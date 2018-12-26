@@ -1,3 +1,7 @@
 from pytubefm.version import version
+from pytubefm.cli import cli
 
-__all__ = ["version"]
+YOUTUBE = "youtube"
+LASTFM = "lastfm"
+
+__all__ = ["version", "cli"]

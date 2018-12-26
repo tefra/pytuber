@@ -12,9 +12,19 @@ if __name__ == "__main__":
     setup(
         packages=find_packages(),
         version=meta["version"],
-        install_requires=["pydrag == 18.1", "python-dotenv == 0.10.0"],
+        install_requires=[
+            "click == 7.0",
+            "tinydb == 3.12.2",
+            "appdirs == 1.4.3",
+            "pydrag == 18.1",
+            "google-api-python-client == 1.7.6",
+            "google-auth == 1.6.1",
+            "google-auth-httplib2 == 0.0.3",
+            "google-auth-oauthlib == 0.2.0",
+        ],
         extras_require={
             "dev": ["pre-commit", "pytest", "pytest-cov", "codecov", "tox"],
             "docs": ["sphinx", "sphinx-rtd-theme", "sphinx-autodoc-typehints"],
         },
+        entry_points={"console_scripts": ["pytubefm=pytubefm:cli"]},
     )

@@ -3,7 +3,9 @@ import shutil
 import tempfile
 import unittest
 
-from pytubefm.main import Context
+from tinydb import TinyDB
+
+from pytubefm.models import Document
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -14,14 +16,18 @@ def fixture_path(filename):
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        self.obj = Context(config_dir=tempfile.mkdtemp())
+        self.tmp_dir = tempfile.mkdtemp()
+        Document.db = TinyDB(
+            os.path.join(self.tmp_dir, "data"), create_dirs=True
+        )
         super(TestCase, self).setUp()
 
     def tearDown(self):
-        self.obj.db.close()
+        Document.db.close()
+        Document.db = None
 
         try:
-            shutil.rmtree(self.obj.config_dir)
+            shutil.rmtree(self.tmp_dir)
         except (OSError, IOError):
             pass
 

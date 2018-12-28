@@ -2,7 +2,8 @@ import os
 
 from click.testing import CliRunner
 
-import pytubefm
+from pytubefm import cli
+from pytubefm.models import Config, Provider
 from tests.utils import TestCase
 
 
@@ -12,10 +13,8 @@ class CommandsTests(TestCase):
         super(CommandsTests, self).setUp()
 
     def test_setup_with_new_config(self):
-        self.assertIsNone(self.obj.get_config(pytubefm.LASTFM))
-        result = self.runner.invoke(
-            pytubefm.cli, ["lastfm", "setup"], input="aaaa", obj=self.obj
-        )
+        self.assertIsNone(Config.find_by_provider(Provider.lastfm))
+        result = self.runner.invoke(cli, ["lastfm", "setup"], input="aaaa")
 
         expected_output = os.linesep.join(
             ("Last.fm Api Key: aaaa", "Last.fm configuration updated!")
@@ -23,17 +22,19 @@ class CommandsTests(TestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
-        actual = self.obj.get_config(pytubefm.LASTFM)
-        self.assertDictEqual({"api_key": "aaaa"}, actual["data"])
+        actual = Config.find_by_provider(Provider.lastfm)
+        self.assertDictEqual({"api_key": "aaaa"}, actual.data)
 
     def test_setup_overwrites_existing_config(self):
-        self.obj.update_config(pytubefm.LASTFM, "foo")
-        self.assertEqual("foo", self.obj.get_config(pytubefm.LASTFM)["data"])
+        Config(
+            provider=Provider.lastfm.value, data=dict(api_key="bbbb")
+        ).save()
+
+        self.assertEqual(
+            dict(api_key="bbbb"), Config.find_by_provider(Provider.lastfm).data
+        )
         result = self.runner.invoke(
-            pytubefm.cli,
-            ["lastfm", "setup"],
-            input=os.linesep.join(("aaaa", "y")),
-            obj=self.obj,
+            cli, ["lastfm", "setup"], input=os.linesep.join(("aaaa", "y"))
         )
 
         expected_output = os.linesep.join(
@@ -46,5 +47,5 @@ class CommandsTests(TestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
-        actual = self.obj.get_config(pytubefm.LASTFM)
-        self.assertDictEqual({"api_key": "aaaa"}, actual["data"])
+        actual = Config.find_by_provider(Provider.lastfm)
+        self.assertDictEqual({"api_key": "aaaa"}, actual.data)

@@ -3,7 +3,8 @@ import os
 
 from click.testing import CliRunner
 
-import pytubefm
+from pytubefm import cli
+from pytubefm.models import Config, Provider
 from tests.utils import TestCase, fixture_path
 
 
@@ -13,13 +14,10 @@ class CommandsTests(TestCase):
         super(CommandsTests, self).setUp()
 
     def test_setup_with_new_config(self):
-        self.assertIsNone(self.obj.get_config(pytubefm.YOUTUBE))
+        self.assertIsNone(Config.find_by_provider(Provider.youtube))
         client_secrets = fixture_path("client_secret.json")
         result = self.runner.invoke(
-            pytubefm.cli,
-            ["youtube", "setup"],
-            input=client_secrets,
-            obj=self.obj,
+            cli, ["youtube", "setup"], input=client_secrets
         )
 
         expected_output = os.linesep.join(
@@ -33,18 +31,19 @@ class CommandsTests(TestCase):
 
         with open(client_secrets, "r") as f:
             expected = json.load(f)
-        actual = self.obj.get_config(pytubefm.YOUTUBE)
-        self.assertDictEqual(expected, actual["data"])
+        actual = Config.find_by_provider(Provider.youtube)
+        self.assertDictEqual(expected, actual.data)
 
     def test_setup_overwrites_existing_config(self):
-        self.obj.update_config(pytubefm.YOUTUBE, "foo")
-        self.assertEqual("foo", self.obj.get_config(pytubefm.YOUTUBE)["data"])
+        Config(provider=Provider.youtube.value, data=dict(a=1)).save()
+        self.assertEqual(
+            dict(a=1), Config.find_by_provider(Provider.youtube).data
+        )
         client_secrets = fixture_path("client_secret.json")
         result = self.runner.invoke(
-            pytubefm.cli,
+            cli,
             ["youtube", "setup"],
             input=os.linesep.join((client_secrets, "y")),
-            obj=self.obj,
         )
 
         expected_output = os.linesep.join(
@@ -60,5 +59,5 @@ class CommandsTests(TestCase):
         with open(client_secrets, "r") as f:
             expected = json.load(f)
 
-        actual = self.obj.get_config(pytubefm.YOUTUBE)
-        self.assertDictEqual(expected, actual["data"])
+        actual = Config.find_by_provider(Provider.youtube)
+        self.assertDictEqual(expected, actual.data)

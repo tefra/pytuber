@@ -3,8 +3,7 @@ from typing import TextIO
 
 import click
 
-import pytubefm
-from pytubefm.main import Context, pass_context
+from pytubefm.models import Config, Provider
 
 
 @click.group("youtube")
@@ -22,8 +21,7 @@ def youtube():
     ),
     prompt="Credentials file path",
 )
-@pass_context
-def setup(ctx: Context, credentials: TextIO) -> None:
+def setup(credentials: TextIO) -> None:
     """
     Configure your youtube api credentials.
 
@@ -32,14 +30,12 @@ def setup(ctx: Context, credentials: TextIO) -> None:
     `config_secret.json` and pass the path as an argument to this method
 
     \f
-    :param ctx: pytube context class
-    :type ctx: :class:`pytubefm.main.Context`
     :param credentials: The path where you downloaded your youtube client secret file
     :type credentials: :class:`io.TextIOWrapper`
     """
 
-    if ctx.get_config(pytubefm.YOUTUBE):
+    if Config.find_by_provider(Provider.youtube):
         click.confirm("Overwrite existing configuration?", abort=True)
 
-    ctx.update_config(pytubefm.YOUTUBE, json.load(credentials))
+    Config(provider=Provider.youtube.value, data=json.load(credentials)).save()
     click.secho("Youtube configuration updated!")

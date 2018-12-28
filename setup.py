@@ -17,6 +17,8 @@ if __name__ == "__main__":
             "tinydb == 3.12.2",
             "appdirs == 1.4.3",
             "pydrag == 18.1",
+            "attrs == 18.2.0",
+            "tabulate == 0.8.2",
             "google-api-python-client == 1.7.6",
             "google-auth == 1.6.1",
             "google-auth-httplib2 == 0.0.3",

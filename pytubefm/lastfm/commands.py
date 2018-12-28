@@ -1,7 +1,6 @@
 import click
 
-import pytubefm
-from pytubefm.main import Context, pass_context
+from pytubefm.models import Config, Provider
 
 
 @click.group("lastfm")
@@ -13,8 +12,7 @@ def lastfm():
 @click.option(
     "--api-key", help="Your last.fm api key", prompt="Last.fm Api Key"
 )
-@pass_context
-def setup(ctx: Context, api_key: str) -> None:
+def setup(api_key: str) -> None:
     """
     Configure your last.fm api account.
 
@@ -22,13 +20,11 @@ def setup(ctx: Context, api_key: str) -> None:
     last.fm as a playlists source for pytubefm.
 
     \f
-    :param ctx: pytube context class
-    :type ctx: :class:`pytubefm.main.Context`
     :param str api_key: Your api key
     """
 
-    if ctx.get_config(pytubefm.LASTFM):
+    if Config.find_by_provider(Provider.lastfm):
         click.confirm("Overwrite existing configuration?", abort=True)
 
-    ctx.update_config(pytubefm.LASTFM, dict(api_key=api_key))
+    Config(provider=Provider.lastfm.value, data=dict(api_key=api_key)).save()
     click.secho("Last.fm configuration updated!")

@@ -14,7 +14,7 @@ if __name__ == "__main__":
         version=meta["version"],
         install_requires=[
             "click == 7.0",
-            "tinydb == 3.12.2",
+            "pickleDB == 0.8.1",
             "appdirs == 1.4.3",
             "pydrag == 18.1",
             "attrs == 18.2.0",

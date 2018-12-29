@@ -3,38 +3,39 @@ from enum import Enum
 
 import appdirs
 import attr
-from tinydb import Query, TinyDB
-from tinydb.database import Table
+import pickledb
 
 
 class Provider(Enum):
     lastfm = "last.fm"
     youtube = "youtube"
 
+    def __str__(self):
+        return self.value
+
 
 @attr.s()
 class Document:
-    db: TinyDB
+    db: pickledb
 
     def asdict(self):
         return attr.asdict(self)
 
     @classmethod
-    def get_db(cls) -> TinyDB:
+    def storage(cls) -> pickledb:
         if Document.db is None:
             config_dir = appdirs.user_config_dir("pytubefm", False)
-            Document.db = TinyDB(
-                os.path.join(config_dir, "data"), create_dirs=True
+            Document.db = pickledb.load(
+                os.path.join(config_dir, "storage.db"), True
             )
         return Document.db
 
     @classmethod
-    def table(cls) -> Table:
-        return cls.get_db().table(cls.__name__)
-
-    @classmethod
-    def from_doc(cls, doc):
-        return cls(**doc)
+    def key(cls, *args):
+        prefix = cls.__class__.__name__.lower()
+        key = [str(x) for x in args]
+        key.insert(0, prefix)
+        return "_".join(key)
 
 
 @attr.s(auto_attribs=True)
@@ -44,11 +45,10 @@ class Config(Document):
 
     @classmethod
     def find_by_provider(cls, provider: Provider):
-        document = cls.table().get(Query().provider == provider.value)
-        if document:
-            return cls.from_doc(document)
+        data = cls.storage().get(cls.key(provider))
+        if data:
+            return cls(**data)
+        return None
 
     def save(self):
-        return self.table().upsert(
-            self.asdict(), Query().provider == self.provider
-        )
+        return self.storage().set(self.key(self.provider), self.asdict())

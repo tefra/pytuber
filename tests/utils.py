@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import unittest
 
-from tinydb import TinyDB
+import pickledb
 
 from pytubefm.models import Document
 
@@ -16,19 +16,16 @@ def fixture_path(filename):
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        self.tmp_dir = tempfile.mkdtemp()
-        Document.db = TinyDB(
-            os.path.join(self.tmp_dir, "data"), create_dirs=True
+        Document.db = pickledb.load(
+            os.path.join(tempfile.mkdtemp(), "storage.db"), True
         )
         super(TestCase, self).setUp()
 
     def tearDown(self):
-        Document.db.close()
-        Document.db = None
-
         try:
-            shutil.rmtree(self.tmp_dir)
+            shutil.rmtree(Document.db.loco)
         except (OSError, IOError):
             pass
-
+        finally:
+            Document.db = None
         super(TestCase, self).tearDown()

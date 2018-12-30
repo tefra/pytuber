@@ -17,7 +17,7 @@ def fixture_path(filename):
 class TestCase(unittest.TestCase):
     def setUp(self):
         Document.db = pickledb.load(
-            os.path.join(tempfile.mkdtemp(), "storage.db"), True
+            os.path.join(tempfile.mkdtemp(), "storage.db"), False
         )
         super(TestCase, self).setUp()
 

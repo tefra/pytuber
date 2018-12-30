@@ -2,7 +2,7 @@ import datetime
 from unittest import mock
 
 from pytubefm.exceptions import NotFound, RecordExists
-from pytubefm.models import Document, Playlist
+from pytubefm.models import Playlist, Storage
 from tests.utils import TestCase
 
 fixed_date = datetime.datetime(2000, 12, 12, 12, 12, 12)
@@ -11,7 +11,7 @@ fixed_date = datetime.datetime(2000, 12, 12, 12, 12, 12)
 class DocumentTests(TestCase):
     def test_now(self):
         now = datetime.datetime.now()
-        actual = Document.now()
+        actual = Storage.now()
         self.assertIsInstance(actual, datetime.datetime)
         self.assertGreaterEqual(actual, now)
         self.assertLess(actual, now + datetime.timedelta(seconds=1))
@@ -65,7 +65,7 @@ class PlaylistTests(TestCase):
                     "limit": 10,
                     "modified": 976615932,
                     "provider": "bar",
-                    "synced": 0,
+                    "synced": 1,
                     "type": "foo",
                     "uploaded": None,
                 }

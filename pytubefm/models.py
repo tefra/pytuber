@@ -4,7 +4,6 @@ import functools
 import hashlib
 import os
 
-import appdirs
 import attr
 import click
 import pickledb
@@ -63,8 +62,7 @@ class PlaylistType(enum.Enum):
         return self.value
 
 
-@attr.s(auto_attribs=False)
-class Document:
+class Storage:
     def asdict(self):
         return attr.asdict(self)
 
@@ -74,12 +72,16 @@ class Document:
         :return: A pickedb instance.
         :rtype: :class:`pickledb.pickledb`
         """
-        if not getattr(Document, "db", None):
-            config_dir = appdirs.user_config_dir("pytubefm", False)
-            db = pickledb.load(os.path.join(config_dir, "storage.db"), True)
-            setattr(Document, "db", db)
+        if not getattr(Storage, "db", None):
+            db = pickledb.load(
+                os.path.join(
+                    click.get_app_dir("pytubefm", False), "storage.db"
+                ),
+                True,
+            )
+            setattr(Storage, "db", db)
 
-        return getattr(Document, "db")
+        return getattr(Storage, "db")
 
     @classmethod
     def key(cls, *args, hash=str):
@@ -98,21 +100,13 @@ class Document:
             else "-"
         )
 
-    @classmethod
-    def preserved_fields(cls):
-        return [
-            x.name
-            for x in attr.fields(cls)
-            if not x.metadata.get("overwrite", False)
-        ]
-
     @staticmethod
     def now():
         return datetime.datetime.now()
 
 
 @attr.s(auto_attribs=True)
-class Config(Document):
+class Config(Storage):
     provider: str
     data: dict
 
@@ -127,16 +121,16 @@ class Config(Document):
         return self.storage().set(self.key(self.provider), self.asdict())
 
 
-@attr.s(auto_attribs=True)
-class Playlist(Document):
-    type: str
-    provider: str
-    arguments: dict
-    limit: int
+@attr.s
+class Playlist(Storage):
+    type: str = attr.ib(converter=str)
+    provider: str = attr.ib(converter=str)
+    limit: int = attr.ib(converter=int)
+    arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib()
     modified: int = attr.ib()
-    synced: int = attr.ib(default=None, metadata=dict(overwrite=True))
-    uploaded: int = attr.ib(default=None, metadata=dict(overwrite=True))
+    synced: int = attr.ib(default=None)
+    uploaded: int = attr.ib(default=None)
 
     @modified.default
     def generate_now(self):
@@ -159,8 +153,9 @@ class Playlist(Document):
             old = self.get(provider=self.provider, id=self.id)
             if not overwrite:
                 raise RecordExists("Playlist already exists!")
-            for field in self.preserved_fields():
-                setattr(self, field, getattr(old, field))
+
+            self.synced = old.synced
+            self.uploaded = old.uploaded
         except NotFound:
             pass
 

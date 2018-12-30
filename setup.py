@@ -15,7 +15,6 @@ if __name__ == "__main__":
         install_requires=[
             "click == 7.0",
             "pickleDB == 0.8.1",
-            "appdirs == 1.4.3",
             "pydrag == 18.1",
             "attrs == 18.2.0",
             "tabulate == 0.8.2",

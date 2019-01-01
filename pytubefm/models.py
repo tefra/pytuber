@@ -1,35 +1,66 @@
 import datetime
 import enum
-import functools
 import hashlib
+import json
 import os
+from functools import reduce
 
 import attr
 import click
-import pickledb
 
 from pytubefm.exceptions import NotFound, RecordExists
 
 
-def cached_property(fun):
-    """
-    A memoize decorator for class properties.
+class Singleton(type):
+    _obj: dict = {}
 
-    http://code.activestate.com/recipes/576563-cached-property/#c3
-    """
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._obj:
+            cls._obj[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._obj[cls]
 
-    @functools.wraps(fun)
-    def get(self):
+
+class Storage(metaclass=Singleton):
+    def __init__(self, data=dict(), path=None):
+        self.data = data
+        self.path = path
+
+    @classmethod
+    def get(cls, *keys, default=None):
+        return reduce(dict.__getitem__, keys, cls().data)
+
+    @classmethod
+    def set(cls, *args):
+        data = cls().data
+        *keys, value = args
+
+        for key in keys[:-1]:
+            data = data.setdefault(key, {})
+        data[keys[-1]] = value
+
+    @classmethod
+    def exists(cls, key):
+        return key in cls().data
+
+    @classmethod
+    def sync(cls):
+        obj = cls()
+        if obj.path:
+            with open(obj.path, "w") as cfg:
+                json.dump(obj.data, cfg)
+
+    @classmethod
+    def purge(cls):
+        cls().data = dict()
+
+    @classmethod
+    def from_file(cls, path: str):
         try:
-            return self._cache[fun]
-        except AttributeError:
-            self._cache = {}
-        except KeyError:
-            pass
-        ret = self._cache[fun] = fun(self)
-        return ret
-
-    return property(get)
+            with open(path, "r") as cfg:
+                data = json.load(cfg)
+        except FileNotFoundError:
+            data = dict()
+        return cls(data=data, path=path)
 
 
 class Provider(enum.Enum):
@@ -62,26 +93,9 @@ class PlaylistType(enum.Enum):
         return self.value
 
 
-class Storage:
+class Document:
     def asdict(self):
         return attr.asdict(self)
-
-    @classmethod
-    def storage(cls) -> pickledb.pickledb:
-        """
-        :return: A pickedb instance.
-        :rtype: :class:`pickledb.pickledb`
-        """
-        if not getattr(Storage, "db", None):
-            db = pickledb.load(
-                os.path.join(
-                    click.get_app_dir("pytubefm", False), "storage.db"
-                ),
-                True,
-            )
-            setattr(Storage, "db", db)
-
-        return getattr(Storage, "db")
 
     @classmethod
     def key(cls, *args, hash=str):
@@ -93,7 +107,7 @@ class Storage:
     @classmethod
     def date(cls, timestamp: int):
         return (
-            datetime.datetime.fromtimestamp(timestamp).strftime(
+            datetime.datetime.utcfromtimestamp(timestamp).strftime(
                 "%Y-%m-%d %H:%M"
             )
             if timestamp
@@ -102,27 +116,27 @@ class Storage:
 
     @staticmethod
     def now():
-        return datetime.datetime.now()
+        return datetime.datetime.utcnow()
 
 
 @attr.s(auto_attribs=True)
-class Config(Storage):
+class Config(Document):
     provider: str
     data: dict
 
     @classmethod
     def find_by_provider(cls, provider: Provider):
-        data = cls.storage().get(cls.key(provider))
-        if data:
-            return cls(**data)
-        return None
+        try:
+            return cls(**Storage.get(cls.key(provider)))
+        except KeyError:
+            return None
 
-    def save(self) -> bool:
-        return self.storage().set(self.key(self.provider), self.asdict())
+    def save(self):
+        Storage.set(self.key(self.provider), self.asdict())
 
 
 @attr.s
-class Playlist(Storage):
+class Playlist(Document):
     type: str = attr.ib(converter=str)
     provider: str = attr.ib(converter=str)
     limit: int = attr.ib(converter=int)
@@ -144,7 +158,7 @@ class Playlist(Storage):
         parts = [self.arguments[k] for k in sorted(self.arguments.keys())]
         return self.key(self.type, *parts, hash=sha1)
 
-    @cached_property
+    @property
     def group(self):
         return self.key(self.provider)
 
@@ -159,15 +173,11 @@ class Playlist(Storage):
         except NotFound:
             pass
 
-        if not self.storage().exists(self.group):
-            self.storage().dcreate(self.group)
-
-        return self.storage().dadd(self.group, (self.id, self.asdict()))
+        Storage.set(self.group, self.id, self.asdict())
 
     def remove(self):
         try:
-            self.storage().dpop(self.group, self.id)
-            return True
+            del Storage().data[self.group][self.id]
         except KeyError:
             raise NotFound("No such playlist id: {}!".format(self.id))
 
@@ -199,13 +209,15 @@ class Playlist(Storage):
     @classmethod
     def get(cls, provider, id):
         try:
-            return Playlist(**cls.storage().dget(cls.key(provider), id))
+            group = cls.key(provider)
+            return cls(**Storage.get(group, id))
         except KeyError:
             raise NotFound("No such playlist id: {}!".format(id))
 
     @classmethod
     def find_by_provider(cls, provider: Provider):
-        group = cls.key(provider)
-        if not cls.storage().exists(group):
+        try:
+            group = cls.key(provider)
+            return [cls(**data) for data in Storage.get(group).values()]
+        except KeyError:
             return []
-        return [cls(**data) for data in cls.storage().dgetall(group).values()]

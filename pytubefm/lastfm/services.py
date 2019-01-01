@@ -5,10 +5,10 @@ from pydrag import Tag, configure
 
 from pytubefm.exceptions import ConfigMissing
 from pytubefm.iso3166 import countries
-from pytubefm.models import Config, Provider, Storage
+from pytubefm.models import Config, Document, Provider, Storage
 
 
-class LastService(Storage):
+class LastService(Document):
     def __init__(self):
         try:
             config = Config.find_by_provider(Provider.lastfm)
@@ -25,21 +25,24 @@ class LastService(Storage):
         :rtype: :class:`pydrag.Tag`
         """
         key = self.key(Provider.lastfm)
-        if refresh or not self.storage().exists(key):
-            self.storage().auto_dump = False
-            self.storage().set(key, [])
-            page = 1
+        if refresh or not Storage.exists(key):
 
+            page = 1
+            tags = []  # type: List[dict]
             with click.progressbar(length=4, label="Fetching tags") as bar:
-                while self.storage().llen(key) < 1000:
-                    tags = Tag.get_top_tags(limit=250, page=page)
-                    self.storage().lextend(key, [t.to_dict() for t in tags])
+                while len(tags) < 1000:
+                    tags.extend(
+                        [
+                            t.to_dict()
+                            for t in Tag.get_top_tags(limit=250, page=page)
+                        ]
+                    )
                     bar.update(page)
                     page += 1
-                self.storage().auto_dump = True
-                self.storage().dump()
 
-        return [Tag(**data) for data in self.storage().lgetall(key)]
+            Storage.set(key, tags)
+
+        return [Tag(**data) for data in Storage.get(key)]
 
     @classmethod
     def get_country_by_code(cls, _, __, value):

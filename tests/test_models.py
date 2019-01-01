@@ -1,24 +1,21 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from unittest import mock
 
 from pytubefm.exceptions import NotFound, RecordExists
-from pytubefm.models import Playlist, Storage
+from pytubefm.models import Document, Playlist, Storage
 from tests.utils import TestCase
 
-fixed_date = datetime(2000, 12, 12, 12, 12, 12, tzinfo=timezone.utc)
+fixed_datetime = datetime(1986, 9, 25, 10, 10, 30, tzinfo=timezone.utc)
 
 
 class DocumentTests(TestCase):
     def test_now(self):
-        now = datetime.now()
-        actual = Storage.now()
+        actual = Document.now()
         self.assertIsInstance(actual, datetime)
-        self.assertGreaterEqual(actual, now)
-        self.assertLess(actual, now + timedelta(seconds=1))
 
 
 class PlaylistTests(TestCase):
-    @mock.patch.object(Playlist, "now", return_value=fixed_date)
+    @mock.patch.object(Playlist, "now", return_value=fixed_datetime)
     def setUp(self, now):
         super(PlaylistTests, self).setUp()
         self.playlist = Playlist(
@@ -28,20 +25,16 @@ class PlaylistTests(TestCase):
     def test_save_new(self):
         self.playlist.save()
         expected = {
-            "playlist_bar": {
-                "c6dbb2e": {
-                    "id": "c6dbb2e",
-                    "arguments": {"a": 1, "b": 2},
-                    "limit": 10,
-                    "modified": 976623132,
-                    "provider": "bar",
-                    "synced": None,
-                    "type": "foo",
-                    "uploaded": None,
-                }
-            }
+            "id": "c6dbb2e",
+            "arguments": {"a": 1, "b": 2},
+            "limit": 10,
+            "modified": int(fixed_datetime.strftime("%s")),
+            "provider": "bar",
+            "synced": None,
+            "type": "foo",
+            "uploaded": None,
         }
-        self.assertDictEqual(expected, Playlist.storage().db)
+        self.assertDictEqual(expected, Storage.get("playlist_bar", "c6dbb2e"))
 
     def test_save_existing_raises_exception(self):
         self.playlist.save()
@@ -58,20 +51,16 @@ class PlaylistTests(TestCase):
         self.playlist.save(overwrite=True)
 
         expected = {
-            "playlist_bar": {
-                "c6dbb2e": {
-                    "id": "c6dbb2e",
-                    "arguments": {"a": 1, "b": 2},
-                    "limit": 10,
-                    "modified": 976623132,
-                    "provider": "bar",
-                    "synced": 1,
-                    "type": "foo",
-                    "uploaded": None,
-                }
-            }
+            "id": "c6dbb2e",
+            "arguments": {"a": 1, "b": 2},
+            "limit": 10,
+            "modified": int(fixed_datetime.strftime("%s")),
+            "provider": "bar",
+            "synced": 1,
+            "type": "foo",
+            "uploaded": None,
         }
-        self.assertDictEqual(expected, Playlist.storage().db)
+        self.assertDictEqual(expected, Storage.get("playlist_bar", "c6dbb2e"))
 
     def test_remove(self):
         self.assertEqual(0, len(Playlist.find_by_provider("bar")))
@@ -79,7 +68,7 @@ class PlaylistTests(TestCase):
         self.playlist.save()
         self.assertEqual(1, len(Playlist.find_by_provider("bar")))
 
-        self.assertTrue(self.playlist.remove())
+        self.playlist.remove()
         self.assertEqual(0, len(Playlist.find_by_provider("bar")))
 
         with self.assertRaises(NotFound) as cm:
@@ -87,17 +76,9 @@ class PlaylistTests(TestCase):
         self.assertEqual("No such playlist id: c6dbb2e!", str(cm.exception))
 
     def test_values_list(self):
-        self.assertEqual(
-            self.playlist.values_list(),
-            ("c6dbb2e", "Foo", "a: 1, b: 2", 10, "2000-12-12 12:12", "-", "-"),
-        )
 
-        self.playlist.synced = int(
-            (fixed_date + timedelta(hours=12)).strftime("%s")
-        )
-        self.playlist.uploaded = int(
-            (fixed_date + timedelta(hours=24)).strftime("%s")
-        )
+        self.playlist.synced = self.playlist.modified + 12 * 60 * 60
+        self.playlist.uploaded = self.playlist.modified + 24 * 60 * 60
         self.assertEqual(
             self.playlist.values_list(),
             (
@@ -105,9 +86,9 @@ class PlaylistTests(TestCase):
                 "Foo",
                 "a: 1, b: 2",
                 10,
-                "2000-12-12 12:12",
-                "2000-12-13 00:12",
-                "2000-12-13 12:12",
+                Playlist.date(self.playlist.modified),
+                Playlist.date(self.playlist.synced),
+                Playlist.date(self.playlist.uploaded),
             ),
         )
 

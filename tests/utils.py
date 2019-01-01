@@ -1,9 +1,6 @@
 import os
-import shutil
-import tempfile
 import unittest
 
-import pickledb
 from click.testing import CliRunner
 
 from pytubefm.models import Storage
@@ -17,20 +14,9 @@ def fixture_path(filename):
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        Storage.db = pickledb.load(
-            os.path.join(tempfile.mkdtemp(), "storage.db"), False
-        )
+        Storage().data = dict()
         self.maxDiff = None
         super(TestCase, self).setUp()
-
-    def tearDown(self):
-        try:
-            shutil.rmtree(Storage.db.loco)
-        except (OSError, IOError):
-            pass
-        finally:
-            Storage.db = None
-        super(TestCase, self).tearDown()
 
 
 class CommandTestCase(TestCase):

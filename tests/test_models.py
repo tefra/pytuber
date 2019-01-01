@@ -1,20 +1,20 @@
-import datetime
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from pytubefm.exceptions import NotFound, RecordExists
 from pytubefm.models import Playlist, Storage
 from tests.utils import TestCase
 
-fixed_date = datetime.datetime(2000, 12, 12, 12, 12, 12)
+fixed_date = datetime(2000, 12, 12, 12, 12, 12, tzinfo=timezone.utc)
 
 
 class DocumentTests(TestCase):
     def test_now(self):
-        now = datetime.datetime.now()
+        now = datetime.now()
         actual = Storage.now()
-        self.assertIsInstance(actual, datetime.datetime)
+        self.assertIsInstance(actual, datetime)
         self.assertGreaterEqual(actual, now)
-        self.assertLess(actual, now + datetime.timedelta(seconds=1))
+        self.assertLess(actual, now + timedelta(seconds=1))
 
 
 class PlaylistTests(TestCase):
@@ -33,7 +33,7 @@ class PlaylistTests(TestCase):
                     "id": "c6dbb2e",
                     "arguments": {"a": 1, "b": 2},
                     "limit": 10,
-                    "modified": 976615932,
+                    "modified": 976623132,
                     "provider": "bar",
                     "synced": None,
                     "type": "foo",
@@ -63,7 +63,7 @@ class PlaylistTests(TestCase):
                     "id": "c6dbb2e",
                     "arguments": {"a": 1, "b": 2},
                     "limit": 10,
-                    "modified": 976615932,
+                    "modified": 976623132,
                     "provider": "bar",
                     "synced": 1,
                     "type": "foo",
@@ -93,10 +93,10 @@ class PlaylistTests(TestCase):
         )
 
         self.playlist.synced = int(
-            (fixed_date + datetime.timedelta(hours=12)).strftime("%s")
+            (fixed_date + timedelta(hours=12)).strftime("%s")
         )
         self.playlist.uploaded = int(
-            (fixed_date + datetime.timedelta(hours=24)).strftime("%s")
+            (fixed_date + timedelta(hours=24)).strftime("%s")
         )
         self.assertEqual(
             self.playlist.values_list(),

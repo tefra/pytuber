@@ -3,9 +3,10 @@ from typing import List
 import click
 from pydrag import Tag, configure
 
+from pytubefm.data import Registry
 from pytubefm.exceptions import ConfigMissing
 from pytubefm.iso3166 import countries
-from pytubefm.models import Config, Document, Provider, Storage
+from pytubefm.models import Config, Document, Provider
 
 
 class LastService(Document):
@@ -25,7 +26,7 @@ class LastService(Document):
         :rtype: :class:`pydrag.Tag`
         """
         key = self.key(Provider.lastfm)
-        if refresh or not Storage.exists(key):
+        if refresh or key not in Registry():
 
             page = 1
             tags = []  # type: List[dict]
@@ -40,9 +41,9 @@ class LastService(Document):
                     bar.update(page)
                     page += 1
 
-            Storage.set(key, tags)
+            Registry.set(key, tags)
 
-        return [Tag(**data) for data in Storage.get(key)]
+        return [Tag(**data) for data in Registry.get(key)]
 
     @classmethod
     def get_country_by_code(cls, _, __, value):

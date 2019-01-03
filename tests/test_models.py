@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 from unittest import mock
 
+from pytubefm.data import Registry
 from pytubefm.exceptions import NotFound, RecordExists
-from pytubefm.models import Document, Playlist, Storage
+from pytubefm.models import Document, Playlist
 from tests.utils import TestCase
 
 fixed_datetime = datetime(1986, 9, 25, 10, 10, 30, tzinfo=timezone.utc)
@@ -34,7 +35,7 @@ class PlaylistTests(TestCase):
             "type": "foo",
             "uploaded": None,
         }
-        self.assertDictEqual(expected, Storage.get("playlist_bar", "c6dbb2e"))
+        self.assertDictEqual(expected, Registry.get("playlist_bar", "c6dbb2e"))
 
     def test_save_existing_raises_exception(self):
         self.playlist.save()
@@ -60,7 +61,7 @@ class PlaylistTests(TestCase):
             "type": "foo",
             "uploaded": None,
         }
-        self.assertDictEqual(expected, Storage.get("playlist_bar", "c6dbb2e"))
+        self.assertDictEqual(expected, Registry.get("playlist_bar", "c6dbb2e"))
 
     def test_remove(self):
         self.assertEqual(0, len(Playlist.find_by_provider("bar")))

@@ -1,66 +1,13 @@
 import datetime
 import enum
 import hashlib
-import json
 import os
-from functools import reduce
 
 import attr
 import click
 
+from pytubefm.data import Registry
 from pytubefm.exceptions import NotFound, RecordExists
-
-
-class Singleton(type):
-    _obj: dict = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._obj:
-            cls._obj[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._obj[cls]
-
-
-class Storage(metaclass=Singleton):
-    def __init__(self, data=dict(), path=None):
-        self.data = data
-        self.path = path
-
-    @classmethod
-    def get(cls, *keys, default=None):
-        return reduce(dict.__getitem__, keys, cls().data)
-
-    @classmethod
-    def set(cls, *args):
-        data = cls().data
-        *keys, value = args
-
-        for key in keys[:-1]:
-            data = data.setdefault(key, {})
-        data[keys[-1]] = value
-
-    @classmethod
-    def exists(cls, key):
-        return key in cls().data
-
-    @classmethod
-    def sync(cls):
-        obj = cls()
-        if obj.path:
-            with open(obj.path, "w") as cfg:
-                json.dump(obj.data, cfg)
-
-    @classmethod
-    def purge(cls):
-        cls().data = dict()
-
-    @classmethod
-    def from_file(cls, path: str):
-        try:
-            with open(path, "r") as cfg:
-                data = json.load(cfg)
-        except FileNotFoundError:
-            data = dict()
-        return cls(data=data, path=path)
 
 
 class Provider(enum.Enum):
@@ -127,12 +74,12 @@ class Config(Document):
     @classmethod
     def find_by_provider(cls, provider: Provider):
         try:
-            return cls(**Storage.get(cls.key(provider)))
+            return cls(**Registry.get(cls.key(provider)))
         except KeyError:
             return None
 
     def save(self):
-        Storage.set(self.key(self.provider), self.asdict())
+        Registry.set(self.key(self.provider), self.asdict())
 
 
 @attr.s
@@ -173,11 +120,11 @@ class Playlist(Document):
         except NotFound:
             pass
 
-        Storage.set(self.group, self.id, self.asdict())
+        Registry.set(self.group, self.id, self.asdict())
 
     def remove(self):
         try:
-            del Storage().data[self.group][self.id]
+            Registry.remove(self.group, self.id)
         except KeyError:
             raise NotFound("No such playlist id: {}!".format(self.id))
 
@@ -210,7 +157,7 @@ class Playlist(Document):
     def get(cls, provider, id):
         try:
             group = cls.key(provider)
-            return cls(**Storage.get(group, id))
+            return cls(**Registry.get(group, id))
         except KeyError:
             raise NotFound("No such playlist id: {}!".format(id))
 
@@ -218,6 +165,6 @@ class Playlist(Document):
     def find_by_provider(cls, provider: Provider):
         try:
             group = cls.key(provider)
-            return [cls(**data) for data in Storage.get(group).values()]
+            return [cls(**data) for data in Registry.get(group).values()]
         except KeyError:
             return []

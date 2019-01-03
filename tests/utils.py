@@ -3,7 +3,7 @@ import unittest
 
 from click.testing import CliRunner
 
-from pytubefm.models import Storage
+from pytubefm.data import Registry
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -14,7 +14,7 @@ def fixture_path(filename):
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        Storage().data = dict()
+        Registry().clear()
         self.maxDiff = None
         super(TestCase, self).setUp()
 

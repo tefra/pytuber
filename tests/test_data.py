@@ -2,7 +2,8 @@ import json
 import os
 import shutil
 import tempfile
-from unittest import TestCase
+from datetime import timedelta
+from unittest import TestCase, mock
 
 from pytubefm.data import Registry
 
@@ -77,3 +78,29 @@ class RegistryTests(TestCase):
             self.assertEqual({"1": {"2": {"3": 4}}}, Registry())
         finally:
             shutil.rmtree(tmp)
+
+    @mock.patch("pytubefm.data.time.time")
+    def test_cache(self, time):
+        time.side_effect = [10, 20.1, 20.1, 20.5, 20.8]
+
+        def callme(ttl, value, refresh=False):
+            return Registry.cache(
+                key="foo",
+                ttl=timedelta(seconds=ttl),
+                func=lambda: value,
+                refresh=refresh,
+            )
+
+        self.assertEqual("first", callme(10, "first"))
+        self.assertEqual(("first", 20.0), Registry.get("foo"))
+
+        self.assertEqual("second", callme(1, "second"))
+        self.assertEqual(("second", 21.1), Registry.get("foo"))
+
+        self.assertEqual("second", callme(1, "third"))
+        self.assertEqual(("second", 21.1), Registry.get("foo"))
+
+        self.assertEqual("third", callme(100, "third", refresh=True))
+        self.assertEqual(("third", 120.8), Registry.get("foo"))
+
+        self.assertEqual(5, time.call_count)

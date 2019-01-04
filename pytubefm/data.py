@@ -1,5 +1,8 @@
 import json
+import time
+from datetime import timedelta
 from functools import reduce
+from typing import Callable
 
 
 class Singleton(type):
@@ -50,3 +53,12 @@ class Registry(dict, metaclass=Singleton):
         except FileNotFoundError:
             data = dict()
         return cls(data)
+
+    @classmethod
+    def cache(
+        cls, key: str, func: Callable, ttl: timedelta, refresh: bool = False
+    ):
+        registry = cls()
+        if refresh or key not in registry or registry[key][1] < time.time():
+            registry[key] = (func(), time.time() + ttl.total_seconds())
+        return registry[key][0]

@@ -2,12 +2,17 @@ import datetime
 from unittest import mock
 
 import click
-from pydrag import Tag
+from pydrag import Artist, Tag
 
 from pytubefm import cli
 from pytubefm.exceptions import RecordExists
 from pytubefm.lastfm.commands import create_or_update_playlist
 from pytubefm.lastfm.models import ChartPlaylist, UserPlaylist
+from pytubefm.lastfm.params import (
+    ArtistParamType,
+    CountryParamType,
+    TagParamType,
+)
 from pytubefm.lastfm.services import LastService
 from pytubefm.models import Config, Playlist, Provider
 from tests.utils import CommandTestCase
@@ -128,8 +133,10 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
+    @mock.patch.object(CountryParamType, "convert")
     @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_country(self, create_or_update):
+    def test_country(self, create_or_update, country_param_type):
+        country_param_type.return_value = "greece"
         result = self.runner.invoke(
             cli, ["lastfm", "add", "country"], input="gr\n50"
         )
@@ -148,8 +155,10 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
+    @mock.patch.object(TagParamType, "convert")
     @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_tag(self, create_or_update):
+    def test_tag(self, create_or_update, tag_param):
+        tag_param.return_value = Tag(name="rock")
         result = self.runner.invoke(
             cli, ["lastfm", "add", "tag"], input="rock\n50"
         )
@@ -166,8 +175,10 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
+    @mock.patch.object(ArtistParamType, "convert")
     @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_artist(self, create_or_update):
+    def test_artist(self, create_or_update, artist_param):
+        artist_param.return_value = Artist(name="Queen")
         result = self.runner.invoke(
             cli, ["lastfm", "add", "artist"], input="Queen\n50"
         )

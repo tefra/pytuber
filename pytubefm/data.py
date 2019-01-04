@@ -2,6 +2,7 @@ import json
 import time
 from datetime import timedelta
 from functools import reduce
+from json import JSONDecodeError
 from typing import Callable
 
 
@@ -50,7 +51,7 @@ class Registry(dict, metaclass=Singleton):
         try:
             with open(path, "r") as cfg:
                 data = json.load(cfg)
-        except FileNotFoundError:
+        except (FileNotFoundError, JSONDecodeError):
             data = dict()
         return cls(data)
 

@@ -1,8 +1,14 @@
 import click
+from pydrag import Artist, Tag
 from tabulate import tabulate
 
 from pytubefm.exceptions import RecordExists
 from pytubefm.lastfm.models import ChartPlaylist, UserPlaylist
+from pytubefm.lastfm.params import (
+    ArtistParamType,
+    CountryParamType,
+    TagParamType,
+)
 from pytubefm.lastfm.services import LastService
 from pytubefm.models import Config, Playlist, Provider
 
@@ -58,7 +64,7 @@ def setup(api_key: str) -> None:
 def tags(refresh) -> None:
     values = [
         (tag.name, tag.count, tag.reach)
-        for tag in LastService().get_tags(refresh=refresh)
+        for tag in LastService.get_tags(refresh=refresh)
     ]
 
     click.echo_via_pager(
@@ -142,7 +148,7 @@ def add_chart_playlist(limit: int):
 @click.option(
     "--country",
     help="An alpha-2 ISO-3166 country code",
-    callback=LastService.get_country_by_code,
+    type=CountryParamType(),
     prompt="Country Code",
 )
 @click.option(
@@ -172,7 +178,12 @@ def add_country_playlist(country: str, limit: int):
 
 
 @add.command("tag")
-@click.option("--tag", help="A last.fm tag, see tags command", prompt="Tag")
+@click.option(
+    "--tag",
+    help="A last.fm tag, see tags command",
+    prompt="Tag",
+    type=TagParamType(),
+)
 @click.option(
     "--limit",
     help="The maximum number of tracks",
@@ -180,7 +191,7 @@ def add_country_playlist(country: str, limit: int):
     prompt="Maximum tracks",
     default=50,
 )
-def add_tag_playlist(tag: str, limit: int):
+def add_tag_playlist(tag: Tag, limit: int):
     """
     Add a top tracks playlist by tag.
 
@@ -193,14 +204,16 @@ def add_tag_playlist(tag: str, limit: int):
         Playlist(
             type=ChartPlaylist.TAG,
             provider=Provider.lastfm,
-            arguments=dict(tag=tag),
+            arguments=dict(tag=tag.name),
             limit=limit,
         )
     )
 
 
 @add.command("artist")
-@click.option("--artist", help="An artist name", prompt="Artist")
+@click.option(
+    "--artist", help="An artist name", prompt="Artist", type=ArtistParamType()
+)
 @click.option(
     "--limit",
     help="The maximum number of tracks",
@@ -208,7 +221,7 @@ def add_tag_playlist(tag: str, limit: int):
     prompt="Maximum tracks",
     default=50,
 )
-def add_artist_playlist(artist: str, limit: int):
+def add_artist_playlist(artist: Artist, limit: int):
     """
     Add a top tracks playlist by artist.
 
@@ -221,7 +234,7 @@ def add_artist_playlist(artist: str, limit: int):
         Playlist(
             type=ChartPlaylist.ARTIST,
             provider=Provider.lastfm,
-            arguments=dict(artist=artist),
+            arguments=dict(artist=artist.name),
             limit=limit,
         )
     )

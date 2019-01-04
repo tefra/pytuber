@@ -1,9 +1,10 @@
 import json
 import time
+from contextlib import suppress
 from datetime import timedelta
 from functools import reduce
 from json import JSONDecodeError
-from typing import Callable
+from typing import Callable, Dict
 
 
 class Singleton(type):
@@ -43,16 +44,16 @@ class Registry(dict, metaclass=Singleton):
 
     @classmethod
     def persist(cls, path):
-        with open(path, "w") as fp:
-            json.dump(cls(), fp)
+        with suppress(FileNotFoundError):
+            with open(path, "w") as fp:
+                json.dump(cls(), fp)
 
     @classmethod
     def from_file(cls, path: str):
-        try:
+        data: Dict = dict()
+        with suppress(FileNotFoundError, JSONDecodeError):
             with open(path, "r") as cfg:
                 data = json.load(cfg)
-        except (FileNotFoundError, JSONDecodeError):
-            data = dict()
         return cls(data)
 
     @classmethod

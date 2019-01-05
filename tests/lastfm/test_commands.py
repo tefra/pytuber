@@ -12,11 +12,18 @@ from pytubefm.lastfm.params import (
     UserParamType,
 )
 from pytubefm.lastfm.services import LastService
-from pytubefm.models import ConfigManager, Playlist, PlaylistManager, Provider
+from pytubefm.models import (
+    ConfigManager,
+    Playlist,
+    PlaylistManager,
+    Provider,
+    Track,
+    TrackManager,
+)
 from tests.utils import CommandTestCase
 
 user = namedtuple("User", ["name"])
-playlist = namedtuple("Playlist", ["id", "is_new"])
+playlist = namedtuple("Playlist", ["id", "synced"])
 
 
 class CommandSetupTests(CommandTestCase):
@@ -64,7 +71,7 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(PlaylistManager, "set")
     def test_user(self, create_playlist, convert):
         convert.return_value = user(name="bbb")
-        create_playlist.return_value = playlist(id=1, is_new=False)
+        create_playlist.return_value = playlist(id=1, synced=None)
         result = self.runner.invoke(
             cli,
             ["lastfm", "add", "user"],
@@ -82,7 +89,7 @@ class CommandAddTests(CommandTestCase):
                 "[4] user_friends_recent_tracks",
                 "Select a playlist type 1-4: 2",
                 "Maximum tracks [50]: 50",
-                "Updated playlist: 1!",
+                "Added playlist: 1!",
             )
         )
 
@@ -99,13 +106,13 @@ class CommandAddTests(CommandTestCase):
 
     @mock.patch.object(PlaylistManager, "set")
     def test_chart(self, create_playlist):
-        create_playlist.return_value = playlist(id=1, is_new=False)
+        create_playlist.return_value = playlist(id=1, synced=None)
         result = self.runner.invoke(
             cli, ["lastfm", "add", "chart"], input="50"
         )
 
         expected_output = "\n".join(
-            ("Maximum tracks [50]: 50", "Updated playlist: 1!")
+            ("Maximum tracks [50]: 50", "Added playlist: 1!")
         )
         create_playlist.assert_called_once_with(
             dict(type=PlaylistType.CHART, provider=Provider.lastfm, limit=50)
@@ -117,7 +124,7 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(PlaylistManager, "set")
     def test_country(self, create_playlist, country_param_type):
         country_param_type.return_value = "greece"
-        create_playlist.return_value = playlist(id=1, is_new=False)
+        create_playlist.return_value = playlist(id=1, synced=None)
         result = self.runner.invoke(
             cli, ["lastfm", "add", "country"], input="gr\n50"
         )
@@ -126,7 +133,7 @@ class CommandAddTests(CommandTestCase):
             (
                 "Country Code: gr",
                 "Maximum tracks [50]: 50",
-                "Updated playlist: 1!",
+                "Added playlist: 1!",
             )
         )
         create_playlist.assert_called_once_with(
@@ -144,13 +151,13 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(PlaylistManager, "set")
     def test_tag(self, create_playlist, convert):
         convert.return_value = Tag(name="rock")
-        create_playlist.return_value = playlist(id=1, is_new=True)
+        create_playlist.return_value = playlist(id=1, synced=111)
         result = self.runner.invoke(
             cli, ["lastfm", "add", "tag"], input="rock\n50"
         )
 
         expected_output = "\n".join(
-            ("Tag: rock", "Maximum tracks [50]: 50", "Added playlist: 1!")
+            ("Tag: rock", "Maximum tracks [50]: 50", "Updated playlist: 1!")
         )
         create_playlist.assert_called_once_with(
             dict(
@@ -167,9 +174,12 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(PlaylistManager, "set")
     def test_artist(self, create_playlist, artist_param):
         artist_param.return_value = Artist(name="Queen")
-        create_playlist.return_value = playlist(id=1, is_new=True)
+        create_playlist.return_value = playlist(id=1, synced=None)
         result = self.runner.invoke(
-            cli, ["lastfm", "add", "artist"], input="Queen\n50"
+            cli,
+            ["lastfm", "add", "artist"],
+            input="Queen\n50",
+            catch_exceptions=False,
         )
 
         expected_output = "\n".join(
@@ -221,23 +231,70 @@ class CommandTagsTests(CommandTestCase):
 
 
 class CommandListPlaylistsTests(CommandTestCase):
-    @mock.patch.object(Playlist, "values_header")
     @mock.patch.object(PlaylistManager, "find")
-    def test_list(self, find, header):
-        header.return_value = ["a", "b", "c"]
-        p_one = mock.Mock()
-        p_one.values_list.return_value = [1, 2, 3]
-        p_two = mock.Mock()
-        p_two.values_list.return_value = [4, 5, 6]
+    def test_list_without_id(self, find):
 
-        find.return_value = [p_one, p_two]
+        find.return_value = [
+            Playlist(
+                type="foo",
+                provider=Provider.lastfm,
+                limit=10,
+                arguments=dict(a=1),
+                modified=1546727685,
+            ),
+            Playlist(
+                type="bar",
+                provider=Provider.lastfm,
+                limit=15,
+                arguments=dict(b=1, c=2),
+                modified=1546727185,
+                synced=1546727285,
+                uploaded=1546727385,
+            ),
+        ]
 
         result = self.runner.invoke(cli, ["lastfm", "list"])
 
         expected_output = "\n".join(
-            ("a    b    c", "---  ---  ---", "  1    2    3", "  4    5    6")
+            (
+                "ID       Type    Arguments      Limit  Modified          Synced            Uploaded",
+                "-------  ------  -----------  -------  ----------------  ----------------  ----------------",
+                "1ffdbf3  Foo     a: 1              10  2019-01-05 22:34  -                 -",
+                "2884480  Bar     b: 1, c: 2        15  2019-01-05 22:26  2019-01-05 22:28  2019-01-05 22:29",
+            )
         )
         find.assert_called_once_with(Provider.lastfm)
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(expected_output, result.output.strip())
+
+    @mock.patch.object(TrackManager, "find")
+    @mock.patch.object(PlaylistManager, "get")
+    def test_list_with_id(self, get, find):
+        playlist = Playlist(
+            type="foo", provider=Provider.lastfm, limit=10, arguments=dict(a=1)
+        )
+
+        get.return_value = playlist
+        find.return_value = [
+            Track(name="foo", artist="bar", duration=120),
+            Track(name="thug", artist="life", duration=1844),
+            Track(name="nope", artist="nope", duration=0),
+        ]
+
+        result = self.runner.invoke(
+            cli, ["lastfm", "list", playlist.id], catch_exceptions=False
+        )
+
+        expected_output = "\n".join(
+            (
+                "No  Artist    Track Name    Duration",
+                "----  --------  ------------  ----------",
+                "   0  bar       foo           0:02:00",
+                "   1  life      thug          0:30:44",
+                "   2  nope      nope          -",
+            )
+        )
+        find.assert_called_once_with(playlist.id)
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
@@ -276,3 +333,81 @@ class CommandRemovePlaylistTests(CommandTestCase):
         )
         self.assertEqual(1, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
+
+
+class CommandSyncPlaylistsTests(CommandTestCase):
+    @mock.patch.object(TrackManager, "set")
+    @mock.patch.object(LastService, "get_tracks")
+    @mock.patch.object(PlaylistManager, "find")
+    def test_sync_all(self, find, get_tracks, set):
+        playlist_one = Playlist(
+            type="foo",
+            provider=Provider.lastfm,
+            limit=10,
+            arguments=dict(a=1),
+            modified=1546727685,
+        )
+        playlist_two = Playlist(
+            type="bar",
+            provider=Provider.lastfm,
+            limit=15,
+            arguments=dict(b=1, c=2),
+            modified=1546727185,
+            synced=1546727285,
+            uploaded=1546727385,
+        )
+
+        find.return_value = [playlist_one, playlist_two]
+        get_tracks.side_effect = [[1, 2, 3], [4, 5, 6]]
+
+        result = self.runner.invoke(
+            cli, ["lastfm", "sync"], catch_exceptions=False
+        )
+
+        self.assertEqual(0, result.exit_code)
+        find.assert_called_once_with(Provider.lastfm)
+        get_tracks.assert_has_calls(
+            [
+                mock.call(type="foo", limit=10, a=1),
+                mock.call(type="bar", limit=15, b=1, c=2),
+            ]
+        )
+        set.assert_has_calls(
+            [
+                mock.call(playlist_one, [1, 2, 3]),
+                mock.call(playlist_two, [4, 5, 6]),
+            ]
+        )
+
+    @mock.patch.object(TrackManager, "set")
+    @mock.patch.object(LastService, "get_tracks")
+    @mock.patch.object(PlaylistManager, "find")
+    def test_sync_with_id(self, find, get_tracks, set):
+        playlist_one = Playlist(
+            type="foo",
+            provider=Provider.lastfm,
+            limit=10,
+            arguments=dict(a=1),
+            modified=1546727685,
+        )
+        playlist_two = Playlist(
+            type="bar",
+            provider=Provider.lastfm,
+            limit=15,
+            arguments=dict(b=1, c=2),
+            modified=1546727185,
+            synced=1546727285,
+            uploaded=1546727385,
+        )
+
+        find.return_value = [playlist_one, playlist_two]
+        get_tracks.return_value = [4, 5, 6]
+
+        result = self.runner.invoke(
+            cli, ["lastfm", "sync", playlist_two.id], catch_exceptions=False
+        )
+
+        self.assertEqual(0, result.exit_code)
+        find.assert_called_once_with(Provider.lastfm)
+        get_tracks.assert_called_once_with(type="bar", limit=15, b=1, c=2)
+        set.assert_called_once_with(playlist_two, [4, 5, 6])

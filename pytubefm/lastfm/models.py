@@ -37,7 +37,7 @@ class PlaylistType(PlaylistMixin):
     ARTIST = "top_tracks_by_artist"
 
 
-UserPlaylistType = PlaylistMixin(
+UserPlaylistType = PlaylistMixin(  # type: ignore
     "UserPlaylistType",
     [
         (x.name, x.value)

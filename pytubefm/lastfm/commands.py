@@ -1,16 +1,18 @@
+from typing import Optional, Tuple
+
 import click
-from pydrag import Artist, Tag
+from pydrag import Artist, Tag, User
 from tabulate import tabulate
 
-from pytubefm.exceptions import RecordExists
-from pytubefm.lastfm.models import ChartPlaylist, UserPlaylist
+from pytubefm.lastfm.models import PlaylistType, UserPlaylistType
 from pytubefm.lastfm.params import (
     ArtistParamType,
     CountryParamType,
     TagParamType,
+    UserParamType,
 )
 from pytubefm.lastfm.services import LastService
-from pytubefm.models import Config, Playlist, Provider
+from pytubefm.models import ConfigManager, Playlist, PlaylistManager, Provider
 
 
 @click.group()
@@ -21,20 +23,6 @@ def lastfm():
 @lastfm.group()
 def add():
     """Created or update a playlist."""
-
-
-def create_or_update_playlist(playlist: Playlist):
-    try:
-        exists = False
-        playlist.save()
-    except RecordExists:
-        exists = click.confirm("Overwrite existing playlist?", abort=True)
-        playlist.save(overwrite=True)
-    click.secho(
-        "{} playlist: {}!".format(
-            "Updated" if exists else "Added", playlist.id
-        )
-    )
 
 
 @lastfm.command()
@@ -52,10 +40,12 @@ def setup(api_key: str) -> None:
     :param str api_key: Your api key
     """
 
-    if Config.find_by_provider(Provider.lastfm):
+    if ConfigManager.get(Provider.lastfm):
         click.confirm("Overwrite existing configuration?", abort=True)
 
-    Config(provider=Provider.lastfm.value, data=dict(api_key=api_key)).save()
+    ConfigManager.update(
+        dict(provider=Provider.lastfm.value, data=dict(api_key=api_key))
+    )
     click.secho("Last.fm configuration updated!")
 
 
@@ -76,15 +66,16 @@ def tags(refresh) -> None:
 
 @add.command("user")
 @click.option(
-    "--username",
+    "--user",
     help="The user for whom the playlist will be generated",
     prompt="Last.fm username",
+    type=UserParamType(),
 )
 @click.option(
     "--playlist-type",
     help="The playlist type number",
-    type=UserPlaylist.range(),
-    prompt=UserPlaylist.choices(),
+    type=UserPlaylistType.range(),
+    prompt=UserPlaylistType.choices(),
 )
 @click.option(
     "--limit",
@@ -93,7 +84,7 @@ def tags(refresh) -> None:
     prompt="Maximum tracks",
     default=50,
 )
-def add_user_playlist(username: str, playlist_type: int, limit: int):
+def add_user_playlist(user: User, playlist_type: int, limit: int):
     """
     Add a user type playlist. This type of playlists are based on a user's
     music preference and history.
@@ -106,17 +97,22 @@ def add_user_playlist(username: str, playlist_type: int, limit: int):
     4. User friends recent tracks
 
     \f
-    :param str username: The user for whom the playlist will be generated
+    :param User user: The user for whom the playlist will be generated
     :param int playlist_type: The playlist type number
     :param int limit: Limit the number of the tracks
     """
 
-    create_or_update_playlist(
-        Playlist(
-            type=UserPlaylist.from_choice(playlist_type),
+    playlist = PlaylistManager.set(
+        dict(
+            type=UserPlaylistType.from_choice(playlist_type),
             provider=Provider.lastfm,
-            arguments=dict(username=username),
+            arguments=dict(username=user.name),
             limit=limit,
+        )
+    )
+    click.secho(
+        "{} playlist: {}!".format(
+            "Added" if playlist.is_new else "Updated", playlist.id
         )
     )
 
@@ -137,9 +133,12 @@ def add_chart_playlist(limit: int):
     :param int limit: Limit the number of the tracks
     """
 
-    create_or_update_playlist(
-        Playlist(
-            type=ChartPlaylist.CHART, provider=Provider.lastfm, limit=limit
+    playlist = PlaylistManager.set(
+        dict(type=PlaylistType.CHART, provider=Provider.lastfm, limit=limit)
+    )
+    click.secho(
+        "{} playlist: {}!".format(
+            "Added" if playlist.is_new else "Updated", playlist.id
         )
     )
 
@@ -167,12 +166,17 @@ def add_country_playlist(country: str, limit: int):
     :param int limit: Limit the number of the tracks
     """
 
-    create_or_update_playlist(
-        Playlist(
-            type=ChartPlaylist.COUNTRY,
+    playlist = PlaylistManager.set(
+        dict(
+            type=PlaylistType.COUNTRY,
             provider=Provider.lastfm,
             arguments=dict(country=country),
             limit=limit,
+        )
+    )
+    click.secho(
+        "{} playlist: {}!".format(
+            "Added" if playlist.is_new else "Updated", playlist.id
         )
     )
 
@@ -200,12 +204,18 @@ def add_tag_playlist(tag: Tag, limit: int):
     :param int limit: Limit the number of the tracks
     """
 
-    create_or_update_playlist(
-        Playlist(
-            type=ChartPlaylist.TAG,
+    playlist = PlaylistManager.set(
+        dict(
+            type=PlaylistType.TAG,
             provider=Provider.lastfm,
             arguments=dict(tag=tag.name),
             limit=limit,
+        )
+    )
+
+    click.secho(
+        "{} playlist: {}!".format(
+            "Added" if playlist.is_new else "Updated", playlist.id
         )
     )
 
@@ -230,37 +240,51 @@ def add_artist_playlist(artist: Artist, limit: int):
     :param int limit: Limit the number of the tracks
     """
 
-    create_or_update_playlist(
-        Playlist(
-            type=ChartPlaylist.ARTIST,
+    playlist = PlaylistManager.set(
+        dict(
+            type=PlaylistType.ARTIST,
             provider=Provider.lastfm,
             arguments=dict(artist=artist.name),
             limit=limit,
         )
     )
 
+    click.secho(
+        "{} playlist: {}!".format(
+            "Added" if playlist.is_new else "Updated", playlist.id
+        )
+    )
+
 
 @lastfm.command("list")
-def list_playlists():
-    """List all playlists."""
+@click.argument("id", required=False)
+def list_playlists(id: Optional[str]):
+    """List all playlists or the tracks of a playlist if you provider an id."""
 
-    values = [
-        p.values_list() for p in Playlist.find_by_provider(Provider.lastfm)
-    ]
-    click.secho(tabulate(values, headers=Playlist.values_header()))
+    if id:
+        playlist = PlaylistManager.get(Provider.lastfm, id)
+        tracks = Track.find_by_playlist_id(playlist.id)
+        values = [t.values_list() for t in tracks]
+        click.echo_via_pager(
+            tabulate(values, headers=Track.values_header(), showindex=True)
+        )
+    else:
+        playlists = PlaylistManager.find(Provider.lastfm)
+        values = [p.values_list() for p in playlists]
+        click.secho(tabulate(values, headers=Playlist.values_header()))
 
 
 @lastfm.command("remove")
-@click.argument("id", required=True)
-def remove_playlist(id: str):
+@click.argument("ids", required=True, nargs=-1)
+def remove_playlists(ids: Tuple[str]):
     """
-    Remove a playlist by id.
+    Remove one or more playlists by id.
 
     \f
-    :param str id: The playlist id
+    :param tuple id: A list of playlist ids to remove
     """
 
-    playlist = Playlist.get(provider=Provider.lastfm, id=id)
     click.confirm("Do you want to continue?", abort=True)
-    playlist.remove()
-    click.secho("Removed playlist: {}!".format(playlist.id))
+    for id in ids:
+        PlaylistManager.remove(Provider.lastfm, id)
+        click.secho("Removed playlist: {}!".format(id))

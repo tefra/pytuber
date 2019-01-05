@@ -1,55 +1,27 @@
-import datetime
+from collections import namedtuple
 from unittest import mock
 
-import click
 from pydrag import Artist, Tag
 
 from pytubefm import cli
-from pytubefm.exceptions import RecordExists
-from pytubefm.lastfm.commands import create_or_update_playlist
-from pytubefm.lastfm.models import ChartPlaylist, UserPlaylist
+from pytubefm.lastfm.models import PlaylistType, UserPlaylistType
 from pytubefm.lastfm.params import (
     ArtistParamType,
     CountryParamType,
     TagParamType,
+    UserParamType,
 )
 from pytubefm.lastfm.services import LastService
-from pytubefm.models import Config, Playlist, Provider
+from pytubefm.models import ConfigManager, Playlist, PlaylistManager, Provider
 from tests.utils import CommandTestCase
 
-fixed_date = datetime.datetime(2000, 12, 12, 12, 12, 12)
-
-
-class CreateOrUpdatePlaylistTests(CommandTestCase):
-    @mock.patch.object(click, "secho")
-    @mock.patch.object(Playlist, "save")
-    def test_create(self, save, secho):
-        playlist = Playlist(type="a", provider="b", limit=10, id="c")
-        create_or_update_playlist(playlist)
-
-        save.assert_called_once_with()
-        secho.assert_called_once_with("Added playlist: c!")
-
-    @mock.patch.object(click, "secho")
-    @mock.patch.object(click, "confirm")
-    @mock.patch.object(Playlist, "save")
-    def test_update(self, save, confirm, secho):
-        save.side_effect = [RecordExists("foo"), None]
-        confirm.return_value = True
-
-        playlist = Playlist(type="a", provider="b", limit=10, id="c")
-        create_or_update_playlist(playlist)
-
-        save.assert_has_calls([mock.call(), mock.call(overwrite=True)])
-        confirm.assert_called_once_with(
-            "Overwrite existing playlist?", abort=True
-        )
-        secho.assert_called_once_with("Updated playlist: c!")
+user = namedtuple("User", ["name"])
+playlist = namedtuple("Playlist", ["id", "is_new"])
 
 
 class CommandSetupTests(CommandTestCase):
     def test_create(self):
-        self.assertIsNone(Config.find_by_provider(Provider.lastfm))
+        self.assertIsNone(ConfigManager.get(Provider.lastfm))
         result = self.runner.invoke(cli, ["lastfm", "setup"], input="aaaa")
 
         expected_output = "\n".join(
@@ -58,16 +30,16 @@ class CommandSetupTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
-        actual = Config.find_by_provider(Provider.lastfm)
+        actual = ConfigManager.get(Provider.lastfm)
         self.assertDictEqual({"api_key": "aaaa"}, actual.data)
 
     def test_update(self):
-        Config(
-            provider=Provider.lastfm.value, data=dict(api_key="bbbb")
-        ).save()
+        ConfigManager.update(
+            dict(provider=Provider.lastfm, data=dict(api_key="bbbb"))
+        )
 
         self.assertEqual(
-            dict(api_key="bbbb"), Config.find_by_provider(Provider.lastfm).data
+            dict(api_key="bbbb"), ConfigManager.get(Provider.lastfm).data
         )
         result = self.runner.invoke(
             cli, ["lastfm", "setup"], input="\n".join(("aaaa", "y"))
@@ -83,15 +55,21 @@ class CommandSetupTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
-        actual = Config.find_by_provider(Provider.lastfm)
+        actual = ConfigManager.get(Provider.lastfm)
         self.assertDictEqual({"api_key": "aaaa"}, actual.data)
 
 
 class CommandAddTests(CommandTestCase):
-    @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_user(self, create_or_update):
+    @mock.patch.object(UserParamType, "convert")
+    @mock.patch.object(PlaylistManager, "set")
+    def test_user(self, create_playlist, convert):
+        convert.return_value = user(name="bbb")
+        create_playlist.return_value = playlist(id=1, is_new=False)
         result = self.runner.invoke(
-            cli, ["lastfm", "add", "user"], input="\n".join(("aaa", "2", "50"))
+            cli,
+            ["lastfm", "add", "user"],
+            input="\n".join(("aaa", "2", "50")),
+            catch_exceptions=False,
         )
 
         expected_output = "\n".join(
@@ -104,49 +82,56 @@ class CommandAddTests(CommandTestCase):
                 "[4] user_friends_recent_tracks",
                 "Select a playlist type 1-4: 2",
                 "Maximum tracks [50]: 50",
+                "Updated playlist: 1!",
             )
         )
 
-        create_or_update.assert_called_once_with(
-            Playlist(
-                type=UserPlaylist.TOP_TRACKS,
+        create_playlist.assert_called_once_with(
+            dict(
+                type=UserPlaylistType.USER_TOP_TRACKS,
                 provider=Provider.lastfm,
-                arguments=dict(username="aaa"),
+                arguments=dict(username="bbb"),
                 limit=50,
             )
         )
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
-    @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_chart(self, create_or_update):
+    @mock.patch.object(PlaylistManager, "set")
+    def test_chart(self, create_playlist):
+        create_playlist.return_value = playlist(id=1, is_new=False)
         result = self.runner.invoke(
             cli, ["lastfm", "add", "chart"], input="50"
         )
 
-        expected_output = "Maximum tracks [50]: 50"
-        create_or_update.assert_called_once_with(
-            Playlist(
-                type=ChartPlaylist.CHART, provider=Provider.lastfm, limit=50
-            )
+        expected_output = "\n".join(
+            ("Maximum tracks [50]: 50", "Updated playlist: 1!")
+        )
+        create_playlist.assert_called_once_with(
+            dict(type=PlaylistType.CHART, provider=Provider.lastfm, limit=50)
         )
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
     @mock.patch.object(CountryParamType, "convert")
-    @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_country(self, create_or_update, country_param_type):
+    @mock.patch.object(PlaylistManager, "set")
+    def test_country(self, create_playlist, country_param_type):
         country_param_type.return_value = "greece"
+        create_playlist.return_value = playlist(id=1, is_new=False)
         result = self.runner.invoke(
             cli, ["lastfm", "add", "country"], input="gr\n50"
         )
 
         expected_output = "\n".join(
-            ("Country Code: gr", "Maximum tracks [50]: 50")
+            (
+                "Country Code: gr",
+                "Maximum tracks [50]: 50",
+                "Updated playlist: 1!",
+            )
         )
-        create_or_update.assert_called_once_with(
-            Playlist(
-                type=ChartPlaylist.COUNTRY,
+        create_playlist.assert_called_once_with(
+            dict(
+                type=PlaylistType.COUNTRY,
                 provider=Provider.lastfm,
                 arguments=dict(country="greece"),
                 limit=50,
@@ -156,17 +141,20 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(expected_output, result.output.strip())
 
     @mock.patch.object(TagParamType, "convert")
-    @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_tag(self, create_or_update, tag_param):
-        tag_param.return_value = Tag(name="rock")
+    @mock.patch.object(PlaylistManager, "set")
+    def test_tag(self, create_playlist, convert):
+        convert.return_value = Tag(name="rock")
+        create_playlist.return_value = playlist(id=1, is_new=True)
         result = self.runner.invoke(
             cli, ["lastfm", "add", "tag"], input="rock\n50"
         )
 
-        expected_output = "\n".join(("Tag: rock", "Maximum tracks [50]: 50"))
-        create_or_update.assert_called_once_with(
-            Playlist(
-                type=ChartPlaylist.TAG,
+        expected_output = "\n".join(
+            ("Tag: rock", "Maximum tracks [50]: 50", "Added playlist: 1!")
+        )
+        create_playlist.assert_called_once_with(
+            dict(
+                type=PlaylistType.TAG,
                 provider=Provider.lastfm,
                 arguments=dict(tag="rock"),
                 limit=50,
@@ -176,19 +164,20 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(expected_output, result.output.strip())
 
     @mock.patch.object(ArtistParamType, "convert")
-    @mock.patch("pytubefm.lastfm.commands.create_or_update_playlist")
-    def test_artist(self, create_or_update, artist_param):
+    @mock.patch.object(PlaylistManager, "set")
+    def test_artist(self, create_playlist, artist_param):
         artist_param.return_value = Artist(name="Queen")
+        create_playlist.return_value = playlist(id=1, is_new=True)
         result = self.runner.invoke(
             cli, ["lastfm", "add", "artist"], input="Queen\n50"
         )
 
         expected_output = "\n".join(
-            ("Artist: Queen", "Maximum tracks [50]: 50")
+            ("Artist: Queen", "Maximum tracks [50]: 50", "Added playlist: 1!")
         )
-        create_or_update.assert_called_once_with(
-            Playlist(
-                type=ChartPlaylist.ARTIST,
+        create_playlist.assert_called_once_with(
+            dict(
+                type=PlaylistType.ARTIST,
                 provider=Provider.lastfm,
                 arguments=dict(artist="Queen"),
                 limit=50,
@@ -233,7 +222,7 @@ class CommandTagsTests(CommandTestCase):
 
 class CommandListPlaylistsTests(CommandTestCase):
     @mock.patch.object(Playlist, "values_header")
-    @mock.patch.object(Playlist, "find_by_provider")
+    @mock.patch.object(PlaylistManager, "find")
     def test_list(self, find, header):
         header.return_value = ["a", "b", "c"]
         p_one = mock.Mock()
@@ -254,30 +243,30 @@ class CommandListPlaylistsTests(CommandTestCase):
 
 
 class CommandRemovePlaylistTests(CommandTestCase):
-    @mock.patch.object(Playlist, "remove")
-    @mock.patch.object(Playlist, "get")
-    def test_remove(self, get, remove):
-        playlist = Playlist(provider=Provider.lastfm, limit=1, type="foo")
-        get.return_value = playlist
+    @mock.patch.object(PlaylistManager, "remove")
+    def test_remove(self, remove):
 
         result = self.runner.invoke(
-            cli, ["lastfm", "remove", "foo"], input="y"
+            cli, ["lastfm", "remove", "foo", "bar"], input="y"
         )
 
         expected_output = "\n".join(
-            ("Do you want to continue? [y/N]: y", "Removed playlist: 0863aa0!")
+            (
+                "Do you want to continue? [y/N]: y",
+                "Removed playlist: foo!",
+                "Removed playlist: bar!",
+            )
         )
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
-        get.assert_called_once_with(provider=Provider.lastfm, id="foo")
-        remove.assert_called_once_with()
+        remove.assert_has_calls(
+            [
+                mock.call(Provider.lastfm, "foo"),
+                mock.call(Provider.lastfm, "bar"),
+            ]
+        )
 
-    @mock.patch.object(Playlist, "remove")
-    @mock.patch.object(Playlist, "get")
-    def test_remove_no_confirm(self, get, remove):
-        playlist = Playlist(provider=Provider.lastfm, limit=1, type="foo")
-        get.return_value = playlist
-
+    def test_remove_no_confirm(self):
         result = self.runner.invoke(
             cli, ["lastfm", "remove", "foo"], input="n"
         )
@@ -287,5 +276,3 @@ class CommandRemovePlaylistTests(CommandTestCase):
         )
         self.assertEqual(1, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
-        get.assert_called_once_with(provider=Provider.lastfm, id="foo")
-        self.assertEqual(0, remove.call_count)

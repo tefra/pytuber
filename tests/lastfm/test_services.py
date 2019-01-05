@@ -8,7 +8,7 @@ from pydrag import Artist, Tag
 
 from pytubefm.data import Registry
 from pytubefm.lastfm.services import LastService
-from pytubefm.models import Config, Provider
+from pytubefm.models import ConfigManager, Provider
 from tests.utils import TestCase
 
 
@@ -72,6 +72,8 @@ class LastServiceTests(TestCase):
             "Run setup to configure last.fm services"
         )
 
-        Config(provider=Provider.lastfm, data=dict(api_key="aaa")).save()
+        ConfigManager.update(
+            dict(provider=Provider.lastfm, data=dict(api_key="aaa"))
+        )
         LastService.assert_config()
         configure.assert_called_once_with(api_key="aaa")

@@ -1,40 +1,21 @@
 import datetime
 import enum
 import hashlib
-import os
+from typing import Dict
 
 import attr
-import click
 
 from pytubefm.data import Registry
-from pytubefm.exceptions import NotFound, RecordExists
+from pytubefm.exceptions import NotFound
+
+
+def timestamp():
+    return int(datetime.datetime.utcnow().strftime("%s"))
 
 
 class Provider(enum.Enum):
     lastfm = "last.fm"
     youtube = "youtube"
-
-    def __str__(self):
-        return self.value
-
-
-class PlaylistType(enum.Enum):
-    @classmethod
-    def choices(cls):
-        prompts = ["Playlist Types"]
-        prompts.extend(
-            ["[{}] {}".format(i + 1, str(x)) for i, x in enumerate(cls)]
-        )
-        prompts.extend(["Select a playlist type 1-{}".format(len(cls))])
-        return os.linesep.join(prompts)
-
-    @classmethod
-    def range(cls):
-        return click.IntRange(1, len(cls))
-
-    @classmethod
-    def from_choice(cls, choice: int) -> "PlaylistType":
-        return list(cls)[choice - 1]
 
     def __str__(self):
         return self.value
@@ -61,25 +42,30 @@ class Document:
             else "-"
         )
 
-    @staticmethod
-    def now():
-        return datetime.datetime.utcnow()
-
 
 @attr.s(auto_attribs=True)
 class Config(Document):
-    provider: str
-    data: dict
+    provider: str = attr.ib(converter=str)
+    data: dict = attr.ib(factory=dict)
+
+
+class ConfigManager:
+    key = "provider_config_%s"
 
     @classmethod
-    def find_by_provider(cls, provider: Provider):
+    def get(cls, provider: Provider):
         try:
-            return cls(**Registry.get(cls.key(provider)))
+            key = cls.key % provider
+            data = Registry.get(key)
+            return Config(**data)
         except KeyError:
             return None
 
-    def save(self):
-        Registry.set(self.key(self.provider), self.asdict())
+    @classmethod
+    def update(cls, data: Dict):
+        key = cls.key % data["provider"]
+        config = Config(**data)
+        Registry.set(key, config.asdict())
 
 
 @attr.s
@@ -89,13 +75,9 @@ class Playlist(Document):
     limit: int = attr.ib(converter=int)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib()
-    modified: int = attr.ib()
+    modified: int = attr.ib(factory=timestamp)
     synced: int = attr.ib(default=None)
     uploaded: int = attr.ib(default=None)
-
-    @modified.default
-    def generate_now(self):
-        return int(self.now().strftime("%s"))
 
     @id.default
     def generate_id(self):
@@ -106,27 +88,8 @@ class Playlist(Document):
         return self.key(self.type, *parts, hash=sha1)
 
     @property
-    def group(self):
-        return self.key(self.provider)
-
-    def save(self, overwrite=False):
-        try:
-            old = self.get(provider=self.provider, id=self.id)
-            if not overwrite:
-                raise RecordExists("Playlist already exists!")
-
-            self.synced = old.synced
-            self.uploaded = old.uploaded
-        except NotFound:
-            pass
-
-        Registry.set(self.group, self.id, self.asdict())
-
-    def remove(self):
-        try:
-            Registry.remove(self.group, self.id)
-        except KeyError:
-            raise NotFound("No such playlist id: {}!".format(self.id))
+    def is_new(self):
+        return self.synced is None
 
     def values_list(self):
         return (
@@ -153,18 +116,43 @@ class Playlist(Document):
             "Uploaded",
         )
 
+
+class PlaylistManager:
+    key = "provider_playlists_%s"
+
     @classmethod
-    def get(cls, provider, id):
+    def get(cls, provider: Provider, id: str):
         try:
-            group = cls.key(provider)
-            return cls(**Registry.get(group, id))
+            key = cls.key % provider
+            data = Registry.get(key, id)
+            return Playlist(**data)
         except KeyError:
             raise NotFound("No such playlist id: {}!".format(id))
 
     @classmethod
-    def find_by_provider(cls, provider: Provider):
+    def set(cls, data):
+        playlist = Playlist(**data)
         try:
-            group = cls.key(provider)
-            return [cls(**data) for data in Registry.get(group).values()]
+            exist = cls.get(playlist.provider, playlist.id)
+            playlist.synced = exist.synced
+            playlist.uploaded = exist.uploaded
+        except NotFound:
+            pass
+        key = cls.key % playlist.provider
+        Registry.set(key, playlist.id, playlist.asdict())
+        return playlist
+
+    @classmethod
+    def remove(cls, provider: Provider, id: str):
+        try:
+            key = cls.key % provider
+            Registry.remove(key, id)
+            # Track.remove_by_playlist_id(self.id)
         except KeyError:
-            return []
+            raise NotFound("No such playlist id: {}!".format(id))
+
+    @classmethod
+    def find(cls, provider: Provider):
+        key = cls.key % provider
+        entries = Registry.get(key, default={})
+        return [Playlist(**entry) for entry in entries.values()]

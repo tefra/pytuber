@@ -1,6 +1,8 @@
 import enum
 import hashlib
 import json
+import re
+from contextlib import suppress
 from datetime import datetime
 from typing import Dict, List
 
@@ -40,11 +42,26 @@ class Config(Document):
     data: dict = attr.ib(factory=dict)
 
 
-@attr.s(auto_attribs=True)
+@attr.s
 class Track(Document):
-    artist: str
-    name: str
-    duration: int
+    artist: str = attr.ib()
+    name: str = attr.ib()
+    duration: int = attr.ib()
+    id: str = attr.ib()
+    url: str = attr.ib()
+
+    @id.default
+    def generate_id(self):
+        return hashlib.sha1(
+            re.sub(
+                r"[\W_]+", "", "{}{}".format(self.artist, self.name).lower()
+            ).encode("utf-8")
+        ).hexdigest()[:7]
+
+    @url.default
+    def generate_url(self):
+        with suppress(NotFound):
+            self.url = TrackManager.get(self.id).url
 
 
 @attr.s
@@ -57,6 +74,7 @@ class Playlist(Document):
     modified: int = attr.ib(factory=timestamp, cmp=False)
     synced: int = attr.ib(default=None, cmp=False)
     uploaded: int = attr.ib(default=None, cmp=False)
+    tracks: List[str] = attr.ib(factory=list)
 
     @id.default
     def generate_id(self):
@@ -120,12 +138,15 @@ class PlaylistManager:
         try:
             key = cls.key % provider
             Registry.remove(key, id)
-            TrackManager.remove(id)
         except KeyError:
             raise NotFound("No such playlist id: {}!".format(id))
 
     @classmethod
     def update(cls, playlist: Playlist, data: Dict):
+
+        if len(data.get("tracks", [])) > 0:
+            data["synced"] = timestamp()
+
         playlist = attr.evolve(playlist, **data)
         key = cls.key % playlist.provider
         Registry.set(key, playlist.id, playlist.asdict())
@@ -139,33 +160,37 @@ class PlaylistManager:
 
 
 class TrackManager:
-    key = "playlist_tracks_%s"
+    key = "tracks"
 
     @classmethod
-    def set(cls, playlist: Playlist, tracks: List[pydrag.Track]):
-        def prepare(entry: pydrag.Track):
-            return Track(
+    def get(cls, id: str):
+        try:
+            data = Registry.get(cls.key, id)
+            return Track(**data)
+        except KeyError:
+            raise NotFound("No such track id: {}!".format(id))
+
+    @classmethod
+    def add(cls, tracks: List[pydrag.Track]):
+        track_ids = []
+        for entry in tracks:
+            track = Track(
                 artist=entry.artist.name,
                 name=entry.name,
                 duration=entry.duration,
-            ).asdict()
-
-        data = [prepare(track) for track in tracks]
-        key = cls.key % playlist.id
-        Registry.set(key, data)
-        return PlaylistManager.update(playlist, dict(synced=timestamp()))
+            )
+            track_ids.append(track.id)
+            Registry.set(cls.key, track.id, track.asdict())
+        return track_ids
 
     @classmethod
-    def find(cls, id):
-        key = cls.key % id
-        entries = Registry.get(key, default=[])
-        return [Track(**entry) for entry in entries]
+    def find(cls, ids):
+        return [cls.get(id) for id in ids]
 
     @classmethod
     def remove(cls, id: str):
         try:
-            key = cls.key % id
-            Registry.remove(key)
+            Registry.remove(cls.key, id)
         except KeyError:
             pass
 

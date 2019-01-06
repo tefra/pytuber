@@ -256,7 +256,7 @@ def list_playlists(id: Optional[str]):
                         if t.duration
                         else "-",
                     )
-                    for t in TrackManager.find(playlist.id)
+                    for t in TrackManager.find(playlist.tracks)
                 ],
                 showindex=True,
                 headers=("No", "Artist", "Track Name", "Duration"),
@@ -320,4 +320,5 @@ def sync_playlists(ids: Tuple[str]):
             tracklist = LastService.get_tracks(
                 type=playlist.type, limit=playlist.limit, **playlist.arguments
             )
-            TrackManager.set(playlist, tracklist)
+            track_ids = TrackManager.add(tracklist)
+            PlaylistManager.update(playlist, dict(tracks=track_ids))

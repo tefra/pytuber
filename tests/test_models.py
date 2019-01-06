@@ -30,6 +30,7 @@ class PlaylistTests(TestCase):
             "synced": None,
             "type": "foo",
             "uploaded": None,
+            "tracks": [],
         }
         modified = actual.pop("modified")
         self.assertDictEqual(expected, actual)
@@ -37,6 +38,12 @@ class PlaylistTests(TestCase):
             datetime.fromtimestamp(modified).strftime("%Y-%m-%d %H:%M"),
             datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
         )
+
+
+class TrackTests(TestCase):
+    def test_initializations(self):
+        track = Track(artist="DMX", name="ruff ryders", duration=None)
+        self.assertEqual("c85d968", track.id)
 
 
 class ProviderTests(TestCase):
@@ -76,6 +83,7 @@ class PlaylistManagerTests(TestCase):
         modified=11111111,
         synced=2222222,
         uploaded=333333,
+        tracks=[],
     )
 
     def test_get(self):
@@ -122,19 +130,19 @@ class PlaylistManagerTests(TestCase):
 
     def test_update(self):
         playlist = PlaylistManager.set(self.data)
-        PlaylistManager.update(playlist, dict(limit=420))
+        PlaylistManager.update(playlist, dict(limit=420, synced=None))
         playlist = PlaylistManager.find(playlist.provider)[0]
+
         self.assertEqual(420, playlist.limit)
+        self.assertIsNone(playlist.synced)
+
+        playlist = PlaylistManager.update(playlist, dict(tracks=[1, 2, 3]))
+        self.assertEqual([1, 2, 3], playlist.tracks)
+        self.assertIsNotNone(playlist.synced)
 
 
 class TrackManagerTests(TestCase):
-    def test_set(self):
-        playlist = PlaylistManager.set(
-            dict(
-                type="foo", provider="bar", arguments=dict(a=1, b=2), limit=10
-            )
-        )
-
+    def test_add(self):
         def track(artist, name, duration):
             return pydrag.Track.from_dict(
                 dict(artist=artist, name=name, duration=duration)
@@ -145,55 +153,67 @@ class TrackManagerTests(TestCase):
             track("Foo", "Bar", 166),
         ]
 
-        TrackManager.set(playlist, tracks)
-        actual = Registry.get("playlist_tracks_%s" % playlist.id)
-        expected = [
-            {"artist": "Queen", "duration": 367, "name": "Bohemian Rhapsody"},
-            {"artist": "Foo", "duration": 166, "name": "Bar"},
-        ]
+        TrackManager.add(tracks)
+        actual = Registry.get("tracks")
+        expected = {
+            "55a4d2b": {
+                "id": "55a4d2b",
+                "artist": "Queen",
+                "duration": 367,
+                "name": "Bohemian Rhapsody",
+                "url": None,
+            },
+            "8843d7f": {
+                "id": "8843d7f",
+                "artist": "Foo",
+                "duration": 166,
+                "name": "Bar",
+                "url": None,
+            },
+        }
 
         self.assertEqual(expected, actual)
 
-        playlist = PlaylistManager.get("bar", "3bdcfa8")
-        self.assertEqual(
-            datetime.fromtimestamp(playlist.modified).strftime(
-                "%Y-%m-%d %H:%M"
-            ),
-            datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
-        )
-
     def test_find(self):
-        self.assertEqual([], TrackManager.find("foo"))
         Registry.set(
-            "playlist_tracks_foo",
-            [
-                {
+            "tracks",
+            {
+                "55a4d2b": {
+                    "id": "55a4d2b",
                     "artist": "Queen",
                     "duration": 367,
                     "name": "Bohemian Rhapsody",
+                    "url": None,
                 },
-                {"artist": "Foo", "duration": 166, "name": "Bar"},
-            ],
+                "8843d7f": {
+                    "id": "8843d7f",
+                    "artist": "Foo",
+                    "duration": 166,
+                    "name": "Bar",
+                    "url": None,
+                },
+            },
         )
 
-        tracks = TrackManager.find("foo")
+        tracks = TrackManager.find(["55a4d2b", "8843d7f"])
         self.assertEqual(2, len(tracks))
         for track in tracks:
             self.assertIsInstance(track, Track)
 
     def test_remove(self):
         Registry.set(
-            "playlist_tracks_foo",
-            [
-                {
+            "tracks",
+            {
+                "55a4d2b": {
+                    "id": "55a4d2b",
                     "artist": "Queen",
                     "duration": 367,
                     "name": "Bohemian Rhapsody",
+                    "url": None,
                 }
-            ],
+            },
         )
 
-        self.assertEqual(1, len(TrackManager.find("foo")))
-        TrackManager.remove("foo")
-        self.assertEqual([], TrackManager.find("foo"))
-        TrackManager.remove("foo")  # Doesn't raise exception!
+        self.assertEqual(1, len(TrackManager.find(["55a4d2b"])))
+        TrackManager.remove("55a4d2b")
+        TrackManager.remove("55a4d2b")  # Doesn't raise an exception

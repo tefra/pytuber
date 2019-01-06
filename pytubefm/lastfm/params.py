@@ -19,7 +19,7 @@ class TagParamType(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            return LastService.get_tag(value)
+            return LastService.get_tag(value).name
         except IndexError:
             self.fail("Unknown tag: %s" % value, param, ctx)
 
@@ -29,7 +29,7 @@ class ArtistParamType(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            return LastService.get_artist(value)
+            return LastService.get_artist(value).name
         except Exception:
             self.fail("Unknown artist: %s" % value, param, ctx)
 
@@ -39,6 +39,6 @@ class UserParamType(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            return LastService.get_user(value)
+            return LastService.get_user(value).name
         except Exception:
             self.fail("Unknown user: %s" % value, param, ctx)

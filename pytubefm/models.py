@@ -112,6 +112,7 @@ class PlaylistManager:
             pass
         key = cls.key % playlist.provider
         Registry.set(key, playlist.id, playlist.asdict())
+        History.set(data)
         return playlist
 
     @classmethod
@@ -167,3 +168,16 @@ class TrackManager:
             Registry.remove(key)
         except KeyError:
             pass
+
+
+class History:
+    namespace = "history"
+
+    @classmethod
+    def set(cls, *args, **kwargs):
+        for key, value in kwargs.items():
+            Registry.set(cls.namespace, key, value)
+
+    @classmethod
+    def get(cls, key, default=None):
+        return Registry.get(cls.namespace, key, default=default)

@@ -49,8 +49,8 @@ class TagParamTypeTests(TestCase):
         rap = Tag(name="Rap")
         rock = Tag(name="Rock")
         get_tags.return_value = [rap, rock]
-        self.assertEqual(rock, self.param.convert("rock", None, None))
-        self.assertEqual(rap, self.param.convert("RaP", None, None))
+        self.assertEqual("Rock", self.param.convert("rock", None, None))
+        self.assertEqual("Rap", self.param.convert("RaP", None, None))
         get_tags.assert_has_calls([call(), call()])
 
     @mock.patch.object(LastService, "get_tags")
@@ -74,10 +74,9 @@ class ArtistParamTypeTests(TestCase):
 
     @mock.patch.object(LastService, "get_artist")
     def test_convert_successful(self, get_artist):
-        artist = Artist(name="Queen")
         get_artist.return_value = Artist(name="Queen")
 
-        self.assertEqual(artist, self.param.convert("queen", None, None))
+        self.assertEqual("Queen", self.param.convert("queen", None, None))
         get_artist.assert_called_once_with("queen")
 
     @mock.patch.object(LastService, "get_artist")
@@ -104,7 +103,7 @@ class UserParamTypeTests(TestCase):
         user = namedtuple("User", ["name"])
         get_user.return_value = user(name="Rj")
 
-        self.assertEqual(user(name="Rj"), self.param.convert("rj", None, None))
+        self.assertEqual("Rj", self.param.convert("rj", None, None))
         get_user.assert_called_once_with("rj")
 
     @mock.patch.object(LastService, "get_user")

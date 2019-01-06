@@ -1,7 +1,7 @@
 from collections import namedtuple
 from unittest import mock
 
-from pydrag import Artist, Tag
+from pydrag import Tag
 
 from pytubefm import cli
 from pytubefm.lastfm.models import PlaylistType, UserPlaylistType
@@ -22,7 +22,6 @@ from pytubefm.models import (
 )
 from tests.utils import CommandTestCase
 
-user = namedtuple("User", ["name"])
 playlist = namedtuple("Playlist", ["id", "synced"])
 
 
@@ -70,8 +69,10 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(UserParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
     def test_user(self, create_playlist, convert):
-        convert.return_value = user(name="bbb")
-        create_playlist.return_value = playlist(id=1, synced=None)
+        convert.return_value = "bbb"
+        create_playlist.return_value = Playlist(
+            id=1, type=None, provider=None, limit=10
+        )
         result = self.runner.invoke(
             cli,
             ["lastfm", "add", "user"],
@@ -106,7 +107,9 @@ class CommandAddTests(CommandTestCase):
 
     @mock.patch.object(PlaylistManager, "set")
     def test_chart(self, create_playlist):
-        create_playlist.return_value = playlist(id=1, synced=None)
+        create_playlist.return_value = Playlist(
+            id=1, type=None, provider=None, limit=10
+        )
         result = self.runner.invoke(
             cli, ["lastfm", "add", "chart"], input="50"
         )
@@ -124,7 +127,9 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(PlaylistManager, "set")
     def test_country(self, create_playlist, country_param_type):
         country_param_type.return_value = "greece"
-        create_playlist.return_value = playlist(id=1, synced=None)
+        create_playlist.return_value = Playlist(
+            id=1, type=None, provider=None, limit=10
+        )
         result = self.runner.invoke(
             cli, ["lastfm", "add", "country"], input="gr\n50"
         )
@@ -150,8 +155,10 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(TagParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
     def test_tag(self, create_playlist, convert):
-        convert.return_value = Tag(name="rock")
-        create_playlist.return_value = playlist(id=1, synced=111)
+        convert.return_value = "rock"
+        create_playlist.return_value = Playlist(
+            id=1, type=None, provider=None, limit=10, synced=111
+        )
         result = self.runner.invoke(
             cli, ["lastfm", "add", "tag"], input="rock\n50"
         )
@@ -173,8 +180,10 @@ class CommandAddTests(CommandTestCase):
     @mock.patch.object(ArtistParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
     def test_artist(self, create_playlist, artist_param):
-        artist_param.return_value = Artist(name="Queen")
-        create_playlist.return_value = playlist(id=1, synced=None)
+        artist_param.return_value = "Queen"
+        create_playlist.return_value = Playlist(
+            id=1, type=None, provider=None, limit=10
+        )
         result = self.runner.invoke(
             cli,
             ["lastfm", "add", "artist"],

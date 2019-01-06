@@ -2,7 +2,6 @@ from datetime import timedelta
 from typing import Optional, Tuple
 
 import click
-from pydrag import Artist, Tag, User
 from tabulate import tabulate
 
 from pytubefm.lastfm.models import PlaylistType, UserPlaylistType
@@ -15,6 +14,7 @@ from pytubefm.lastfm.params import (
 from pytubefm.lastfm.services import LastService
 from pytubefm.models import (
     ConfigManager,
+    History,
     PlaylistManager,
     Provider,
     TrackManager,
@@ -24,12 +24,12 @@ from pytubefm.models import (
 
 @click.group()
 def lastfm():
-    pass
+    """Last.fm is a music service that learns what you love."""
 
 
 @lastfm.group()
 def add():
-    """Created or update a playlist."""
+    """Created a playlist."""
 
 
 @lastfm.command()
@@ -40,11 +40,8 @@ def setup(api_key: str) -> None:
     """
     Configure your last.fm api account.
 
-    Signup for a last.fm api account and use your api key in order to use
-    last.fm as a playlists source for pytubefm.
-
-    \f
-    :param str api_key: Your api key
+    Signup for a last.fm api account and use your api key in order to
+    use last.fm as a playlists source for pytubefm.
     """
 
     if ConfigManager.get(Provider.lastfm):
@@ -58,7 +55,8 @@ def setup(api_key: str) -> None:
 
 @lastfm.command()
 @click.option("--refresh", help="Refresh cache", is_flag=True, default=False)
-def tags(refresh) -> None:
+def tags(refresh: bool):
+    """List all available tags."""
     values = [
         (tag.name, tag.count, tag.reach)
         for tag in LastService.get_tags(refresh=refresh)
@@ -77,6 +75,7 @@ def tags(refresh) -> None:
     help="The user for whom the playlist will be generated",
     prompt="Last.fm username",
     type=UserParamType(),
+    default=lambda: History.get("user", default=None),
 )
 @click.option(
     "--playlist-type",
@@ -89,9 +88,9 @@ def tags(refresh) -> None:
     help="The maximum number of tracks",
     type=click.IntRange(50, 1000),
     prompt="Maximum tracks",
-    default=50,
+    default=lambda: History.get("limit", 50),
 )
-def add_user_playlist(user: User, playlist_type: int, limit: int):
+def add_user_playlist(user: str, playlist_type: int, limit: int):
     """
     Add a user type playlist. This type of playlists are based on a user's
     music preference and history.
@@ -102,18 +101,14 @@ def add_user_playlist(user: User, playlist_type: int, limit: int):
     2. User top tracks
     3. User recent tracks
     4. User friends recent tracks
-
-    \f
-    :param User user: The user for whom the playlist will be generated
-    :param int playlist_type: The playlist type number
-    :param int limit: Limit the number of the tracks
     """
 
+    History.set(user=user, limit=limit)
     playlist = PlaylistManager.set(
         dict(
             type=UserPlaylistType.from_choice(playlist_type),
             provider=Provider.lastfm,
-            arguments=dict(username=user.name),
+            arguments=dict(username=user),
             limit=limit,
         )
     )
@@ -130,16 +125,12 @@ def add_user_playlist(user: User, playlist_type: int, limit: int):
     help="The maximum number of tracks",
     type=click.IntRange(50, 1000),
     prompt="Maximum tracks",
-    default=50,
+    default=lambda: History.get("limit", 50),
 )
 def add_chart_playlist(limit: int):
-    """
-    Add a top tracks playlist.
+    """Add a top tracks playlist."""
 
-    \f
-    :param int limit: Limit the number of the tracks
-    """
-
+    History.set(limit=limit)
     playlist = PlaylistManager.set(
         dict(type=PlaylistType.CHART, provider=Provider.lastfm, limit=limit)
     )
@@ -162,17 +153,12 @@ def add_chart_playlist(limit: int):
     help="The maximum number of tracks",
     type=click.IntRange(50, 1000),
     prompt="Maximum tracks",
-    default=50,
+    default=lambda: History.get("limit", 50),
 )
 def add_country_playlist(country: str, limit: int):
-    """
-    Add a top tracks playlist by country.
+    """Add a top tracks playlist by country."""
 
-    \f
-    :param str country: An alpha-2 ISO-3166 country code
-    :param int limit: Limit the number of the tracks
-    """
-
+    History.set(limit=limit)
     playlist = PlaylistManager.set(
         dict(
             type=PlaylistType.COUNTRY,
@@ -200,22 +186,17 @@ def add_country_playlist(country: str, limit: int):
     help="The maximum number of tracks",
     type=click.IntRange(50, 1000),
     prompt="Maximum tracks",
-    default=50,
+    default=lambda: History.get("limit", 50),
 )
-def add_tag_playlist(tag: Tag, limit: int):
-    """
-    Add a top tracks playlist by tag.
+def add_tag_playlist(tag: str, limit: int):
+    """Add a top tracks playlist by tag."""
 
-    \f
-    :param str tag: A tag name eg (rock)
-    :param int limit: Limit the number of the tracks
-    """
-
+    History.set(limit=limit)
     playlist = PlaylistManager.set(
         dict(
             type=PlaylistType.TAG,
             provider=Provider.lastfm,
-            arguments=dict(tag=tag.name),
+            arguments=dict(tag=tag),
             limit=limit,
         )
     )
@@ -236,22 +217,17 @@ def add_tag_playlist(tag: Tag, limit: int):
     help="The maximum number of tracks",
     type=click.IntRange(50, 1000),
     prompt="Maximum tracks",
-    default=50,
+    default=lambda: History.get("limit", 50),
 )
-def add_artist_playlist(artist: Artist, limit: int):
-    """
-    Add a top tracks playlist by artist.
+def add_artist_playlist(artist: str, limit: int):
+    """Add a top tracks playlist by artist."""
 
-    \f
-    :param str artist: An artist name eg (Queen)
-    :param int limit: Limit the number of the tracks
-    """
-
+    History.set(limit=limit)
     playlist = PlaylistManager.set(
         dict(
             type=PlaylistType.ARTIST,
             provider=Provider.lastfm,
-            arguments=dict(artist=artist.name),
+            arguments=dict(artist=artist),
             limit=limit,
         )
     )
@@ -266,7 +242,7 @@ def add_artist_playlist(artist: Artist, limit: int):
 @lastfm.command("list")
 @click.argument("id", required=False)
 def list_playlists(id: Optional[str]):
-    """List all playlists or the tracks of a playlist if you provider an id."""
+    """List all playlists or the contents of a playlist."""
 
     if id:
         playlist = PlaylistManager.get(Provider.lastfm, id)
@@ -322,12 +298,7 @@ def list_playlists(id: Optional[str]):
 @lastfm.command("remove")
 @click.argument("ids", required=True, nargs=-1)
 def remove_playlists(ids: Tuple[str]):
-    """
-    Remove one or more playlists by id.
-
-    \f
-    :param tuple id: A list of playlist ids to remove
-    """
+    """Remove one or more playlists by id."""
 
     click.confirm("Do you want to continue?", abort=True)
     for id in ids:
@@ -338,12 +309,7 @@ def remove_playlists(ids: Tuple[str]):
 @lastfm.command("sync")
 @click.argument("ids", required=False, nargs=-1)
 def sync_playlists(ids: Tuple[str]):
-    """
-    Sync all or one or more playlists by id.
-
-    \f
-    :param tuple id: A list of playlist ids to remove
-    """
+    """Sync one or more playlists by id, leave empty to sync all."""
 
     playlists = PlaylistManager.find(Provider.lastfm)
     if ids:

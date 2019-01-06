@@ -11,6 +11,8 @@ from pytubefm.youtube.commands import youtube
 @click.group()
 @click.pass_context
 def cli(ctx: Context):
+    """Create and upload youtube playlists from various sources like
+    last.fm."""
     cfg = os.path.join(click.get_app_dir("pytubefm", False), "storage.db")
 
     Registry.from_file(cfg)

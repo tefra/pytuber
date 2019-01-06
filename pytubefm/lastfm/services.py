@@ -2,8 +2,7 @@ from datetime import timedelta
 from typing import List
 
 import click
-from pydrag import Artist, Tag, Track, User, configure
-from pydrag.constants import Period
+from pydrag import Artist, Tag, Track, User, configure, constants
 
 from pytubefm.lastfm.models import PlaylistType
 from pytubefm.models import ConfigManager, Provider
@@ -13,33 +12,44 @@ from pytubefm.storage import Registry
 class LastService:
     @classmethod
     def get_tracks(cls, type, limit, **kwargs):
+        """
+        Retrieve from last.fm  a tracks list by the playlist type and
+        arguments.
+
+        :param str type: The playlist type
+        :param int limit: The limit to be applied
+        :param dict kwargs: The playlist arguments like username, country, artist
+        :rtype: :class:`list` of :class:`~pydrag.Track`
+        """
         cls.assert_config()
         ptype = PlaylistType(type)
         if ptype == PlaylistType.USER_LOVED_TRACKS:
             user = cls.get_user(kwargs["username"])
-            return user.get_loved_tracks(limit=limit)
+            return user.get_loved_tracks(limit=limit).data
         elif ptype == PlaylistType.USER_RECENT_TRACKS:
             user = cls.get_user(kwargs["username"])
-            return user.get_recent_tracks(limit=limit)
+            return user.get_recent_tracks(limit=limit).data
         elif ptype == PlaylistType.USER_TOP_TRACKS:
             user = cls.get_user(kwargs["username"])
-            return user.get_top_tracks(period=Period.overall, limit=limit)
+            return user.get_top_tracks(
+                period=constants.Period.overall, limit=limit
+            ).data
         elif ptype == PlaylistType.USER_FRIENDS_RECENT_TRACKS:
             user = cls.get_user(kwargs["username"])
             friends = user.get_friends(limit=limit, recent_tracks=True)
             return [f.recent_track for f in friends if f.recent_track]
         elif ptype == PlaylistType.CHART:
-            return Track.get_top_tracks_chart(limit=limit)
+            return Track.get_top_tracks_chart(limit=limit).data
         elif ptype == PlaylistType.COUNTRY:
             return Track.get_top_tracks_by_country(
                 country=kwargs["country"], limit=limit
-            )
+            ).data
         elif ptype == PlaylistType.TAG:
             tag = cls.get_tag(kwargs["tag"])
-            return tag.get_top_tracks(limit=limit)
+            return tag.get_top_tracks(limit=limit).data
         elif ptype == PlaylistType.ARTIST:
             artist = cls.get_artist(kwargs["artist"])
-            return artist.get_top_tracks(limit=limit)
+            return artist.get_top_tracks(limit=limit).data
 
     @classmethod
     def get_tags(cls, refresh=False) -> List[Tag]:
@@ -80,6 +90,12 @@ class LastService:
 
     @classmethod
     def get_tag(cls, name) -> Tag:
+        """
+        Get a last.fm tag by name.
+
+        :param str name: The name name to lookup
+        :rtype: :class:`pydrag.Tag`
+        """
         tags = cls.get_tags()
         return [tag for tag in tags if tag.name.lower() == name.lower()][0]
 
@@ -89,13 +105,13 @@ class LastService:
         Use last.fm api to find an artist by name. The result will be cached
         for 30 days.
 
-        :param str artist: The artist's name
+        :param str artist: The artist's name to lookup
         :rtype: :class:`pydrag.Artist`
         """
         cls.assert_config()
 
         cache = Registry.cache(
-            key="last.fm_artist_{}".format(artist),
+            key="last.fm_artist_{}".format(artist.lower()),
             ttl=timedelta(days=30),
             func=lambda: Artist.find(artist).to_dict(),
         )
@@ -124,7 +140,7 @@ class LastService:
         """
         Assert last.fm configuration exists.
 
-        :raise :class:`click.Abort`
+        :raises :exc:`click.Abort`
         """
         try:
             config = ConfigManager.get(Provider.lastfm)

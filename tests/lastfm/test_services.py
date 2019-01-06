@@ -1,12 +1,9 @@
 from collections import namedtuple
 from datetime import timedelta
 from unittest import mock
-from unittest.mock import call
 
 import click
-from click import Abort
-from pydrag import Artist, Tag, Track, User
-from pydrag.constants import Period
+from pydrag import Artist, Tag, Track, User, constants
 
 from pytubefm.lastfm.models import PlaylistType
 from pytubefm.lastfm.services import LastService
@@ -73,7 +70,9 @@ class LastServiceTests(TestCase):
         )
         self.assertEqual("foobar", actual)
         get_user.assert_called_once_with("foo")
-        top_tracks.assert_called_once_with(period=Period.overall, limit=10)
+        top_tracks.assert_called_once_with(
+            period=constants.Period.overall, limit=10
+        )
 
     @mock.patch.object(LastService, "assert_config")
     @mock.patch.object(User, "get_friends")
@@ -162,10 +161,10 @@ class LastServiceTests(TestCase):
 
         get_top_tags.assert_has_calls(
             [
-                call(limit=250, page=1),
-                call(limit=250, page=2),
-                call(limit=250, page=3),
-                call(limit=250, page=4),
+                mock.call(limit=250, page=1),
+                mock.call(limit=250, page=2),
+                mock.call(limit=250, page=3),
+                mock.call(limit=250, page=4),
             ]
         )
 
@@ -215,7 +214,7 @@ class LastServiceTests(TestCase):
     @mock.patch("pytubefm.lastfm.services.configure")
     @mock.patch.object(click, "secho")
     def test_assert_config(self, secho, configure):
-        with self.assertRaises(Abort):
+        with self.assertRaises(click.Abort):
             LastService.assert_config()
         secho.assert_called_once_with(
             "Run setup to configure last.fm services"

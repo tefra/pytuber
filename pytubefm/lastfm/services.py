@@ -5,9 +5,9 @@ import click
 from pydrag import Artist, Tag, Track, User, configure
 from pydrag.constants import Period
 
-from pytubefm.data import Registry
 from pytubefm.lastfm.models import PlaylistType
 from pytubefm.models import ConfigManager, Provider
+from pytubefm.storage import Registry
 
 
 class LastService:

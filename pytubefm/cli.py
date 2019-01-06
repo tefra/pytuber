@@ -3,8 +3,8 @@ import os
 import click
 from click import Context
 
-from pytubefm.data import Registry
 from pytubefm.lastfm.commands import lastfm
+from pytubefm.storage import Registry
 from pytubefm.youtube.commands import youtube
 
 

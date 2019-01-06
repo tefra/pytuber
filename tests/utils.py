@@ -4,10 +4,9 @@ import tempfile
 import unittest
 from unittest import mock
 
-import click
 from click.testing import CliRunner
 
-from pytubefm.data import Registry
+from pytubefm.storage import Registry
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -17,16 +16,20 @@ def fixture_path(filename):
 
 
 class TestCase(unittest.TestCase):
-    @mock.patch.object(click, "get_app_dir")
-    def setUp(self, get_app_dir):
-        self.tmp_dir = tempfile.mkdtemp()
-        get_app_dir.return_value = self.tmp_dir
+    def setUp(self):
+        tmp_dir = tempfile.mkdtemp()
+
+        get_app_dir_patch = mock.patch("click.get_app_dir")
+        get_app_dir = get_app_dir_patch.start()
+        get_app_dir.return_value = tmp_dir
+        self.addCleanup(get_app_dir_patch.stop)
+        self.addCleanup(lambda: shutil.rmtree(tmp_dir))
+
         self.maxDiff = None
         super(TestCase, self).setUp()
 
     def tearDown(self):
         Registry().clear()
-        shutil.rmtree(self.tmp_dir)
         super(TestCase, self).tearDown()
 
 

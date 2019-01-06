@@ -5,7 +5,7 @@ import tempfile
 from datetime import timedelta
 from unittest import TestCase, mock
 
-from pytubefm.data import Registry
+from pytubefm.storage import Registry
 
 
 class RegistryTests(TestCase):
@@ -79,7 +79,7 @@ class RegistryTests(TestCase):
         finally:
             shutil.rmtree(tmp)
 
-    @mock.patch("pytubefm.data.time.time")
+    @mock.patch("pytubefm.storage.time.time")
     def test_cache(self, time):
         time.side_effect = [10, 20.1, 20.1, 20.5, 20.8]
 

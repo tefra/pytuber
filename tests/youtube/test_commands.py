@@ -1,18 +1,12 @@
 import json
 import os
 
-from click.testing import CliRunner
-
 from pytubefm import cli
 from pytubefm.models import ConfigManager, Provider
-from tests.utils import TestCase, fixture_path
+from tests.utils import CommandTestCase, fixture_path
 
 
-class CommandsTests(TestCase):
-    def setUp(self):
-        self.runner = CliRunner()
-        super(CommandsTests, self).setUp()
-
+class CommandsTests(CommandTestCase):
     def test_setup_with_new_config(self):
         self.assertIsNone(ConfigManager.get(Provider.youtube))
         client_secrets = fixture_path("client_secret.json")

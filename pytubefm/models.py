@@ -7,8 +7,8 @@ from typing import Dict, List
 import attr
 import pydrag
 
-from pytubefm.data import Registry
 from pytubefm.exceptions import NotFound
+from pytubefm.storage import Registry
 
 
 def timestamp():

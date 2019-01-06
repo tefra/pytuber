@@ -3,7 +3,6 @@ from datetime import datetime
 
 import pydrag
 
-from pytubefm.data import Registry
 from pytubefm.exceptions import NotFound
 from pytubefm.models import (
     Config,
@@ -14,6 +13,7 @@ from pytubefm.models import (
     Track,
     TrackManager,
 )
+from pytubefm.storage import Registry
 from tests.utils import TestCase
 
 

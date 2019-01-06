@@ -4,7 +4,7 @@ import os
 from click.testing import CliRunner
 
 from pytubefm import cli
-from pytubefm.models import Config, Provider
+from pytubefm.models import ConfigManager, Provider
 from tests.utils import TestCase, fixture_path
 
 
@@ -14,7 +14,7 @@ class CommandsTests(TestCase):
         super(CommandsTests, self).setUp()
 
     def test_setup_with_new_config(self):
-        self.assertIsNone(Config.find_by_provider(Provider.youtube))
+        self.assertIsNone(ConfigManager.get(Provider.youtube))
         client_secrets = fixture_path("client_secret.json")
         result = self.runner.invoke(
             cli, ["youtube", "setup"], input=client_secrets
@@ -31,14 +31,14 @@ class CommandsTests(TestCase):
 
         with open(client_secrets, "r") as f:
             expected = json.load(f)
-        actual = Config.find_by_provider(Provider.youtube)
+        actual = ConfigManager.get(Provider.youtube)
         self.assertDictEqual(expected, actual.data)
 
     def test_setup_overwrites_existing_config(self):
-        Config(provider=Provider.youtube.value, data=dict(a=1)).save()
-        self.assertEqual(
-            dict(a=1), Config.find_by_provider(Provider.youtube).data
+        ConfigManager.update(
+            dict(provider=Provider.youtube.value, data=dict(a=1))
         )
+        self.assertEqual(dict(a=1), ConfigManager.get(Provider.youtube).data)
         client_secrets = fixture_path("client_secret.json")
         result = self.runner.invoke(
             cli,
@@ -59,5 +59,5 @@ class CommandsTests(TestCase):
         with open(client_secrets, "r") as f:
             expected = json.load(f)
 
-        actual = Config.find_by_provider(Provider.youtube)
+        actual = ConfigManager.get(Provider.youtube)
         self.assertDictEqual(expected, actual.data)

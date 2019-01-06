@@ -3,7 +3,7 @@ from typing import TextIO
 
 import click
 
-from pytubefm.models import Config, Provider
+from pytubefm.models import ConfigManager, Provider
 
 
 @click.group("youtube")
@@ -34,8 +34,10 @@ def setup(credentials: TextIO) -> None:
     :type credentials: :class:`io.TextIOWrapper`
     """
 
-    if Config.find_by_provider(Provider.youtube):
+    if ConfigManager.get(Provider.youtube):
         click.confirm("Overwrite existing configuration?", abort=True)
 
-    Config(provider=Provider.youtube.value, data=json.load(credentials)).save()
+    ConfigManager.update(
+        dict(provider=Provider.youtube.value, data=json.load(credentials))
+    )
     click.secho("Youtube configuration updated!")

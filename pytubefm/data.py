@@ -16,10 +16,18 @@ class Singleton(type):
         return cls._obj[cls]
 
 
+NOTHING = object()
+
+
 class Registry(dict, metaclass=Singleton):
     @classmethod
-    def get(cls, *keys, default=None):
-        return reduce(dict.__getitem__, keys, cls())
+    def get(cls, *keys, default=NOTHING):
+        try:
+            return reduce(dict.__getitem__, keys, cls())
+        except KeyError:
+            if default == NOTHING:
+                raise
+            return default
 
     @classmethod
     def set(cls, *args):

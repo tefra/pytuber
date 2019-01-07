@@ -1,4 +1,6 @@
+import base64
 import copy
+import json
 from datetime import datetime
 
 import pydrag
@@ -19,9 +21,10 @@ from tests.utils import TestCase
 
 class PlaylistTests(TestCase):
     def test_initialization(self):
-        actual = Playlist(
+        playlist = Playlist(
             type="foo", provider="bar", arguments=dict(a=1, b=2), limit=10
-        ).asdict()
+        )
+        actual = playlist.asdict()
         expected = {
             "arguments": {"a": 1, "b": 2},
             "id": "3bdcfa8",
@@ -31,12 +34,26 @@ class PlaylistTests(TestCase):
             "type": "foo",
             "uploaded": None,
             "tracks": [],
+            "youtube_id": None,
         }
         modified = actual.pop("modified")
         self.assertDictEqual(expected, actual)
         self.assertEqual(
             datetime.fromtimestamp(modified).strftime("%Y-%m-%d %H:%M"),
             datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
+        )
+        self.assertEqual(
+            "eyJhcmd1bWVudHMiOiB7ImEiOiAxLCAiYiI6IDJ9LCAicHJvdmlkZXIiOiAiYmFyIiwgInR5cGUiOiAiZm9vIn0=",
+            playlist.mime,
+        )
+
+        expected = {
+            "arguments": {"a": 1, "b": 2},
+            "provider": "bar",
+            "type": "foo",
+        }
+        self.assertEqual(
+            expected, json.loads(base64.b64decode(playlist.mime.encode()))
         )
 
 
@@ -84,6 +101,7 @@ class PlaylistManagerTests(TestCase):
         synced=2222222,
         uploaded=333333,
         tracks=[],
+        youtube_id=None,
     )
 
     def test_get(self):

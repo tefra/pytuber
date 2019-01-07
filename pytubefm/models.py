@@ -1,3 +1,4 @@
+import base64
 import enum
 import hashlib
 import json
@@ -71,10 +72,11 @@ class Playlist(Document):
     limit: int = attr.ib(converter=int, cmp=False)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib()
+    youtube_id = attr.ib(default=None)
+    tracks: List[str] = attr.ib(factory=list)
     modified: int = attr.ib(factory=timestamp, cmp=False)
     synced: int = attr.ib(default=None, cmp=False)
     uploaded: int = attr.ib(default=None, cmp=False)
-    tracks: List[str] = attr.ib(factory=list)
 
     @id.default
     def generate_id(self):
@@ -86,6 +88,17 @@ class Playlist(Document):
                 }
             ).encode("utf-8")
         ).hexdigest()[:7]
+
+    @property
+    def mime(self):
+        return base64.b64encode(
+            json.dumps(
+                {
+                    field: getattr(self, field)
+                    for field in ["arguments", "provider", "type"]
+                }
+            ).encode()
+        ).decode("utf-8")
 
 
 class ConfigManager:

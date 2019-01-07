@@ -49,7 +49,7 @@ class Track(Document):
     name: str = attr.ib()
     duration: int = attr.ib()
     id: str = attr.ib()
-    url: str = attr.ib()
+    youtube_id: str = attr.ib()
 
     @id.default
     def generate_id(self):
@@ -59,10 +59,10 @@ class Track(Document):
             ).encode("utf-8")
         ).hexdigest()[:7]
 
-    @url.default
-    def generate_url(self):
+    @youtube_id.default
+    def generate_youtube_id(self):
         with suppress(NotFound):
-            self.url = TrackManager.get(self.id).url
+            self.youtube_id = TrackManager.get(self.id).video_id
 
 
 @attr.s
@@ -197,15 +197,19 @@ class TrackManager:
         return track_ids
 
     @classmethod
-    def find(cls, ids):
+    def find(cls, ids=None):
+        if ids is None:
+            return [
+                Track(**data)
+                for data in Registry.get(cls.key, default={}).values()
+            ]
         return [cls.get(id) for id in ids]
 
     @classmethod
-    def remove(cls, id: str):
-        try:
-            Registry.remove(cls.key, id)
-        except KeyError:
-            pass
+    def update(cls, track: Track, data: Dict):
+        track = attr.evolve(track, **data)
+        Registry.set(cls.key, track.id, track.asdict())
+        return track
 
 
 class History:

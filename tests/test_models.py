@@ -179,14 +179,14 @@ class TrackManagerTests(TestCase):
                 "artist": "Queen",
                 "duration": 367,
                 "name": "Bohemian Rhapsody",
-                "url": None,
+                "youtube_id": None,
             },
             "8843d7f": {
                 "id": "8843d7f",
                 "artist": "Foo",
                 "duration": 166,
                 "name": "Bar",
-                "url": None,
+                "youtube_id": None,
             },
         }
 
@@ -201,14 +201,14 @@ class TrackManagerTests(TestCase):
                     "artist": "Queen",
                     "duration": 367,
                     "name": "Bohemian Rhapsody",
-                    "url": None,
+                    "youtube_id": None,
                 },
                 "8843d7f": {
                     "id": "8843d7f",
                     "artist": "Foo",
                     "duration": 166,
                     "name": "Bar",
-                    "url": None,
+                    "youtube_id": None,
                 },
             },
         )
@@ -217,21 +217,3 @@ class TrackManagerTests(TestCase):
         self.assertEqual(2, len(tracks))
         for track in tracks:
             self.assertIsInstance(track, Track)
-
-    def test_remove(self):
-        Registry.set(
-            "tracks",
-            {
-                "55a4d2b": {
-                    "id": "55a4d2b",
-                    "artist": "Queen",
-                    "duration": 367,
-                    "name": "Bohemian Rhapsody",
-                    "url": None,
-                }
-            },
-        )
-
-        self.assertEqual(1, len(TrackManager.find(["55a4d2b"])))
-        TrackManager.remove("55a4d2b")
-        TrackManager.remove("55a4d2b")  # Doesn't raise an exception

@@ -35,6 +35,7 @@ class PlaylistTests(TestCase):
             "uploaded": None,
             "tracks": [],
             "youtube_id": None,
+            "title": None,
         }
         modified = actual.pop("modified")
         self.assertDictEqual(expected, actual)
@@ -102,6 +103,7 @@ class PlaylistManagerTests(TestCase):
         uploaded=333333,
         tracks=[],
         youtube_id=None,
+        title=None,
     )
 
     def test_get(self):

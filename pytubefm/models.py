@@ -72,7 +72,8 @@ class Playlist(Document):
     limit: int = attr.ib(converter=int, cmp=False)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib()
-    youtube_id = attr.ib(default=None)
+    title: str = attr.ib(default=None)
+    youtube_id: str = attr.ib(default=None)
     tracks: List[str] = attr.ib(factory=list)
     modified: int = attr.ib(factory=timestamp, cmp=False)
     synced: int = attr.ib(default=None, cmp=False)
@@ -99,6 +100,18 @@ class Playlist(Document):
                 }
             ).encode()
         ).decode("utf-8")
+
+    @property
+    def display_type(self):
+        return (
+            self.title if self.title else self.type.replace("_", " ").title()
+        )
+
+    @property
+    def display_arguments(self):
+        return ", ".join(
+            ["{}: {}".format(k, v) for k, v in self.arguments.items()]
+        )
 
 
 class ConfigManager:

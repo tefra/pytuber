@@ -76,7 +76,7 @@ class CommandAddTests(CommandTestCase):
         result = self.runner.invoke(
             cli,
             ["lastfm", "add", "user"],
-            input="\n".join(("aaa", "2", "50")),
+            input="\n".join(("aaa", "2", "50", "My Favorite  ")),
             catch_exceptions=False,
         )
 
@@ -90,6 +90,7 @@ class CommandAddTests(CommandTestCase):
                 "[4] user_friends_recent_tracks",
                 "Select a playlist type 1-4: 2",
                 "Maximum tracks [50]: 50",
+                "Optional Title: My Favorite  ",
                 "Added playlist: 1!",
             )
         )
@@ -100,6 +101,7 @@ class CommandAddTests(CommandTestCase):
                 provider=Provider.lastfm,
                 arguments=dict(username="bbb"),
                 limit=50,
+                title="My Favorite",
             )
         )
         self.assertEqual(0, result.exit_code)
@@ -111,14 +113,23 @@ class CommandAddTests(CommandTestCase):
             id=1, type=None, provider=None, limit=10
         )
         result = self.runner.invoke(
-            cli, ["lastfm", "add", "chart"], input="50"
+            cli, ["lastfm", "add", "chart"], input="50\n "
         )
 
         expected_output = "\n".join(
-            ("Maximum tracks [50]: 50", "Added playlist: 1!")
+            (
+                "Maximum tracks [50]: 50",
+                "Optional Title:  ",
+                "Added playlist: 1!",
+            )
         )
         create_playlist.assert_called_once_with(
-            dict(type=PlaylistType.CHART, provider=Provider.lastfm, limit=50)
+            dict(
+                type=PlaylistType.CHART,
+                provider=Provider.lastfm,
+                limit=50,
+                title="",
+            )
         )
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
@@ -131,13 +142,14 @@ class CommandAddTests(CommandTestCase):
             id=1, type=None, provider=None, limit=10
         )
         result = self.runner.invoke(
-            cli, ["lastfm", "add", "country"], input="gr\n50"
+            cli, ["lastfm", "add", "country"], input=b"gr\n50\n "
         )
 
         expected_output = "\n".join(
             (
                 "Country Code: gr",
                 "Maximum tracks [50]: 50",
+                "Optional Title:  ",
                 "Added playlist: 1!",
             )
         )
@@ -147,6 +159,7 @@ class CommandAddTests(CommandTestCase):
                 provider=Provider.lastfm,
                 arguments=dict(country="greece"),
                 limit=50,
+                title="",
             )
         )
         self.assertEqual(0, result.exit_code)
@@ -160,11 +173,16 @@ class CommandAddTests(CommandTestCase):
             id=1, type=None, provider=None, limit=10, synced=111
         )
         result = self.runner.invoke(
-            cli, ["lastfm", "add", "tag"], input="rock\n50"
+            cli, ["lastfm", "add", "tag"], input="rock\n50\n "
         )
 
         expected_output = "\n".join(
-            ("Tag: rock", "Maximum tracks [50]: 50", "Updated playlist: 1!")
+            (
+                "Tag: rock",
+                "Maximum tracks [50]: 50",
+                "Optional Title:  ",
+                "Updated playlist: 1!",
+            )
         )
         create_playlist.assert_called_once_with(
             dict(
@@ -172,6 +190,7 @@ class CommandAddTests(CommandTestCase):
                 provider=Provider.lastfm,
                 arguments=dict(tag="rock"),
                 limit=50,
+                title="",
             )
         )
         self.assertEqual(0, result.exit_code)
@@ -187,12 +206,17 @@ class CommandAddTests(CommandTestCase):
         result = self.runner.invoke(
             cli,
             ["lastfm", "add", "artist"],
-            input="Queen\n50",
+            input="Queen\n50\nQueen....",
             catch_exceptions=False,
         )
 
         expected_output = "\n".join(
-            ("Artist: Queen", "Maximum tracks [50]: 50", "Added playlist: 1!")
+            (
+                "Artist: Queen",
+                "Maximum tracks [50]: 50",
+                "Optional Title: Queen....",
+                "Added playlist: 1!",
+            )
         )
         create_playlist.assert_called_once_with(
             dict(
@@ -200,6 +224,7 @@ class CommandAddTests(CommandTestCase):
                 provider=Provider.lastfm,
                 arguments=dict(artist="Queen"),
                 limit=50,
+                title="Queen....",
             )
         )
         self.assertEqual(0, result.exit_code)
@@ -248,6 +273,7 @@ class CommandListPlaylistsTests(CommandTestCase):
                 type="foo",
                 provider=Provider.lastfm,
                 limit=10,
+                youtube_id="456ybnm",
                 arguments=dict(a=1),
                 modified=1546727685,
             ),
@@ -266,10 +292,10 @@ class CommandListPlaylistsTests(CommandTestCase):
 
         expected_output = "\n".join(
             (
-                "ID       Type    Arguments      Limit  Modified          Synced            Uploaded",
-                "-------  ------  -----------  -------  ----------------  ----------------  ----------------",
-                "1ffdbf3  Foo     a: 1              10  2019-01-05 22:34  -                 -",
-                "2884480  Bar     b: 1, c: 2        15  2019-01-05 22:26  2019-01-05 22:28  2019-01-05 22:29",
+                "ID       YoutubeID    Title    Arguments      Limit  Modified          Synced            Uploaded",
+                "-------  -----------  -------  -----------  -------  ----------------  ----------------  ----------------",
+                "1ffdbf3  456ybnm      Foo      a: 1              10  2019-01-05 22:34  -                 -",
+                "2884480               Bar      b: 1, c: 2        15  2019-01-05 22:26  2019-01-05 22:28  2019-01-05 22:29",
             )
         )
         find.assert_called_once_with(Provider.lastfm)
@@ -300,8 +326,8 @@ class CommandListPlaylistsTests(CommandTestCase):
 
         expected_output = "\n".join(
             (
-                "No  Artist    Track Name    Duration",
-                "----  --------  ------------  ----------",
+                "No  Artist    Track Name    Duration    YoutubeID",
+                "----  --------  ------------  ----------  -----------",
                 "   0  bar       foo           0:02:00",
                 "   1  life      thug          0:30:44",
                 "   2  nope      nope          -",

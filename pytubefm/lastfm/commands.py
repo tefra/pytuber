@@ -1,4 +1,5 @@
 from datetime import timedelta
+from functools import partial
 from typing import Optional, Tuple
 
 import click
@@ -69,6 +70,19 @@ def tags(refresh: bool):
     )
 
 
+option_limit = partial(
+    click.option,
+    "--limit",
+    help="The maximum number of tracks",
+    type=click.IntRange(50, 1000),
+    prompt="Maximum tracks",
+    default=lambda: History.get("limit", 50),
+)
+option_title = partial(
+    click.option, "--title", help="Custom title", prompt="Optional Title"
+)
+
+
 @add.command("user")
 @click.option(
     "--user",
@@ -83,14 +97,9 @@ def tags(refresh: bool):
     type=UserPlaylistType.range(),
     prompt=UserPlaylistType.choices(),
 )
-@click.option(
-    "--limit",
-    help="The maximum number of tracks",
-    type=click.IntRange(50, 1000),
-    prompt="Maximum tracks",
-    default=lambda: History.get("limit", 50),
-)
-def add_user_playlist(user: str, playlist_type: int, limit: int):
+@option_limit()
+@option_title()
+def add_user_playlist(user: str, playlist_type: int, limit: int, title: str):
     """
     Add a user type playlist. This type of playlists are based on a user's
     music preference and history.
@@ -102,7 +111,6 @@ def add_user_playlist(user: str, playlist_type: int, limit: int):
     3. User recent tracks
     4. User friends recent tracks
     """
-
     History.set(user=user, limit=limit)
     playlist = PlaylistManager.set(
         dict(
@@ -110,6 +118,7 @@ def add_user_playlist(user: str, playlist_type: int, limit: int):
             provider=Provider.lastfm,
             arguments=dict(username=user),
             limit=limit,
+            title=title.strip(),
         )
     )
     click.secho(
@@ -120,19 +129,19 @@ def add_user_playlist(user: str, playlist_type: int, limit: int):
 
 
 @add.command("chart")
-@click.option(
-    "--limit",
-    help="The maximum number of tracks",
-    type=click.IntRange(50, 1000),
-    prompt="Maximum tracks",
-    default=lambda: History.get("limit", 50),
-)
-def add_chart_playlist(limit: int):
+@option_limit()
+@option_title()
+def add_chart_playlist(limit: int, title: str):
     """Add a top tracks playlist."""
 
     History.set(limit=limit)
     playlist = PlaylistManager.set(
-        dict(type=PlaylistType.CHART, provider=Provider.lastfm, limit=limit)
+        dict(
+            type=PlaylistType.CHART,
+            provider=Provider.lastfm,
+            limit=limit,
+            title=title.strip(),
+        )
     )
     click.secho(
         "{} playlist: {}!".format(
@@ -148,14 +157,9 @@ def add_chart_playlist(limit: int):
     type=CountryParamType(),
     prompt="Country Code",
 )
-@click.option(
-    "--limit",
-    help="The maximum number of tracks",
-    type=click.IntRange(50, 1000),
-    prompt="Maximum tracks",
-    default=lambda: History.get("limit", 50),
-)
-def add_country_playlist(country: str, limit: int):
+@option_limit()
+@option_title()
+def add_country_playlist(country: str, limit: int, title: str):
     """Add a top tracks playlist by country."""
 
     History.set(limit=limit)
@@ -165,6 +169,7 @@ def add_country_playlist(country: str, limit: int):
             provider=Provider.lastfm,
             arguments=dict(country=country),
             limit=limit,
+            title=title.strip(),
         )
     )
     click.secho(
@@ -181,14 +186,9 @@ def add_country_playlist(country: str, limit: int):
     prompt="Tag",
     type=TagParamType(),
 )
-@click.option(
-    "--limit",
-    help="The maximum number of tracks",
-    type=click.IntRange(50, 1000),
-    prompt="Maximum tracks",
-    default=lambda: History.get("limit", 50),
-)
-def add_tag_playlist(tag: str, limit: int):
+@option_limit()
+@option_title()
+def add_tag_playlist(tag: str, limit: int, title: str):
     """Add a top tracks playlist by tag."""
 
     History.set(limit=limit)
@@ -198,6 +198,7 @@ def add_tag_playlist(tag: str, limit: int):
             provider=Provider.lastfm,
             arguments=dict(tag=tag),
             limit=limit,
+            title=title.strip(),
         )
     )
 
@@ -212,14 +213,9 @@ def add_tag_playlist(tag: str, limit: int):
 @click.option(
     "--artist", help="An artist name", prompt="Artist", type=ArtistParamType()
 )
-@click.option(
-    "--limit",
-    help="The maximum number of tracks",
-    type=click.IntRange(50, 1000),
-    prompt="Maximum tracks",
-    default=lambda: History.get("limit", 50),
-)
-def add_artist_playlist(artist: str, limit: int):
+@option_limit()
+@option_title()
+def add_artist_playlist(artist: str, limit: int, title: str):
     """Add a top tracks playlist by artist."""
 
     History.set(limit=limit)
@@ -229,6 +225,7 @@ def add_artist_playlist(artist: str, limit: int):
             provider=Provider.lastfm,
             arguments=dict(artist=artist),
             limit=limit,
+            title=title.strip(),
         )
     )
 
@@ -255,11 +252,18 @@ def list_playlists(id: Optional[str]):
                         str(timedelta(seconds=t.duration))
                         if t.duration
                         else "-",
+                        t.youtube_id,
                     )
                     for t in TrackManager.find(playlist.tracks)
                 ],
                 showindex=True,
-                headers=("No", "Artist", "Track Name", "Duration"),
+                headers=(
+                    "No",
+                    "Artist",
+                    "Track Name",
+                    "Duration",
+                    "YoutubeID",
+                ),
             )
         )
     else:
@@ -268,13 +272,9 @@ def list_playlists(id: Optional[str]):
                 [
                     (
                         p.id,
-                        p.type.replace("_", " ").title(),
-                        ", ".join(
-                            [
-                                "{}: {}".format(k, v)
-                                for k, v in p.arguments.items()
-                            ]
-                        ),
+                        p.youtube_id,
+                        p.display_type,
+                        p.display_arguments,
                         p.limit,
                         date(p.modified),
                         date(p.synced),
@@ -284,7 +284,8 @@ def list_playlists(id: Optional[str]):
                 ],
                 headers=(
                     "ID",
-                    "Type",
+                    "YoutubeID",
+                    "Title",
                     "Arguments",
                     "Limit",
                     "Modified",

@@ -4,8 +4,9 @@ from typing import TextIO
 import click
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from pytubefm.models import ConfigManager, Provider
+from pytubefm.models import ConfigManager, Provider, TrackManager
 from pytubefm.youtube.models import SCOPES
+from pytubefm.youtube.services import YouService
 
 
 @click.group("youtube")
@@ -37,7 +38,6 @@ def setup(client_secrets: TextIO) -> None:
         dict(
             provider=Provider.youtube.value,
             data={
-                # 'token': creds.token,
                 "refresh_token": creds.refresh_token,
                 "token_uri": creds.token_uri,
                 "client_id": creds.client_id,
@@ -47,3 +47,22 @@ def setup(client_secrets: TextIO) -> None:
         )
     )
     click.secho("Youtube configuration updated!")
+
+    """Sync online/offline data"""
+
+
+@youtube.command()
+def match():
+    """Match local tracks to youtube videos."""
+
+    tracks = [track for track in TrackManager.find() if not track.youtube_id]
+    with click.progressbar(tracks, label="Matching tracks") as track_list:
+        for track in track_list:
+            youtube_id = YouService.search(track)
+            if youtube_id:
+                TrackManager.update(track, dict(youtube_id=youtube_id))
+
+
+@youtube.command()
+def push():
+    pass

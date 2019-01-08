@@ -47,22 +47,23 @@ class Config(Document):
 class Track(Document):
     artist: str = attr.ib()
     name: str = attr.ib()
-    duration: int = attr.ib()
-    id: str = attr.ib()
-    youtube_id: str = attr.ib()
+    duration: int = attr.ib(default=None)
+    id: str = attr.ib(default=None)
+    youtube_id: str = attr.ib(default=None)
 
-    @id.default
-    def generate_id(self):
-        return hashlib.sha1(
-            re.sub(
-                r"[\W_]+", "", "{}{}".format(self.artist, self.name).lower()
-            ).encode("utf-8")
-        ).hexdigest()[:7]
+    def __attrs_post_init__(self):
+        if not self.id:
+            self.id = hashlib.sha1(
+                re.sub(
+                    r"[\W_]+",
+                    "",
+                    "{}{}".format(self.artist, self.name).lower(),
+                ).encode("utf-8")
+            ).hexdigest()[:7]
 
-    @youtube_id.default
-    def generate_youtube_id(self):
-        with suppress(NotFound):
-            self.youtube_id = TrackManager.get(self.id).video_id
+        if not self.youtube_id:
+            with suppress(NotFound):
+                self.youtube_id = TrackManager.find_youtube_id(self.id)
 
 
 @attr.s
@@ -189,6 +190,10 @@ class TrackManager:
     key = "tracks"
 
     @classmethod
+    def find_youtube_id(cls, id: str):
+        return Registry.get(cls.key, id, "youtube_id", default=None)
+
+    @classmethod
     def get(cls, id: str):
         try:
             data = Registry.get(cls.key, id)
@@ -198,14 +203,14 @@ class TrackManager:
 
     @classmethod
     def add(cls, tracks: List[pydrag.Track]):
-        track_ids = []
+        track_ids = set()
         for entry in tracks:
             track = Track(
                 artist=entry.artist.name,
                 name=entry.name,
                 duration=entry.duration,
             )
-            track_ids.append(track.id)
+            track_ids.add(track.id)
             Registry.set(cls.key, track.id, track.asdict())
         return track_ids
 

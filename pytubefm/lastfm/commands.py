@@ -45,10 +45,10 @@ def setup(api_key: str) -> None:
     use last.fm as a playlists source for pytubefm.
     """
 
-    if ConfigManager.get(Provider.lastfm):
+    if ConfigManager.get(Provider.lastfm, default=None):
         click.confirm("Overwrite existing configuration?", abort=True)
 
-    ConfigManager.update(
+    ConfigManager.set(
         dict(provider=Provider.lastfm.value, data=dict(api_key=api_key))
     )
     click.secho("Last.fm configuration updated!")
@@ -242,7 +242,7 @@ def list_playlists(id: Optional[str]):
     """List all playlists or the contents of a playlist."""
 
     if id:
-        playlist = PlaylistManager.get(Provider.lastfm, id)
+        playlist = PlaylistManager.get(id)
         click.echo_via_pager(
             tabulate(
                 [
@@ -254,7 +254,7 @@ def list_playlists(id: Optional[str]):
                         else "-",
                         t.youtube_id,
                     )
-                    for t in TrackManager.find(playlist.tracks)
+                    for t in [TrackManager.get(id) for id in playlist.tracks]
                 ],
                 showindex=True,
                 headers=(
@@ -280,7 +280,7 @@ def list_playlists(id: Optional[str]):
                         date(p.synced),
                         date(p.uploaded),
                     )
-                    for p in PlaylistManager.find(Provider.lastfm)
+                    for p in PlaylistManager.find(provider=Provider.lastfm)
                 ],
                 headers=(
                     "ID",
@@ -303,7 +303,7 @@ def remove_playlists(ids: Tuple[str]):
 
     click.confirm("Do you want to continue?", abort=True)
     for id in ids:
-        PlaylistManager.remove(Provider.lastfm, id)
+        PlaylistManager.remove(id)
         click.secho("Removed playlist: {}!".format(id))
 
 
@@ -312,7 +312,7 @@ def remove_playlists(ids: Tuple[str]):
 def sync_playlists(ids: Tuple[str]):
     """Sync one or more playlists by id, leave empty to sync all."""
 
-    playlists = PlaylistManager.find(Provider.lastfm)
+    playlists = PlaylistManager.find(provider=Provider.lastfm)
     if ids:
         playlists = list(filter(lambda x: x.id in ids, playlists))
 
@@ -321,5 +321,14 @@ def sync_playlists(ids: Tuple[str]):
             tracklist = LastService.get_tracks(
                 type=playlist.type, limit=playlist.limit, **playlist.arguments
             )
-            track_ids = TrackManager.add(tracklist)
+            track_ids = [
+                TrackManager.set(
+                    dict(
+                        artist=entry.artist.name,
+                        name=entry.name,
+                        duration=entry.duration,
+                    )
+                ).id
+                for entry in tracklist
+            ]
             PlaylistManager.update(playlist, dict(tracks=track_ids))

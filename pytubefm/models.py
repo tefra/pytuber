@@ -5,10 +5,9 @@ import json
 import re
 from contextlib import suppress
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Type
 
 import attr
-import pydrag
 
 from pytubefm.exceptions import NotFound
 from pytubefm.storage import Registry
@@ -47,38 +46,32 @@ class Config(Document):
 class Track(Document):
     artist: str = attr.ib()
     name: str = attr.ib()
+    id: str = attr.ib()
     duration: int = attr.ib(default=None)
-    id: str = attr.ib(default=None)
-    youtube_id: str = attr.ib(default=None)
+    youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
 
-    def __attrs_post_init__(self):
-        if not self.id:
-            self.id = hashlib.sha1(
-                re.sub(
-                    r"[\W_]+",
-                    "",
-                    "{}{}".format(self.artist, self.name).lower(),
-                ).encode("utf-8")
-            ).hexdigest()[:7]
-
-        if not self.youtube_id:
-            with suppress(NotFound):
-                self.youtube_id = TrackManager.find_youtube_id(self.id)
+    @id.default
+    def generate_id(self):
+        return hashlib.sha1(
+            re.sub(
+                r"[\W_]+", "", "{}{}".format(self.artist, self.name).lower()
+            ).encode("utf-8")
+        ).hexdigest()[:7]
 
 
 @attr.s
 class Playlist(Document):
     type: str = attr.ib(converter=str)
     provider: str = attr.ib(converter=str)
-    limit: int = attr.ib(converter=int, cmp=False)
+    limit: int = attr.ib(converter=int)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib()
     title: str = attr.ib(default=None)
-    youtube_id: str = attr.ib(default=None)
-    tracks: List[str] = attr.ib(factory=list)
-    modified: int = attr.ib(factory=timestamp, cmp=False)
-    synced: int = attr.ib(default=None, cmp=False)
-    uploaded: int = attr.ib(default=None, cmp=False)
+    youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
+    tracks: List[str] = attr.ib(factory=list, metadata=dict(keep=True))
+    modified: int = attr.ib(factory=timestamp)
+    synced: int = attr.ib(default=None, metadata=dict(keep=True))
+    uploaded: int = attr.ib(default=None, metadata=dict(keep=True))
 
     @id.default
     def generate_id(self):
@@ -102,6 +95,12 @@ class Playlist(Document):
             ).encode()
         ).decode("utf-8")
 
+    @classmethod
+    def from_mime(cls, mime):
+        with suppress(Exception):
+            return cls(**json.loads(base64.b64decode(mime)))
+        return None
+
     @property
     def display_type(self):
         return (
@@ -115,119 +114,95 @@ class Playlist(Document):
         )
 
 
-class ConfigManager:
-    key = "provider_config_%s"
+class Manager:
+    namespace: str
+    model: Type
+    key: str
 
     @classmethod
-    def get(cls, provider: Provider):
+    def get(cls, key, **kwargs):
+        with suppress(KeyError):
+            data = Registry.get(cls.namespace, str(key), **kwargs)
+            with suppress(TypeError):
+                return cls.model(**data)
+            return data
+
+        raise NotFound(
+            "No {} matched your argument: {}!".format(cls.namespace, key)
+        )
+
+    @classmethod
+    def set(cls, data: Dict):
+        obj = cls.model(**data)
+        key = getattr(obj, cls.key)
+
+        with suppress(KeyError):
+            data = Registry.get(cls.namespace, key)
+            for field in attr.fields(cls.model):
+                if field.metadata.get("keep") and not getattr(obj, field.name):
+                    setattr(obj, field.name, data.get(field.name))
+
+        Registry.set(cls.namespace, key, obj.asdict())
+        return obj
+
+    @classmethod
+    def update(cls, obj, data: Dict):
+        new = attr.evolve(obj, **data)
+        key = getattr(new, cls.key)
+        Registry.set(cls.namespace, key, new.asdict())
+        return new
+
+    @classmethod
+    def remove(cls, key):
         try:
-            key = cls.key % provider
-            data = Registry.get(key)
-            return Config(**data)
+            Registry.remove(cls.namespace, key)
         except KeyError:
-            return None
+            raise NotFound(
+                "No {} matched your argument: {}!".format(cls.namespace, key)
+            )
 
     @classmethod
-    def update(cls, data: Dict):
-        key = cls.key % data["provider"]
-        config = Config(**data)
-        Registry.set(key, config.asdict())
+    def find(cls, **kwargs):
+        def match(data, conditions):
+            for key, value in conditions.items():
+                if data.get(key) != value:
+                    return False
+            return True
+
+        return [
+            cls.model(**raw)
+            for raw in Registry.get(cls.namespace).values()
+            if match(raw, kwargs)
+        ]
 
 
-class PlaylistManager:
-    key = "provider_playlists_%s"
+class ConfigManager(Manager):
+    namespace = "configuration"
+    key = "provider"
+    model = Config
 
-    @classmethod
-    def get(cls, provider: Provider, id: str):
-        try:
-            key = cls.key % provider
-            data = Registry.get(key, id)
-            return Playlist(**data)
-        except KeyError:
-            raise NotFound("No such playlist id: {}!".format(id))
 
-    @classmethod
-    def set(cls, data):
-        playlist = Playlist(**data)
-        try:
-            exist = cls.get(playlist.provider, playlist.id)
-            playlist.synced = exist.synced
-            playlist.uploaded = exist.uploaded
-        except NotFound:
-            pass
-        key = cls.key % playlist.provider
-        Registry.set(key, playlist.id, playlist.asdict())
-        History.set(data)
-        return playlist
+class PlaylistManager(Manager):
+    namespace = "playlist"
+    key = "id"
+    model = Playlist
 
     @classmethod
-    def remove(cls, provider: Provider, id: str):
-        try:
-            key = cls.key % provider
-            Registry.remove(key, id)
-        except KeyError:
-            raise NotFound("No such playlist id: {}!".format(id))
-
-    @classmethod
-    def update(cls, playlist: Playlist, data: Dict):
-
+    def update(cls, obj, data: Dict):
         if len(data.get("tracks", [])) > 0:
             data["synced"] = timestamp()
 
-        playlist = attr.evolve(playlist, **data)
-        key = cls.key % playlist.provider
-        Registry.set(key, playlist.id, playlist.asdict())
-        return playlist
-
-    @classmethod
-    def find(cls, provider: Provider):
-        key = cls.key % provider
-        entries = Registry.get(key, default={})
-        return [Playlist(**entry) for entry in entries.values()]
+        return super().update(obj, data)
 
 
-class TrackManager:
-    key = "tracks"
+class TrackManager(Manager):
+    namespace = "track"
+    key = "id"
+    model = Track
 
     @classmethod
     def find_youtube_id(cls, id: str):
-        return Registry.get(cls.key, id, "youtube_id", default=None)
-
-    @classmethod
-    def get(cls, id: str):
-        try:
-            data = Registry.get(cls.key, id)
-            return Track(**data)
-        except KeyError:
-            raise NotFound("No such track id: {}!".format(id))
-
-    @classmethod
-    def add(cls, tracks: List[pydrag.Track]):
-        track_ids = set()
-        for entry in tracks:
-            track = Track(
-                artist=entry.artist.name,
-                name=entry.name,
-                duration=entry.duration,
-            )
-            track_ids.add(track.id)
-            Registry.set(cls.key, track.id, track.asdict())
-        return track_ids
-
-    @classmethod
-    def find(cls, ids=None):
-        if ids is None:
-            return [
-                Track(**data)
-                for data in Registry.get(cls.key, default={}).values()
-            ]
-        return [cls.get(id) for id in ids]
-
-    @classmethod
-    def update(cls, track: Track, data: Dict):
-        track = attr.evolve(track, **data)
-        Registry.set(cls.key, track.id, track.asdict())
-        return track
+        return Registry.get(cls.namespace, id, "youtube_id", default=None)
 
 
 class History:

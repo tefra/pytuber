@@ -1,6 +1,7 @@
 from collections import namedtuple
 from unittest import mock
 
+import pydrag
 from pydrag import Tag
 
 from pytubefm import cli
@@ -20,14 +21,16 @@ from pytubefm.models import (
     Track,
     TrackManager,
 )
+from pytubefm.storage import Registry
 from tests.utils import CommandTestCase
 
 playlist = namedtuple("Playlist", ["id", "synced"])
+Registry()
 
 
 class CommandSetupTests(CommandTestCase):
     def test_create(self):
-        self.assertIsNone(ConfigManager.get(Provider.lastfm))
+        self.assertIsNone(ConfigManager.get(Provider.lastfm, default=None))
         result = self.runner.invoke(cli, ["lastfm", "setup"], input="aaaa")
 
         expected_output = "\n".join(
@@ -40,7 +43,7 @@ class CommandSetupTests(CommandTestCase):
         self.assertDictEqual({"api_key": "aaaa"}, actual.data)
 
     def test_update(self):
-        ConfigManager.update(
+        ConfigManager.set(
             dict(provider=Provider.lastfm, data=dict(api_key="bbbb"))
         )
 
@@ -298,13 +301,13 @@ class CommandListPlaylistsTests(CommandTestCase):
                 "2884480               Bar      b: 1, c: 2        15  2019-01-05 22:26  2019-01-05 22:28  2019-01-05 22:29",
             )
         )
-        find.assert_called_once_with(Provider.lastfm)
+        find.assert_called_once_with(provider=Provider.lastfm)
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
-    @mock.patch.object(TrackManager, "find")
+    @mock.patch.object(TrackManager, "get")
     @mock.patch.object(PlaylistManager, "get")
-    def test_list_with_id(self, get, find):
+    def test_list_with_id(self, get_playlists, get_track):
         playlist = Playlist(
             type="foo",
             provider=Provider.lastfm,
@@ -313,8 +316,8 @@ class CommandListPlaylistsTests(CommandTestCase):
             tracks=[1, 2, 3],
         )
 
-        get.return_value = playlist
-        find.return_value = [
+        get_playlists.return_value = playlist
+        get_track.side_effect = [
             Track(name="foo", artist="bar", duration=120),
             Track(name="thug", artist="life", duration=1844),
             Track(name="nope", artist="nope", duration=0),
@@ -333,7 +336,7 @@ class CommandListPlaylistsTests(CommandTestCase):
                 "   2  nope      nope          -",
             )
         )
-        find.assert_called_once_with(playlist.tracks)
+        get_track.assert_has_calls([mock.call(id) for id in playlist.tracks])
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
 
@@ -355,12 +358,7 @@ class CommandRemovePlaylistTests(CommandTestCase):
         )
         self.assertEqual(0, result.exit_code)
         self.assertEqual(expected_output, result.output.strip())
-        remove.assert_has_calls(
-            [
-                mock.call(Provider.lastfm, "foo"),
-                mock.call(Provider.lastfm, "bar"),
-            ]
-        )
+        remove.assert_has_calls([mock.call("foo"), mock.call("bar")])
 
     def test_remove_no_confirm(self):
         result = self.runner.invoke(
@@ -375,12 +373,22 @@ class CommandRemovePlaylistTests(CommandTestCase):
 
 
 class CommandSyncPlaylistsTests(CommandTestCase):
-    @mock.patch.object(TrackManager, "add")
+    @mock.patch.object(TrackManager, "set")
     @mock.patch.object(LastService, "get_tracks")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_sync_all(self, find, update, get_tracks, add):
-        add.side_effect = [[1, 2, 3], [4, 5, 6]]
+    def test_sync_all(self, find, update, get_tracks, set):
+        tracks = {}
+        set_side_effects = []
+        for ltr in "abcdef":
+            tracks[ltr] = pydrag.Track.from_dict(
+                dict(name=ltr, artist="@%s" % ltr)
+            )
+            set_side_effects.append(
+                Track(name=ltr, artist="@%s" % ltr, id=ord(ltr) - 96)
+            )
+
+        set.side_effect = set_side_effects
         playlist_one = Playlist(
             type="foo",
             provider=Provider.lastfm,
@@ -399,22 +407,32 @@ class CommandSyncPlaylistsTests(CommandTestCase):
         )
 
         find.return_value = [playlist_one, playlist_two]
-        get_tracks.side_effect = [["a", "b", "c"], ["d", "e", "f"]]
+        get_tracks.side_effect = [
+            [tracks.get("a"), tracks.get("b"), tracks.get("c")],
+            [tracks.get("d"), tracks.get("e"), tracks.get("f")],
+        ]
 
         result = self.runner.invoke(
             cli, ["lastfm", "sync"], catch_exceptions=False
         )
 
         self.assertEqual(0, result.exit_code)
-        find.assert_called_once_with(Provider.lastfm)
+        find.assert_called_once_with(provider=Provider.lastfm)
         get_tracks.assert_has_calls(
             [
                 mock.call(type="foo", limit=10, a=1),
                 mock.call(type="bar", limit=15, b=1, c=2),
             ]
         )
-        add.assert_has_calls(
-            [mock.call(["a", "b", "c"]), mock.call(["d", "e", "f"])]
+        set.assert_has_calls(
+            [
+                mock.call({"artist": "@a", "name": "a", "duration": None}),
+                mock.call({"artist": "@b", "name": "b", "duration": None}),
+                mock.call({"artist": "@c", "name": "c", "duration": None}),
+                mock.call({"artist": "@d", "name": "d", "duration": None}),
+                mock.call({"artist": "@e", "name": "e", "duration": None}),
+                mock.call({"artist": "@f", "name": "f", "duration": None}),
+            ]
         )
 
         update.assert_has_calls(
@@ -424,12 +442,29 @@ class CommandSyncPlaylistsTests(CommandTestCase):
             ]
         )
 
-    @mock.patch.object(TrackManager, "add")
+    @mock.patch.object(TrackManager, "set")
     @mock.patch.object(LastService, "get_tracks")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_sync_one(self, find, update, get_tracks, add):
-        add.return_value = [4, 5, 6]
+    def test_sync_one(self, find, update, get_tracks, set):
+        tracks = {}
+        set_side_effects = []
+        for ltr in "def":
+            tracks[ltr] = pydrag.Track.from_dict(
+                dict(name=ltr, artist="@%s" % ltr)
+            )
+            set_side_effects.append(
+                Track(name=ltr, artist="@%s" % ltr, id=ord(ltr) - 96)
+            )
+
+        set.side_effect = set_side_effects
+        playlist_one = Playlist(
+            type="foo",
+            provider=Provider.lastfm,
+            limit=10,
+            arguments=dict(a=1),
+            modified=1546727685,
+        )
         playlist_two = Playlist(
             type="bar",
             provider=Provider.lastfm,
@@ -440,16 +475,24 @@ class CommandSyncPlaylistsTests(CommandTestCase):
             uploaded=1546727385,
         )
 
-        find.return_value = [playlist_two]
-        get_tracks.return_value = ["d", "e", "f"]
+        find.return_value = [playlist_one, playlist_two]
+        get_tracks.side_effect = [
+            [tracks.get("d"), tracks.get("e"), tracks.get("f")]
+        ]
 
         result = self.runner.invoke(
-            cli, ["lastfm", "sync"], catch_exceptions=False
+            cli, ["lastfm", "sync", playlist_two.id], catch_exceptions=False
         )
 
         self.assertEqual(0, result.exit_code)
-        find.assert_called_once_with(Provider.lastfm)
+        find.assert_called_once_with(provider=Provider.lastfm)
         get_tracks.assert_called_once_with(type="bar", limit=15, b=1, c=2)
-        add.assert_called_once_with(["d", "e", "f"])
+        set.assert_has_calls(
+            [
+                mock.call({"artist": "@d", "name": "d", "duration": None}),
+                mock.call({"artist": "@e", "name": "e", "duration": None}),
+                mock.call({"artist": "@f", "name": "f", "duration": None}),
+            ]
+        )
 
         update.assert_called_once_with(playlist_two, dict(tracks=[4, 5, 6]))

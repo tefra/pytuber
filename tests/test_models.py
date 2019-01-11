@@ -44,15 +44,18 @@ class PlaylistTests(TestCase):
             datetime.fromtimestamp(modified).strftime("%Y-%m-%d %H:%M"),
             datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
         )
-        self.assertEqual(
-            "eyJhcmd1bWVudHMiOiB7ImEiOiAxLCAiYiI6IDJ9LCAicHJvdmlkZXIiOiAiYmFyIiwgInR5cGUiOiAiZm9vIn0=",
-            playlist.mime,
+
+        expected = (
+            "eyJhcmd1bWVudHMiOiB7ImEiOiAxLCAiYiI6IDJ9LCAicHJvdmlk"
+            "ZXIiOiAiYmFyIiwgInR5cGUiOiAiZm9vIiwgImxpbWl0IjogMTB9"
         )
+        self.assertEqual(expected, playlist.mime)
 
         expected = {
             "arguments": {"a": 1, "b": 2},
             "provider": "bar",
             "type": "foo",
+            "limit": 10,
         }
         self.assertEqual(
             expected, json.loads(base64.b64decode(playlist.mime.encode()))

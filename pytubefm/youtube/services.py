@@ -1,16 +1,26 @@
 import click
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from pytubefm.models import ConfigManager, Provider, Track
-from pytubefm.youtube.models import SCOPES
+from pytubefm.exceptions import NotFound
+from pytubefm.models import ConfigManager, Playlist, Provider, Track
+from pytubefm.youtube.models import PlaylistItem
 
 
 class YouService:
+    max_results = 50
     client = None
+    scopes = ["https://www.googleapis.com/auth/youtube"]
 
     @classmethod
-    def search(cls, track: Track):
+    def authorize(cls, client_secrets):
+        return InstalledAppFlow.from_client_secrets_file(
+            client_secrets, scopes=cls.scopes
+        ).run_console()
+
+    @classmethod
+    def search_track(cls, track: Track):
         params = dict(
             part="snippet",
             maxResults=1,
@@ -24,15 +34,99 @@ class YouService:
                 return item["id"]["videoId"]
 
     @classmethod
+    def get_playlists(cls):
+        params = dict(part="snippet", mine=True, maxResults=cls.max_results)
+        next_page_token = None
+        playlists = []
+        while True:
+            if next_page_token:
+                params.update(dict(pageToken=next_page_token))
+
+            response = cls.get_client().playlists().list(**params).execute()
+            for item in response.get("items", []):
+                playlist = Playlist.from_mime(
+                    item["snippet"]["description"].strip().split("\n")[-1]
+                )
+                if playlist:
+                    if playlist.display_type != item["snippet"]["title"]:
+                        playlist.title = item["snippet"]["title"]
+                    playlist.youtube_id = item["id"]
+                    playlists.append(playlist)
+
+            next_page_token = response.get("nextPageToken")
+            if not next_page_token:
+                break
+
+        return playlists
+
+    @classmethod
+    def create_playlist(cls, playlist: Playlist):
+        params = dict(
+            body=dict(
+                snippet=dict(
+                    title=playlist.display_type, description=playlist.mime
+                ),
+                status=dict(privacyStatus="private"),
+            ),
+            part="snippet,status",
+        )
+        return cls.get_client().playlists().insert(**params).execute()["id"]
+
+    @classmethod
+    def get_playlist_items(cls, playlist: Playlist):
+        items = []
+        next_page_token = None
+        params = dict(
+            part="contentDetails",
+            maxResults=cls.max_results,
+            playlistId=playlist.youtube_id,
+        )
+        while True:
+            if next_page_token:
+                params.update(dict(pageToken=next_page_token))
+
+            resp = cls.get_client().playlistItems().list(**params).execute()
+            for item in resp.get("items", []):
+                items.append(
+                    PlaylistItem(
+                        id=item["id"],
+                        video_id=item["contentDetails"]["videoId"],
+                    )
+                )
+
+            next_page_token = resp.get("nextPageToken")
+            if not next_page_token:
+                break
+        return items
+
+    @classmethod
+    def create_playlist_item(cls, playlist: Playlist, video_id):
+        params = dict(
+            body=dict(
+                snippet=dict(
+                    playlistId=playlist.youtube_id,
+                    resourceId=dict(kind="youtube#video", videoId=video_id),
+                )
+            ),
+            part="snippet",
+        )
+        return cls.get_client().playlistItems().insert(**params).execute()
+
+    @classmethod
+    def remove_playlist_item(cls, playlist_item: PlaylistItem):
+        params = dict(id=playlist_item.id)
+        return cls.get_client().playlistItems().delete(**params).execute()
+
+    @classmethod
     def get_client(cls):
         if not cls.client:
             try:
                 info = ConfigManager.get(Provider.youtube).data
                 credentials = Credentials.from_authorized_user_info(
-                    info, scopes=SCOPES
+                    info, scopes=cls.scopes
                 )
-            except (KeyError, AttributeError):
-                click.secho("Run setup to configure youtube services")
+            except NotFound:
+                click.secho("Run setup to configure youtube client")
                 raise click.Abort()
             cls.client = build("youtube", "v3", credentials=credentials)
         return cls.client

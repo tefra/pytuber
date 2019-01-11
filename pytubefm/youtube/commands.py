@@ -1,11 +1,12 @@
-import json
-from typing import TextIO
-
 import click
-from google_auth_oauthlib.flow import InstalledAppFlow
 
-from pytubefm.models import ConfigManager, Provider, TrackManager
-from pytubefm.youtube.models import SCOPES
+from pytubefm.models import (
+    ConfigManager,
+    PlaylistManager,
+    Provider,
+    TrackManager,
+)
+from pytubefm.utils import spinner
 from pytubefm.youtube.services import YouService
 
 
@@ -15,8 +16,8 @@ def youtube():
 
 
 @youtube.command()
-@click.argument("client-secrets", type=click.File(), required=True)
-def setup(client_secrets: TextIO) -> None:
+@click.argument("client-secrets", type=click.Path(), required=True)
+def setup(client_secrets: str) -> None:
     """
     Configure your youtube api credentials.
 
@@ -26,43 +27,111 @@ def setup(client_secrets: TextIO) -> None:
     to this method
     """
 
-    if ConfigManager.get(Provider.youtube):
+    if ConfigManager.get(Provider.youtube, default=None):
         click.confirm("Overwrite existing configuration?", abort=True)
 
-    flow = InstalledAppFlow.from_client_config(
-        json.load(client_secrets), scopes=SCOPES
-    )
-    creds = flow.run_console()
-
-    ConfigManager.update(
+    credentials = YouService.authorize(client_secrets)
+    ConfigManager.set(
         dict(
             provider=Provider.youtube.value,
-            data={
-                "refresh_token": creds.refresh_token,
-                "token_uri": creds.token_uri,
-                "client_id": creds.client_id,
-                "client_secret": creds.client_secret,
-                "scopes": creds.scopes,
-            },
+            data=dict(
+                refresh_token=credentials.refresh_token,
+                token_uri=credentials.token_uri,
+                client_id=credentials.client_id,
+                client_secret=credentials.client_secret,
+                scopes=credentials.scopes,
+            ),
         )
     )
     click.secho("Youtube configuration updated!")
 
-    """Sync online/offline data"""
+
+@youtube.group()
+def push():
+    """Push local playlists and tracks to youtube."""
 
 
-@youtube.command()
-def match():
+@youtube.group()
+def fetch():
+    """Fetch playlist and tracks information from youtube."""
+
+
+@fetch.command("playlists")
+def fetch_playlists():
+    """Fetch remote information and update local playlists."""
+    with spinner("Fetching playlists information") as sp:
+        for playlist in YouService.get_playlists():
+            PlaylistManager.set(playlist.asdict())
+            sp.write("Imported playlist {}".format(playlist.id))
+
+
+@fetch.command("tracks")
+def fetch_tracks():
     """Match local tracks to youtube videos."""
 
-    tracks = [track for track in TrackManager.find() if not track.youtube_id]
-    with click.progressbar(tracks, label="Matching tracks") as track_list:
-        for track in track_list:
-            youtube_id = YouService.search(track)
-            if youtube_id:
-                TrackManager.update(track, dict(youtube_id=youtube_id))
+    tracks = TrackManager.find(youtube_id=None)
+    if len(tracks) == 0:
+        return click.secho("There are no new tracks")
+
+    click.secho("Fetching tracks information", bold=True)
+    for track in tracks:
+        with spinner("Track: {} - {}".format(track.artist, track.name)):
+            youtube_id = YouService.search_track(track)
+            TrackManager.update(track, dict(youtube_id=youtube_id))
 
 
-@youtube.command()
-def push():
-    pass
+@push.command("playlists")
+def push_playlists():
+    """Create new playlists on youtube."""
+
+    playlists = PlaylistManager.find(youtube_id=None)
+    if len(playlists) == 0:
+        return click.secho("There are no new playlists")
+
+    click.secho("Creating playlists", bold=True)
+    for playlist in playlists:
+        with spinner("Playlist: {}".format(playlist.display_type)):
+            youtube_id = YouService.create_playlist(playlist)
+            PlaylistManager.update(playlist, dict(youtube_id=youtube_id))
+
+
+@push.command("tracks")
+def push_tracks():
+    online_playlists = PlaylistManager.find(youtube_id=lambda x: x is not None)
+    click.secho("Syncing playlists", bold=True)
+    for playlist in online_playlists:
+        add = items = remove = []
+        with spinner(
+            "Fetching playlist items: {}".format(playlist.display_type)
+        ):
+            items = YouService.get_playlist_items(playlist)
+            online = set([item.video_id for item in items])
+            offline = set(
+                [
+                    track.youtube_id
+                    for track in TrackManager.find(
+                        youtube_id=lambda x: x is not None,
+                        id=lambda x: x in playlist.tracks,
+                    )
+                ]
+            )
+
+            add = offline - online
+            remove = online - offline
+
+        if len(add) == len(remove) == 0:
+            click.secho("Playlist is already synced!")
+            continue
+
+        if len(add) > 0:
+            click.secho("Adding new playlist items", bold=True)
+            for video_id in sorted(add):
+                with spinner("Adding video: {}".format(video_id)):
+                    YouService.create_playlist_item(playlist, video_id)
+
+        if len(remove) > 0:
+            click.secho("Removing playlist items", bold=True)
+            remove = [item for item in items if item.video_id in remove]
+            for item in sorted(remove):
+                with spinner("Removing video: {}".format(item.video_id)):
+                    YouService.remove_playlist_item(item)

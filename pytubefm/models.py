@@ -1,26 +1,16 @@
 import base64
+import contextlib
 import enum
 import hashlib
 import json
 import re
-from contextlib import suppress
-from datetime import datetime
 from typing import Dict, List, Type
 
 import attr
 
 from pytubefm.exceptions import NotFound
 from pytubefm.storage import Registry
-
-
-def timestamp():
-    return int(datetime.utcnow().strftime("%s"))
-
-
-def date(timestamp: int):
-    if not timestamp:
-        return "-"
-    return datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+from pytubefm.utils import timestamp
 
 
 class Provider(enum.Enum):
@@ -63,7 +53,7 @@ class Track(Document):
 class Playlist(Document):
     type: str = attr.ib(converter=str)
     provider: str = attr.ib(converter=str)
-    limit: int = attr.ib(converter=int)
+    limit: int = attr.ib(converter=int, default=100)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib()
     title: str = attr.ib(default=None)
@@ -90,14 +80,14 @@ class Playlist(Document):
             json.dumps(
                 {
                     field: getattr(self, field)
-                    for field in ["arguments", "provider", "type"]
+                    for field in ["arguments", "provider", "type", "limit"]
                 }
             ).encode()
         ).decode("utf-8")
 
     @classmethod
     def from_mime(cls, mime):
-        with suppress(Exception):
+        with contextlib.suppress(Exception):
             return cls(**json.loads(base64.b64decode(mime)))
         return None
 
@@ -121,9 +111,9 @@ class Manager:
 
     @classmethod
     def get(cls, key, **kwargs):
-        with suppress(KeyError):
+        with contextlib.suppress(KeyError):
             data = Registry.get(cls.namespace, str(key), **kwargs)
-            with suppress(TypeError):
+            with contextlib.suppress(TypeError):
                 return cls.model(**data)
             return data
 
@@ -136,7 +126,7 @@ class Manager:
         obj = cls.model(**data)
         key = getattr(obj, cls.key)
 
-        with suppress(KeyError):
+        with contextlib.suppress(KeyError):
             data = Registry.get(cls.namespace, key)
             for field in attr.fields(cls.model):
                 if field.metadata.get("keep") and not getattr(obj, field.name):
@@ -164,14 +154,21 @@ class Manager:
     @classmethod
     def find(cls, **kwargs):
         def match(data, conditions):
-            for key, value in conditions.items():
-                if data.get(key) != value:
-                    return False
-            return True
+            with contextlib.suppress(Exception):
+                for k, v in conditions.items():
+                    value = data.get(k)
+                    if callable(v):
+                        assert v(value)
+                    elif v is None:
+                        assert value is None
+                    else:
+                        assert type(value)(v) == value
+                return True
+            return False
 
         return [
             cls.model(**raw)
-            for raw in Registry.get(cls.namespace).values()
+            for raw in Registry.get(cls.namespace, default={}).values()
             if match(raw, kwargs)
         ]
 

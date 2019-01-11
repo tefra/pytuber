@@ -19,8 +19,8 @@ from pytubefm.models import (
     PlaylistManager,
     Provider,
     TrackManager,
-    date,
 )
+from pytubefm.utils import date
 
 
 @click.group()
@@ -321,14 +321,16 @@ def sync_playlists(ids: Tuple[str]):
             tracklist = LastService.get_tracks(
                 type=playlist.type, limit=playlist.limit, **playlist.arguments
             )
-            track_ids = [
-                TrackManager.set(
-                    dict(
-                        artist=entry.artist.name,
-                        name=entry.name,
-                        duration=entry.duration,
-                    )
-                ).id
-                for entry in tracklist
-            ]
-            PlaylistManager.update(playlist, dict(tracks=track_ids))
+            track_ids = set(
+                [
+                    TrackManager.set(
+                        dict(
+                            artist=entry.artist.name,
+                            name=entry.name,
+                            duration=entry.duration,
+                        )
+                    ).id
+                    for entry in tracklist
+                ]
+            )
+            PlaylistManager.update(playlist, dict(tracks=list(track_ids)))

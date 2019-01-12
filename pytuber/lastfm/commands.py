@@ -1,6 +1,6 @@
 from datetime import timedelta
 from functools import partial
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import click
 from tabulate import tabulate
@@ -321,16 +321,18 @@ def sync_playlists(ids: Tuple[str]):
             tracklist = LastService.get_tracks(
                 type=playlist.type, limit=playlist.limit, **playlist.arguments
             )
-            track_ids = set(
-                [
-                    TrackManager.set(
-                        dict(
-                            artist=entry.artist.name,
-                            name=entry.name,
-                            duration=entry.duration,
-                        )
-                    ).id
-                    for entry in tracklist
-                ]
-            )
-            PlaylistManager.update(playlist, dict(tracks=list(track_ids)))
+
+            track_ids: List[str] = []
+            for entry in tracklist:
+                id = TrackManager.set(
+                    dict(
+                        artist=entry.artist.name,
+                        name=entry.name,
+                        duration=entry.duration,
+                    )
+                ).id
+
+                if id not in track_ids:
+                    track_ids.append(id)
+
+            PlaylistManager.update(playlist, dict(tracks=track_ids))

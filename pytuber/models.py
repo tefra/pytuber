@@ -40,13 +40,15 @@ class Track(Document):
     duration: int = attr.ib(default=None)
     youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
 
-    @id.default
-    def generate_id(self):
-        return hashlib.sha1(
-            re.sub(
-                r"[\W_]+", "", "{}{}".format(self.artist, self.name).lower()
-            ).encode("utf-8")
-        ).hexdigest()[:7]
+    def __attrs_post_init__(self):
+        if self.id is None:
+            self.id = hashlib.sha1(
+                re.sub(
+                    r"[\W_]+",
+                    "",
+                    "{}{}".format(self.artist, self.name).lower(),
+                ).encode("utf-8")
+            ).hexdigest()[:7]
 
 
 @attr.s
@@ -55,7 +57,7 @@ class Playlist(Document):
     provider: str = attr.ib(converter=str)
     limit: int = attr.ib(converter=int, default=100)
     arguments: dict = attr.ib(factory=dict)
-    id: str = attr.ib()
+    id: str = attr.ib(default=None)
     title: str = attr.ib(default=None)
     youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
     tracks: List[str] = attr.ib(factory=list, metadata=dict(keep=True))
@@ -63,16 +65,16 @@ class Playlist(Document):
     synced: int = attr.ib(default=None, metadata=dict(keep=True))
     uploaded: int = attr.ib(default=None, metadata=dict(keep=True))
 
-    @id.default
-    def generate_id(self):
-        return hashlib.sha1(
-            json.dumps(
-                {
-                    field: getattr(self, field)
-                    for field in ["arguments", "provider", "type"]
-                }
-            ).encode("utf-8")
-        ).hexdigest()[:7]
+    def __attrs_post_init__(self):
+        if self.id is None:
+            self.id = hashlib.sha1(
+                json.dumps(
+                    {
+                        field: getattr(self, field)
+                        for field in ["arguments", "provider", "type"]
+                    }
+                ).encode("utf-8")
+            ).hexdigest()[:7]
 
     @property
     def mime(self):

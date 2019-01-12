@@ -17,26 +17,24 @@ from pytuber.models import (
     TrackManager,
 )
 from pytuber.storage import Registry
-from tests.utils import TestCase
+from tests.utils import PlaylistFixture, TestCase, TrackFixture
 
 
 class PlaylistTests(TestCase):
     def test_initialization(self):
-        playlist = Playlist(
-            type="foo", provider="bar", arguments=dict(a=1, b=2), limit=10
-        )
+        playlist = PlaylistFixture.one()
         actual = playlist.asdict()
         expected = {
-            "arguments": {"a": 1, "b": 2},
-            "id": "3bdcfa8",
-            "limit": 10,
-            "provider": "bar",
-            "synced": None,
-            "type": "foo",
-            "uploaded": None,
-            "tracks": [],
-            "youtube_id": None,
+            "type": "type_a",
+            "provider": "provider_a",
+            "limit": 100,
+            "arguments": {"a": 0},
+            "id": "id_a",
             "title": None,
+            "youtube_id": None,
+            "tracks": [],
+            "synced": None,
+            "uploaded": None,
         }
         modified = actual.pop("modified")
         self.assertDictEqual(expected, actual)
@@ -46,16 +44,16 @@ class PlaylistTests(TestCase):
         )
 
         expected = (
-            "eyJhcmd1bWVudHMiOiB7ImEiOiAxLCAiYiI6IDJ9LCAicHJvdmlk"
-            "ZXIiOiAiYmFyIiwgInR5cGUiOiAiZm9vIiwgImxpbWl0IjogMTB9"
+            "eyJhcmd1bWVudHMiOiB7ImEiOiAwfSwgInByb3ZpZGVyIjogInByb3"
+            "ZpZGVyX2EiLCAidHlwZSI6ICJ0eXBlX2EiLCAibGltaXQiOiAxMDB9"
         )
         self.assertEqual(expected, playlist.mime)
 
         expected = {
-            "arguments": {"a": 1, "b": 2},
-            "provider": "bar",
-            "type": "foo",
-            "limit": 10,
+            "arguments": {"a": 0},
+            "limit": 100,
+            "provider": "provider_a",
+            "type": "type_a",
         }
         self.assertEqual(
             expected, json.loads(base64.b64decode(playlist.mime.encode()))
@@ -64,8 +62,8 @@ class PlaylistTests(TestCase):
 
 class TrackTests(TestCase):
     def test_initializations(self):
-        track = Track(artist="DMX", name="ruff ryders", duration=None)
-        self.assertEqual("c85d968", track.id)
+        track = TrackFixture.one(id=None)
+        self.assertEqual("6784d47", track.id)
 
 
 class ProviderTests(TestCase):

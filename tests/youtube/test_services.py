@@ -4,10 +4,10 @@ import click
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from pytuber.models import ConfigManager, Playlist, Track
+from pytuber.models import ConfigManager
 from pytuber.youtube.models import PlaylistItem
 from pytuber.youtube.services import YouService
-from tests.utils import TestCase
+from tests.utils import PlaylistFixture, TestCase, TrackFixture
 
 
 class YouServiceTests(TestCase):
@@ -34,7 +34,7 @@ class YouServiceTests(TestCase):
             "items": [{"id": {"kind": "youtube#video", "videoId": "101"}}]
         }
 
-        track = Track(artist="a", name="b")
+        track = TrackFixture.one()
         self.assertEqual("101", YouService.search_track(track))
         list.assert_called_once_with(
             part="snippet",
@@ -45,7 +45,7 @@ class YouServiceTests(TestCase):
 
     @mock.patch.object(YouService, "get_client")
     def test_get_playlists(self, get_client):
-        playlist = Playlist(id=1, type=None, provider=None, limit=10)
+        playlist = PlaylistFixture.one()
         list = get_client.return_value.playlists.return_value.list
         list.return_value.execute.side_effect = [
             {
@@ -80,7 +80,7 @@ class YouServiceTests(TestCase):
 
     @mock.patch.object(YouService, "get_client")
     def test_create_playlist(self, get_client):
-        playlist = Playlist(id=1, type=None, provider=None, limit=10)
+        playlist = PlaylistFixture.one()
         insert = get_client.return_value.playlists.return_value.insert
         insert.return_value.execute.return_value = {"id": "101"}
 
@@ -97,7 +97,7 @@ class YouServiceTests(TestCase):
 
     @mock.patch.object(YouService, "get_client")
     def test_get_playlist_items(self, get_client):
-        playlist = Playlist(id=1, type=None, provider=None, limit=10)
+        playlist = PlaylistFixture.one()
         list = get_client.return_value.playlistItems.return_value.list
         list.return_value.execute.side_effect = [
             {
@@ -139,9 +139,7 @@ class YouServiceTests(TestCase):
 
     @mock.patch.object(YouService, "get_client")
     def test_create_playlist_item(self, get_client):
-        playlist = Playlist(
-            id=1, type=None, provider=None, limit=10, youtube_id="b"
-        )
+        playlist = PlaylistFixture.one(youtube_id="b")
         insert = get_client.return_value.playlistItems.return_value.insert
         insert.return_value.execute.return_value = "foo"
 

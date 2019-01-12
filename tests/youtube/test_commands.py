@@ -5,15 +5,13 @@ from google.oauth2.credentials import Credentials
 from pytuber import cli
 from pytuber.models import (
     ConfigManager,
-    Playlist,
     PlaylistManager,
     Provider,
-    Track,
     TrackManager,
 )
 from pytuber.youtube.models import PlaylistItem
 from pytuber.youtube.services import YouService
-from tests.utils import CommandTestCase
+from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 
 class CommandSetupTests(CommandTestCase):
@@ -63,8 +61,7 @@ class CommandGroupFetchTests(CommandTestCase):
     @mock.patch.object(YouService, "search_track")
     @mock.patch.object(TrackManager, "find")
     def test_tracks(self, find, search, update):
-        track_one = Track(artist="a", name="b")
-        track_two = Track(artist="e", name="f")
+        track_one, track_two = TrackFixture.get(2)
         find.return_value = [track_one, track_two]
 
         search.side_effect = ["y1", "y3"]
@@ -72,10 +69,14 @@ class CommandGroupFetchTests(CommandTestCase):
             cli, ["youtube", "fetch", "tracks"], catch_exceptions=False
         )
 
+        expected_messages = (
+            "Fetching tracks information",
+            "Track: artist_a - name_a",
+            "Track: artist_b - name_b",
+        )
+
         self.assertEqual(0, result.exit_code)
-        self.assertIn("Fetching tracks information", result.output)
-        self.assertIn("Track: a - b", result.output)
-        self.assertIn("Track: e - f", result.output)
+        self.assertOutputContains(expected_messages, result.output)
 
         find.assert_called_once_with(youtube_id=None)
         search.assert_has_calls([mock.call(track_one), mock.call(track_two)])
@@ -97,18 +98,20 @@ class CommandGroupFetchTests(CommandTestCase):
     @mock.patch.object(PlaylistManager, "set")
     @mock.patch.object(YouService, "get_playlists")
     def test_playlists(self, get_playlists, set_playlist):
-        p_one = Playlist(id=1, type=None, provider=None, limit=10)
-        p_two = Playlist(id=2, type=None, provider=None, limit=10)
+        p_one, p_two = PlaylistFixture.get(2)
         get_playlists.return_value = [p_one, p_two]
 
         result = self.runner.invoke(
             cli, ["youtube", "fetch", "playlists"], catch_exceptions=False
         )
 
+        expected_messages = (
+            "Imported playlist {}".format(p_one.id),
+            "Imported playlist {}".format(p_two.id),
+            "Fetching playlists information",
+        )
         self.assertEqual(0, result.exit_code)
-        self.assertIn("Fetching playlists information", result.output)
-        self.assertIn("Imported playlist {}".format(p_one.id), result.output)
-        self.assertIn("Imported playlist {}".format(p_two.id), result.output)
+        self.assertOutputContains(expected_messages, result.output)
 
         get_playlists.assert_called_once_with()
         set_playlist.assert_has_calls(
@@ -121,18 +124,20 @@ class CommandGroupPushTests(CommandTestCase):
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
     def test_playlists(self, find, update, create_playlist):
-        p_one = Playlist(id=1, type="one", provider=None, limit=10)
-        p_two = Playlist(id=2, type="two", provider=None, limit=10)
+        p_one, p_two = PlaylistFixture.get(2)
         find.return_value = [p_one, p_two]
         create_playlist.side_effect = ["y1", "y2"]
         result = self.runner.invoke(
             cli, ["youtube", "push", "playlists"], catch_exceptions=False
         )
 
+        expected_messages = (
+            "Creating playlists",
+            "Playlist: {}".format(p_one.display_type),
+            "Playlist: {}".format(p_two.display_type),
+        )
         self.assertEqual(0, result.exit_code)
-        self.assertIn("Creating playlists", result.output)
-        self.assertIn("Playlist: {}".format(p_one.display_type), result.output)
-        self.assertIn("Playlist: {}".format(p_two.display_type), result.output)
+        self.assertOutputContains(expected_messages, result.output)
 
         create_playlist.assert_has_calls([mock.call(p_one), mock.call(p_two)])
         update.assert_has_calls(
@@ -163,23 +168,16 @@ class CommandGroupPushTests(CommandTestCase):
         create_playlist_item,
         remove_playlist_item,
     ):
-        tracks = {}
-        for ltr in "abcdef":
-            tracks[ltr] = Track(
-                artist=ltr, name="@%s" % ltr, youtube_id="$%s" % ltr
-            )
 
-        p_one = Playlist(
-            id=1, type="one", provider=None, limit=10, tracks=["a", "b", "c"]
+        tracks = TrackFixture.get(
+            6, youtube_id=["$a", "$b", "$c", "$d", "$e", "$f"]
         )
-        p_two = Playlist(
-            id=2, type="two", provider=None, limit=10, tracks=["d", "e", "f"]
+        p_one, p_two = PlaylistFixture.get(
+            2, tracks=[["id_a", "id_b", "id_c"], ["id_d", "id_e", "id_f"]]
         )
+
         find_playlists.return_value = [p_one, p_two]
-        find_tracks.side_effect = [
-            [tracks.get("a"), tracks.get("b"), tracks.get("c")],
-            [tracks.get("d"), tracks.get("e"), tracks.get("f")],
-        ]
+        find_tracks.side_effect = [tracks[:3], tracks[3:]]
 
         get_playlist_items.side_effect = [
             [PlaylistItem(1, "$a"), PlaylistItem(2, "$e")],
@@ -194,30 +192,29 @@ class CommandGroupPushTests(CommandTestCase):
             cli, ["youtube", "push", "tracks"], catch_exceptions=False
         )
 
+        expected_output = (
+            "Syncing playlists",
+            "Fetching playlist items: Type A",
+            "Adding new playlist items",
+            "Adding video: $b",
+            "Adding video: $c",
+            "Removing playlist items",
+            "Removing video: $e",
+            "Fetching playlist items: Type B",
+            "Playlist is already synced!",
+        )
+
         self.assertEqual(0, result.exit_code)
+        self.assertOutputContains(expected_output, result.output)
+
         get_playlist_items.assert_has_calls(
             [mock.call(p_one), mock.call(p_two)]
         )
 
         create_playlist_item.assert_has_calls(
             [
-                mock.call(p_one, tracks.get("b").youtube_id),
-                mock.call(p_one, tracks.get("c").youtube_id),
+                mock.call(p_one, tracks[1].youtube_id),
+                mock.call(p_one, tracks[2].youtube_id),
             ]
         )
         remove_playlist_item.assert_called_once_with(PlaylistItem(2, "$e"))
-
-        expected_output = (
-            "Syncing playlists",
-            "Fetching playlist items: One",
-            "Adding new playlist items",
-            "Adding video: $b",
-            "Adding video: $c",
-            "Removing playlist items",
-            "Removing video: $e",
-            "Fetching playlist items: Two",
-            "Playlist is already synced!",
-        )
-
-        for i, line in enumerate(result.output.strip().split("\n")):
-            self.assertIn(expected_output[i], line)

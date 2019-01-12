@@ -1,14 +1,15 @@
 import base64
-import copy
 import json
 from datetime import datetime
 
-import pydrag
+import attr
 
 from pytubefm.exceptions import NotFound
 from pytubefm.models import (
     Config,
     ConfigManager,
+    Document,
+    Manager,
     Playlist,
     PlaylistManager,
     Provider,
@@ -35,6 +36,7 @@ class PlaylistTests(TestCase):
             "uploaded": None,
             "tracks": [],
             "youtube_id": None,
+            "title": None,
         }
         modified = actual.pop("modified")
         self.assertDictEqual(expected, actual)
@@ -42,15 +44,18 @@ class PlaylistTests(TestCase):
             datetime.fromtimestamp(modified).strftime("%Y-%m-%d %H:%M"),
             datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
         )
-        self.assertEqual(
-            "eyJhcmd1bWVudHMiOiB7ImEiOiAxLCAiYiI6IDJ9LCAicHJvdmlkZXIiOiAiYmFyIiwgInR5cGUiOiAiZm9vIn0=",
-            playlist.mime,
+
+        expected = (
+            "eyJhcmd1bWVudHMiOiB7ImEiOiAxLCAiYiI6IDJ9LCAicHJvdmlk"
+            "ZXIiOiAiYmFyIiwgInR5cGUiOiAiZm9vIiwgImxpbWl0IjogMTB9"
         )
+        self.assertEqual(expected, playlist.mime)
 
         expected = {
             "arguments": {"a": 1, "b": 2},
             "provider": "bar",
             "type": "foo",
+            "limit": 10,
         }
         self.assertEqual(
             expected, json.loads(base64.b64decode(playlist.mime.encode()))
@@ -73,165 +78,113 @@ class ProviderTests(TestCase):
         self.assertEqual(Provider.lastfm.value, str(Provider.lastfm))
 
 
-class ConfigManagerTests(TestCase):
+@attr.s(auto_attribs=True)
+class Foo(Document):
+    id: str
+    value: int
+    keeper: str = attr.ib(default=None, metadata=dict(keep=True))
+
+
+class FooManager(Manager):
+    namespace = "foo"
+    key = "id"
+    model = Foo
+
+
+class ManagerTests(TestCase):
+    data = dict(id="a", value=1, keeper="keep")
+
     def test_get(self):
-        self.assertIsNone(ConfigManager.get("foo"))
+        with self.assertRaises(NotFound) as cm:
+            FooManager.get("bar")
+        self.assertEqual(
+            "No foo matched your argument: bar!", str(cm.exception)
+        )
 
-        data = {"data": {"a": 1}, "provider": "foo"}
-        Registry.set("provider_config_foo", data)
-        actual = ConfigManager.get("foo")
+        Registry.set("foo", "bar", self.data)
+        obj = FooManager.get("bar")
+        self.assertIsInstance(obj, FooManager.model)
+        self.assertDictEqual(self.data, obj.asdict())
 
-        self.assertIsInstance(actual, Config)
-        self.assertEqual(data, actual.asdict())
+    def test_set(self):
+        foo = FooManager.set(self.data)
+        self.assertIsInstance(foo, FooManager.model)
+        self.assertDictEqual(self.data, Registry.get("foo", "a"))
+        self.assertDictEqual(self.data, foo.asdict())
+
+        bar = FooManager.set(dict(id="a", value=1))
+        self.assertEqual(foo.asdict(), bar.asdict())
+
+        thug = FooManager.set(dict(id="a", value=1, keeper="peek"))
+        self.assertEqual("peek", thug.keeper)
 
     def test_update(self):
-        ConfigManager.update(dict(provider="foo", data=dict(a=1)))
-        expected = {"data": {"a": 1}, "provider": "foo"}
-        self.assertEqual(expected, Registry.get("provider_config_foo"))
+        foo = FooManager.set(self.data)
+        new_foo = FooManager.update(foo, dict(value=2))
+
+        self.assertIsNot(foo, new_foo)
+        self.assertIsInstance(new_foo, FooManager.model)
+
+        expected = dict(id="a", value=2, keeper="keep")
+        self.assertDictEqual(expected, Registry.get("foo", "a"))
+        self.assertDictEqual(expected, new_foo.asdict())
+
+    def test_remove(self):
+        Registry.set("foo", "bar", "dummy")
+        FooManager.remove("bar")
+        with self.assertRaises(NotFound) as cm:
+            FooManager.remove("bar")
+        self.assertEqual(
+            "No foo matched your argument: bar!", str(cm.exception)
+        )
+
+    def test_find(self):
+        a = FooManager.set(dict(id="a", value=1))
+        b = FooManager.set(dict(id="b", value=2))
+        c = FooManager.set(dict(id="c", value=2))
+        d = FooManager.set(dict(id="d", value=1))
+
+        self.assertEqual([a, b, c, d], FooManager.find())
+        self.assertEqual([b, c], FooManager.find(value=2))
+        self.assertEqual([c], FooManager.find(value=2, id="c"))
+        self.assertEqual([], FooManager.find(id="e"))
+
+
+class ConfigManagerTests(TestCase):
+    def test_class(self):
+        self.assertTrue(issubclass(ConfigManager, Manager))
+        self.assertEqual(Config, ConfigManager.model)
+        self.assertEqual("provider", ConfigManager.key)
+        self.assertEqual("configuration", ConfigManager.namespace)
 
 
 class PlaylistManagerTests(TestCase):
-    data = dict(
-        id="a",
-        type="foo",
-        provider="bar",
-        arguments=dict(a=1, b=2),
-        limit=10,
-        modified=11111111,
-        synced=2222222,
-        uploaded=333333,
-        tracks=[],
-        youtube_id=None,
-    )
+    def test_class(self):
+        self.assertTrue(issubclass(PlaylistManager, Manager))
+        self.assertEqual(Playlist, PlaylistManager.model)
+        self.assertEqual("id", PlaylistManager.key)
+        self.assertEqual("playlist", PlaylistManager.namespace)
 
-    def test_get(self):
-        with self.assertRaises(NotFound) as cm:
-            PlaylistManager.get("foo", "bar")
-        self.assertEqual("No such playlist id: bar!", str(cm.exception))
+    def test_update_sets_synced_if_tracks_are_updated(self):
+        playlist = PlaylistManager.set(
+            dict(id=1, type=None, provider=None, limit=10)
+        )
 
-        Registry.set("provider_playlists_foo", "bar", self.data)
-        playlist = PlaylistManager.get("foo", "bar")
-        self.assertIsInstance(playlist, Playlist)
-        self.assertDictEqual(self.data, playlist.asdict())
-
-    def test_set(self):
-        playlist = PlaylistManager.set(self.data)
-        self.assertIsInstance(playlist, Playlist)
-        self.assertDictEqual(self.data, playlist.asdict())
-
-        new_data = copy.deepcopy(self.data)
-        new_data.update(dict(synced=False, uploaded=False))
-
-        playlist = PlaylistManager.set(new_data)
-        self.assertIsInstance(playlist, Playlist)
-        self.assertDictEqual(self.data, playlist.asdict())
-
-    def test_find(self):
-        self.assertEqual([], PlaylistManager.find("bar"))
-
-        for i in range(0, 3):
-            data = copy.deepcopy(self.data)
-            data.update(dict(id=i))
-            PlaylistManager.set(data)
-
-        playlists = PlaylistManager.find("bar")
-        self.assertEqual(3, len(playlists))
-        self.assertEqual([0, 1, 2], [p.id for p in playlists])
-
-    def test_remove(self):
-        Registry.set("provider_playlists_foo", "bar", "dummy")
-        PlaylistManager.remove("foo", "bar")
-
-        with self.assertRaises(NotFound) as cm:
-            PlaylistManager.remove("foo", "bar")
-        self.assertEqual("No such playlist id: bar!", str(cm.exception))
-
-    def test_update(self):
-        playlist = PlaylistManager.set(self.data)
-        PlaylistManager.update(playlist, dict(limit=420, synced=None))
-        playlist = PlaylistManager.find(playlist.provider)[0]
-
-        self.assertEqual(420, playlist.limit)
-        self.assertIsNone(playlist.synced)
-
-        playlist = PlaylistManager.update(playlist, dict(tracks=[1, 2, 3]))
-        self.assertEqual([1, 2, 3], playlist.tracks)
-        self.assertIsNotNone(playlist.synced)
+        new = PlaylistManager.update(playlist, dict(tracks=[1, 2, 3]))
+        self.assertEqual(
+            datetime.fromtimestamp(new.synced).strftime("%Y-%m-%d %H:%M"),
+            datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
+        )
 
 
 class TrackManagerTests(TestCase):
-    def test_add(self):
-        def track(artist, name, duration):
-            return pydrag.Track.from_dict(
-                dict(artist=artist, name=name, duration=duration)
-            )
+    def test_class(self):
+        self.assertTrue(issubclass(TrackManager, Manager))
+        self.assertEqual(Track, TrackManager.model)
+        self.assertEqual("id", TrackManager.key)
+        self.assertEqual("track", TrackManager.namespace)
 
-        tracks = [
-            track("Queen", "Bohemian Rhapsody", 367),
-            track("Foo", "Bar", 166),
-        ]
-
-        TrackManager.add(tracks)
-        actual = Registry.get("tracks")
-        expected = {
-            "55a4d2b": {
-                "id": "55a4d2b",
-                "artist": "Queen",
-                "duration": 367,
-                "name": "Bohemian Rhapsody",
-                "url": None,
-            },
-            "8843d7f": {
-                "id": "8843d7f",
-                "artist": "Foo",
-                "duration": 166,
-                "name": "Bar",
-                "url": None,
-            },
-        }
-
-        self.assertEqual(expected, actual)
-
-    def test_find(self):
-        Registry.set(
-            "tracks",
-            {
-                "55a4d2b": {
-                    "id": "55a4d2b",
-                    "artist": "Queen",
-                    "duration": 367,
-                    "name": "Bohemian Rhapsody",
-                    "url": None,
-                },
-                "8843d7f": {
-                    "id": "8843d7f",
-                    "artist": "Foo",
-                    "duration": 166,
-                    "name": "Bar",
-                    "url": None,
-                },
-            },
-        )
-
-        tracks = TrackManager.find(["55a4d2b", "8843d7f"])
-        self.assertEqual(2, len(tracks))
-        for track in tracks:
-            self.assertIsInstance(track, Track)
-
-    def test_remove(self):
-        Registry.set(
-            "tracks",
-            {
-                "55a4d2b": {
-                    "id": "55a4d2b",
-                    "artist": "Queen",
-                    "duration": 367,
-                    "name": "Bohemian Rhapsody",
-                    "url": None,
-                }
-            },
-        )
-
-        self.assertEqual(1, len(TrackManager.find(["55a4d2b"])))
-        TrackManager.remove("55a4d2b")
-        TrackManager.remove("55a4d2b")  # Doesn't raise an exception
+    def test_find_youtube_id(self):
+        Registry.set("track", "a", "youtube_id", 1)
+        self.assertEqual(1, TrackManager.find_youtube_id("a"))
+        self.assertIsNone(TrackManager.find_youtube_id("b"))

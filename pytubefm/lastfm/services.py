@@ -4,6 +4,7 @@ from typing import List
 import click
 from pydrag import Artist, Tag, Track, User, configure, constants
 
+from pytubefm.exceptions import NotFound
 from pytubefm.lastfm.models import PlaylistType
 from pytubefm.models import ConfigManager, Provider
 from pytubefm.storage import Registry
@@ -145,6 +146,6 @@ class LastService:
         try:
             config = ConfigManager.get(Provider.lastfm)
             configure(api_key=config.data["api_key"])
-        except (KeyError, AttributeError):
+        except NotFound:
             click.secho("Run setup to configure last.fm services")
             raise click.Abort()

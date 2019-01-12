@@ -221,7 +221,7 @@ class LastServiceTests(TestCase):
             "Run setup to configure last.fm services"
         )
 
-        ConfigManager.update(
+        ConfigManager.set(
             dict(provider=Provider.lastfm, data=dict(api_key="aaa"))
         )
         LastService.assert_config()

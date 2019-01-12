@@ -1,27 +1,16 @@
 import base64
+import contextlib
 import enum
 import hashlib
 import json
 import re
-from contextlib import suppress
-from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Type
 
 import attr
-import pydrag
 
 from pytubefm.exceptions import NotFound
 from pytubefm.storage import Registry
-
-
-def timestamp():
-    return int(datetime.utcnow().strftime("%s"))
-
-
-def date(timestamp: int):
-    if not timestamp:
-        return "-"
-    return datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+from pytubefm.utils import timestamp
 
 
 class Provider(enum.Enum):
@@ -47,9 +36,9 @@ class Config(Document):
 class Track(Document):
     artist: str = attr.ib()
     name: str = attr.ib()
-    duration: int = attr.ib()
     id: str = attr.ib()
-    url: str = attr.ib()
+    duration: int = attr.ib(default=None)
+    youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
 
     @id.default
     def generate_id(self):
@@ -59,24 +48,20 @@ class Track(Document):
             ).encode("utf-8")
         ).hexdigest()[:7]
 
-    @url.default
-    def generate_url(self):
-        with suppress(NotFound):
-            self.url = TrackManager.get(self.id).url
-
 
 @attr.s
 class Playlist(Document):
     type: str = attr.ib(converter=str)
     provider: str = attr.ib(converter=str)
-    limit: int = attr.ib(converter=int, cmp=False)
+    limit: int = attr.ib(converter=int, default=100)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib()
-    youtube_id = attr.ib(default=None)
-    tracks: List[str] = attr.ib(factory=list)
-    modified: int = attr.ib(factory=timestamp, cmp=False)
-    synced: int = attr.ib(default=None, cmp=False)
-    uploaded: int = attr.ib(default=None, cmp=False)
+    title: str = attr.ib(default=None)
+    youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
+    tracks: List[str] = attr.ib(factory=list, metadata=dict(keep=True))
+    modified: int = attr.ib(factory=timestamp)
+    synced: int = attr.ib(default=None, metadata=dict(keep=True))
+    uploaded: int = attr.ib(default=None, metadata=dict(keep=True))
 
     @id.default
     def generate_id(self):
@@ -95,117 +80,126 @@ class Playlist(Document):
             json.dumps(
                 {
                     field: getattr(self, field)
-                    for field in ["arguments", "provider", "type"]
+                    for field in ["arguments", "provider", "type", "limit"]
                 }
             ).encode()
         ).decode("utf-8")
 
+    @classmethod
+    def from_mime(cls, mime):
+        with contextlib.suppress(Exception):
+            return cls(**json.loads(base64.b64decode(mime)))
+        return None
 
-class ConfigManager:
-    key = "provider_config_%s"
+    @property
+    def display_type(self):
+        return (
+            self.title if self.title else self.type.replace("_", " ").title()
+        )
+
+    @property
+    def display_arguments(self):
+        return ", ".join(
+            ["{}: {}".format(k, v) for k, v in self.arguments.items()]
+        )
+
+
+class Manager:
+    namespace: str
+    model: Type
+    key: str
 
     @classmethod
-    def get(cls, provider: Provider):
+    def get(cls, key, **kwargs):
+        with contextlib.suppress(KeyError):
+            data = Registry.get(cls.namespace, str(key), **kwargs)
+            with contextlib.suppress(TypeError):
+                return cls.model(**data)
+            return data
+
+        raise NotFound(
+            "No {} matched your argument: {}!".format(cls.namespace, key)
+        )
+
+    @classmethod
+    def set(cls, data: Dict):
+        obj = cls.model(**data)
+        key = getattr(obj, cls.key)
+
+        with contextlib.suppress(KeyError):
+            data = Registry.get(cls.namespace, key)
+            for field in attr.fields(cls.model):
+                if field.metadata.get("keep") and not getattr(obj, field.name):
+                    setattr(obj, field.name, data.get(field.name))
+
+        Registry.set(cls.namespace, key, obj.asdict())
+        return obj
+
+    @classmethod
+    def update(cls, obj, data: Dict):
+        new = attr.evolve(obj, **data)
+        key = getattr(new, cls.key)
+        Registry.set(cls.namespace, key, new.asdict())
+        return new
+
+    @classmethod
+    def remove(cls, key):
         try:
-            key = cls.key % provider
-            data = Registry.get(key)
-            return Config(**data)
+            Registry.remove(cls.namespace, key)
         except KeyError:
-            return None
+            raise NotFound(
+                "No {} matched your argument: {}!".format(cls.namespace, key)
+            )
 
     @classmethod
-    def update(cls, data: Dict):
-        key = cls.key % data["provider"]
-        config = Config(**data)
-        Registry.set(key, config.asdict())
+    def find(cls, **kwargs):
+        def match(data, conditions):
+            with contextlib.suppress(Exception):
+                for k, v in conditions.items():
+                    value = data.get(k)
+                    if callable(v):
+                        assert v(value)
+                    elif v is None:
+                        assert value is None
+                    else:
+                        assert type(value)(v) == value
+                return True
+            return False
+
+        return [
+            cls.model(**raw)
+            for raw in Registry.get(cls.namespace, default={}).values()
+            if match(raw, kwargs)
+        ]
 
 
-class PlaylistManager:
-    key = "provider_playlists_%s"
+class ConfigManager(Manager):
+    namespace = "configuration"
+    key = "provider"
+    model = Config
 
-    @classmethod
-    def get(cls, provider: Provider, id: str):
-        try:
-            key = cls.key % provider
-            data = Registry.get(key, id)
-            return Playlist(**data)
-        except KeyError:
-            raise NotFound("No such playlist id: {}!".format(id))
 
-    @classmethod
-    def set(cls, data):
-        playlist = Playlist(**data)
-        try:
-            exist = cls.get(playlist.provider, playlist.id)
-            playlist.synced = exist.synced
-            playlist.uploaded = exist.uploaded
-        except NotFound:
-            pass
-        key = cls.key % playlist.provider
-        Registry.set(key, playlist.id, playlist.asdict())
-        History.set(data)
-        return playlist
-
-    @classmethod
-    def remove(cls, provider: Provider, id: str):
-        try:
-            key = cls.key % provider
-            Registry.remove(key, id)
-        except KeyError:
-            raise NotFound("No such playlist id: {}!".format(id))
+class PlaylistManager(Manager):
+    namespace = "playlist"
+    key = "id"
+    model = Playlist
 
     @classmethod
-    def update(cls, playlist: Playlist, data: Dict):
-
+    def update(cls, obj, data: Dict):
         if len(data.get("tracks", [])) > 0:
             data["synced"] = timestamp()
 
-        playlist = attr.evolve(playlist, **data)
-        key = cls.key % playlist.provider
-        Registry.set(key, playlist.id, playlist.asdict())
-        return playlist
+        return super().update(obj, data)
+
+
+class TrackManager(Manager):
+    namespace = "track"
+    key = "id"
+    model = Track
 
     @classmethod
-    def find(cls, provider: Provider):
-        key = cls.key % provider
-        entries = Registry.get(key, default={})
-        return [Playlist(**entry) for entry in entries.values()]
-
-
-class TrackManager:
-    key = "tracks"
-
-    @classmethod
-    def get(cls, id: str):
-        try:
-            data = Registry.get(cls.key, id)
-            return Track(**data)
-        except KeyError:
-            raise NotFound("No such track id: {}!".format(id))
-
-    @classmethod
-    def add(cls, tracks: List[pydrag.Track]):
-        track_ids = []
-        for entry in tracks:
-            track = Track(
-                artist=entry.artist.name,
-                name=entry.name,
-                duration=entry.duration,
-            )
-            track_ids.append(track.id)
-            Registry.set(cls.key, track.id, track.asdict())
-        return track_ids
-
-    @classmethod
-    def find(cls, ids):
-        return [cls.get(id) for id in ids]
-
-    @classmethod
-    def remove(cls, id: str):
-        try:
-            Registry.remove(cls.key, id)
-        except KeyError:
-            pass
+    def find_youtube_id(cls, id: str):
+        return Registry.get(cls.namespace, id, "youtube_id", default=None)
 
 
 class History:

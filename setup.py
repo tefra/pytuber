@@ -17,9 +17,9 @@ if __name__ == "__main__":
             "pydrag == 18.1",
             "attrs == 18.2.0",
             "tabulate == 0.8.2",
-            "google-api-python-client == 1.7.6",
-            "google-auth == 1.6.1",
-            "google-auth-httplib2 == 0.0.3",
+            "yaspin == 0.14.0",
+            "google-api-python-client == 1.7.7",
+            "google-auth == 1.6.2",
             "google-auth-oauthlib == 0.2.0",
         ],
         extras_require={

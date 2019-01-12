@@ -4,16 +4,16 @@ from unittest import mock
 import pydrag
 from pydrag import Tag
 
-from pytubefm import cli
-from pytubefm.lastfm.models import PlaylistType, UserPlaylistType
-from pytubefm.lastfm.params import (
+from pytuber import cli
+from pytuber.lastfm.models import PlaylistType, UserPlaylistType
+from pytuber.lastfm.params import (
     ArtistParamType,
     CountryParamType,
     TagParamType,
     UserParamType,
 )
-from pytubefm.lastfm.services import LastService
-from pytubefm.models import (
+from pytuber.lastfm.services import LastService
+from pytuber.models import (
     ConfigManager,
     Playlist,
     PlaylistManager,
@@ -21,7 +21,7 @@ from pytubefm.models import (
     Track,
     TrackManager,
 )
-from pytubefm.storage import Registry
+from pytuber.storage import Registry
 from tests.utils import CommandTestCase
 
 playlist = namedtuple("Playlist", ["id", "synced"])

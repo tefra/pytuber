@@ -6,7 +6,7 @@ from unittest import mock
 
 from click.testing import CliRunner
 
-from pytubefm.storage import Registry
+from pytuber.storage import Registry
 
 here = os.path.abspath(os.path.dirname(__file__))
 

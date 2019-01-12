@@ -6,10 +6,10 @@ import click
 from pydrag import Artist, Tag, Track, User, constants
 from pydrag.models.common import ListModel
 
-from pytubefm.lastfm.models import PlaylistType
-from pytubefm.lastfm.services import LastService
-from pytubefm.models import ConfigManager, Provider
-from pytubefm.storage import Registry
+from pytuber.lastfm.models import PlaylistType
+from pytuber.lastfm.services import LastService
+from pytuber.models import ConfigManager, Provider
+from pytuber.storage import Registry
 from tests.utils import TestCase
 
 
@@ -145,7 +145,7 @@ class LastServiceTests(TestCase):
         get_top_tracks.assert_called_once_with(limit=10)
 
     @mock.patch.object(LastService, "assert_config")
-    @mock.patch("pytubefm.storage.time.time")
+    @mock.patch("pytuber.storage.time.time")
     @mock.patch.object(Tag, "get_top_tags")
     def test_get_tags(self, get_top_tags, time, assert_config):
         time.return_value = 1
@@ -176,7 +176,7 @@ class LastServiceTests(TestCase):
         assert_config.assert_called_once()
 
     @mock.patch.object(LastService, "assert_config")
-    @mock.patch("pytubefm.storage.time.time")
+    @mock.patch("pytuber.storage.time.time")
     @mock.patch.object(Artist, "find")
     def test_get_artist(self, find, time, assert_config):
         time.return_value = 1
@@ -195,7 +195,7 @@ class LastServiceTests(TestCase):
         assert_config.assert_called_once()
 
     @mock.patch.object(LastService, "assert_config")
-    @mock.patch("pytubefm.storage.time.time")
+    @mock.patch("pytuber.storage.time.time")
     @mock.patch.object(User, "find")
     def test_get_user(self, find, time, assert_config):
         time.return_value = 1
@@ -212,7 +212,7 @@ class LastServiceTests(TestCase):
         self.assertEqual(timedelta(hours=24, seconds=1).total_seconds(), ttl)
         assert_config.assert_called_once()
 
-    @mock.patch("pytubefm.lastfm.services.configure")
+    @mock.patch("pytuber.lastfm.services.configure")
     @mock.patch.object(click, "secho")
     def test_assert_config(self, secho, configure):
         with self.assertRaises(click.Abort):

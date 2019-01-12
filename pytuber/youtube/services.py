@@ -3,9 +3,9 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from pytubefm.exceptions import NotFound
-from pytubefm.models import ConfigManager, Playlist, Provider, Track
-from pytubefm.youtube.models import PlaylistItem
+from pytuber.exceptions import NotFound
+from pytuber.models import ConfigManager, Playlist, Provider, Track
+from pytuber.youtube.models import PlaylistItem
 
 
 class YouService:

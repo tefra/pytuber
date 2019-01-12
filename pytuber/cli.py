@@ -3,9 +3,9 @@ import os
 import click
 from click import Context
 
-from pytubefm.lastfm.commands import lastfm
-from pytubefm.storage import Registry
-from pytubefm.youtube.commands import youtube
+from pytuber.lastfm.commands import lastfm
+from pytuber.storage import Registry
+from pytuber.youtube.commands import youtube
 
 
 @click.group()
@@ -13,7 +13,7 @@ from pytubefm.youtube.commands import youtube
 def cli(ctx: Context):
     """Create and upload youtube playlists from various sources like
     last.fm."""
-    cfg = os.path.join(click.get_app_dir("pytubefm", False), "storage.db")
+    cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
 
     Registry.from_file(cfg)
     ctx.call_on_close(lambda: Registry.persist(cfg))

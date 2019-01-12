@@ -4,9 +4,9 @@ import click
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from pytubefm.models import ConfigManager, Playlist, Track
-from pytubefm.youtube.models import PlaylistItem
-from pytubefm.youtube.services import YouService
+from pytuber.models import ConfigManager, Playlist, Track
+from pytuber.youtube.models import PlaylistItem
+from pytuber.youtube.services import YouService
 from tests.utils import TestCase
 
 
@@ -168,7 +168,7 @@ class YouServiceTests(TestCase):
         delete.assert_called_once_with(id=item.id)
 
     @mock.patch.object(click, "secho")
-    @mock.patch("pytubefm.youtube.services.build")
+    @mock.patch("pytuber.youtube.services.build")
     @mock.patch.object(Credentials, "from_authorized_user_info")
     def test_get_client(self, get_user_info, build, secho):
         with self.assertRaises(click.Abort):

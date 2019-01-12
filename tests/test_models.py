@@ -4,8 +4,8 @@ from datetime import datetime
 
 import attr
 
-from pytubefm.exceptions import NotFound
-from pytubefm.models import (
+from pytuber.exceptions import NotFound
+from pytuber.models import (
     Config,
     ConfigManager,
     Document,
@@ -16,7 +16,7 @@ from pytubefm.models import (
     Track,
     TrackManager,
 )
-from pytubefm.storage import Registry
+from pytuber.storage import Registry
 from tests.utils import TestCase
 
 

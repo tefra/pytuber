@@ -1,13 +1,13 @@
 import click
 
-from pytubefm.models import (
+from pytuber.models import (
     ConfigManager,
     PlaylistManager,
     Provider,
     TrackManager,
 )
-from pytubefm.utils import spinner
-from pytubefm.youtube.services import YouService
+from pytuber.utils import spinner
+from pytuber.youtube.services import YouService
 
 
 @click.group("youtube")
@@ -22,7 +22,7 @@ def setup(client_secrets: str) -> None:
     Configure your youtube api credentials.
 
     Create a project in the Google Developers Console and obtain
-    authorization credentials so pytubefm can submit API requests.
+    authorization credentials so pytuber can submit API requests.
     Download your `config_secret.json` and pass the path as an argument
     to this method
     """

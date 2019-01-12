@@ -5,22 +5,22 @@ from typing import Optional, Tuple
 import click
 from tabulate import tabulate
 
-from pytubefm.lastfm.models import PlaylistType, UserPlaylistType
-from pytubefm.lastfm.params import (
+from pytuber.lastfm.models import PlaylistType, UserPlaylistType
+from pytuber.lastfm.params import (
     ArtistParamType,
     CountryParamType,
     TagParamType,
     UserParamType,
 )
-from pytubefm.lastfm.services import LastService
-from pytubefm.models import (
+from pytuber.lastfm.services import LastService
+from pytuber.models import (
     ConfigManager,
     History,
     PlaylistManager,
     Provider,
     TrackManager,
 )
-from pytubefm.utils import date
+from pytuber.utils import date
 
 
 @click.group()
@@ -42,7 +42,7 @@ def setup(api_key: str) -> None:
     Configure your last.fm api account.
 
     Signup for a last.fm api account and use your api key in order to
-    use last.fm as a playlists source for pytubefm.
+    use last.fm as a playlists source for pytuber.
     """
 
     if ConfigManager.get(Provider.lastfm, default=None):

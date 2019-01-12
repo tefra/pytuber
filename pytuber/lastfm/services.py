@@ -4,10 +4,10 @@ from typing import List
 import click
 from pydrag import Artist, Tag, Track, User, configure, constants
 
-from pytubefm.exceptions import NotFound
-from pytubefm.lastfm.models import PlaylistType
-from pytubefm.models import ConfigManager, Provider
-from pytubefm.storage import Registry
+from pytuber.exceptions import NotFound
+from pytuber.lastfm.models import PlaylistType
+from pytuber.models import ConfigManager, Provider
+from pytuber.storage import Registry
 
 
 class LastService:

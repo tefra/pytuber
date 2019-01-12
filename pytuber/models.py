@@ -8,9 +8,9 @@ from typing import Dict, List, Type
 
 import attr
 
-from pytubefm.exceptions import NotFound
-from pytubefm.storage import Registry
-from pytubefm.utils import timestamp
+from pytuber.exceptions import NotFound
+from pytuber.storage import Registry
+from pytuber.utils import timestamp
 
 
 class Provider(enum.Enum):

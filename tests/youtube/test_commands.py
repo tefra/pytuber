@@ -2,8 +2,8 @@ from unittest import mock
 
 from google.oauth2.credentials import Credentials
 
-from pytubefm import cli
-from pytubefm.models import (
+from pytuber import cli
+from pytuber.models import (
     ConfigManager,
     Playlist,
     PlaylistManager,
@@ -11,8 +11,8 @@ from pytubefm.models import (
     Track,
     TrackManager,
 )
-from pytubefm.youtube.models import PlaylistItem
-from pytubefm.youtube.services import YouService
+from pytuber.youtube.models import PlaylistItem
+from pytuber.youtube.services import YouService
 from tests.utils import CommandTestCase
 
 

@@ -1,7 +1,7 @@
 import click
 
-from pytubefm.iso3166 import countries
-from pytubefm.lastfm.services import LastService
+from pytuber.iso3166 import countries
+from pytuber.lastfm.services import LastService
 
 
 class CountryParamType(click.ParamType):

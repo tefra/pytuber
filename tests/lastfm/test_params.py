@@ -6,13 +6,13 @@ import click
 from click import BadParameter
 from pydrag import Artist, Tag
 
-from pytubefm.lastfm.params import (
+from pytuber.lastfm.params import (
     ArtistParamType,
     CountryParamType,
     TagParamType,
     UserParamType,
 )
-from pytubefm.lastfm.services import LastService
+from pytuber.lastfm.services import LastService
 
 
 class CountryParamTypeTests(TestCase):

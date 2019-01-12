@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 here = os.path.abspath(os.path.dirname(__file__))
 
 meta = dict()  # type: dict
-with open(os.path.join(here, "pytubefm", "version.py"), encoding="utf-8") as f:
+with open(os.path.join(here, "pytuber", "version.py"), encoding="utf-8") as f:
     exec(f.read(), meta)
 
 if __name__ == "__main__":
@@ -26,5 +26,5 @@ if __name__ == "__main__":
             "dev": ["pre-commit", "pytest", "pytest-cov", "codecov", "tox"],
             "docs": ["sphinx", "sphinx-rtd-theme", "sphinx-autodoc-typehints"],
         },
-        entry_points={"console_scripts": ["pytubefm=pytubefm:cli"]},
+        entry_points={"console_scripts": ["pytuber=pytuber:cli"]},
     )

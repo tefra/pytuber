@@ -24,7 +24,12 @@ if __name__ == "__main__":
         ],
         extras_require={
             "dev": ["pre-commit", "pytest", "pytest-cov", "codecov", "tox"],
-            "docs": ["sphinx", "sphinx-rtd-theme", "sphinx-autodoc-typehints"],
+            "docs": [
+                "sphinx",
+                "sphinx-click",
+                "sphinx-rtd-theme",
+                "sphinx-autodoc-typehints",
+            ],
         },
         entry_points={"console_scripts": ["pytuber=pytuber:cli"]},
     )

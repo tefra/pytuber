@@ -4,7 +4,6 @@ from typing import List
 import click
 from pydrag import Artist, Tag, Track, User, configure, constants
 
-from pytuber.exceptions import NotFound
 from pytuber.lastfm.models import PlaylistType
 from pytuber.models import ConfigManager, Provider
 from pytuber.storage import Registry
@@ -138,14 +137,6 @@ class LastService:
 
     @classmethod
     def assert_config(cls):
-        """
-        Assert last.fm configuration exists.
-
-        :raises :exc:`click.Abort`
-        """
-        try:
-            config = ConfigManager.get(Provider.lastfm)
-            configure(api_key=config.data["api_key"])
-        except NotFound:
-            click.secho("Run setup to configure last.fm services")
-            raise click.Abort()
+        """Assert last.fm configuration exists."""
+        config = ConfigManager.get(Provider.lastfm)
+        configure(api_key=config.data["api_key"])

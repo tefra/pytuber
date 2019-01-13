@@ -2,10 +2,10 @@ from collections import namedtuple
 from datetime import timedelta
 from unittest import mock
 
-import click
 from pydrag import Artist, Tag, Track, User, constants
 from pydrag.models.common import ListModel
 
+from pytuber.exceptions import NotFound
 from pytuber.lastfm.models import PlaylistType
 from pytuber.lastfm.services import LastService
 from pytuber.models import ConfigManager, Provider
@@ -213,13 +213,9 @@ class LastServiceTests(TestCase):
         assert_config.assert_called_once()
 
     @mock.patch("pytuber.lastfm.services.configure")
-    @mock.patch.object(click, "secho")
-    def test_assert_config(self, secho, configure):
-        with self.assertRaises(click.Abort):
+    def test_assert_config(self, configure):
+        with self.assertRaises(NotFound):
             LastService.assert_config()
-        secho.assert_called_once_with(
-            "Run setup to configure last.fm services"
-        )
 
         ConfigManager.set(
             dict(provider=Provider.lastfm, data=dict(api_key="aaa"))

@@ -1,9 +1,9 @@
 from unittest import mock
 
-import click
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
+from pytuber.exceptions import NotFound
 from pytuber.models import ConfigManager
 from pytuber.youtube.models import PlaylistItem
 from pytuber.youtube.services import YouService
@@ -165,14 +165,11 @@ class YouServiceTests(TestCase):
         self.assertEqual("foo", YouService.remove_playlist_item(item))
         delete.assert_called_once_with(id=item.id)
 
-    @mock.patch.object(click, "secho")
     @mock.patch("pytuber.youtube.services.build")
     @mock.patch.object(Credentials, "from_authorized_user_info")
-    def test_get_client(self, get_user_info, build, secho):
-        with self.assertRaises(click.Abort):
+    def test_get_client(self, get_user_info, build):
+        with self.assertRaises(NotFound):
             YouService.get_client()
-
-        secho.assert_called_once_with("Run setup to configure youtube client")
 
         ConfigManager.set(data=dict(provider="youtube", data="foo"))
         get_user_info.return_value = "creds"

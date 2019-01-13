@@ -1,9 +1,7 @@
-import click
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from pytuber.exceptions import NotFound
 from pytuber.models import ConfigManager, Playlist, Provider, Track
 from pytuber.youtube.models import PlaylistItem
 
@@ -120,13 +118,9 @@ class YouService:
     @classmethod
     def get_client(cls):
         if not cls.client:
-            try:
-                info = ConfigManager.get(Provider.youtube).data
-                credentials = Credentials.from_authorized_user_info(
-                    info, scopes=cls.scopes
-                )
-            except NotFound:
-                click.secho("Run setup to configure youtube client")
-                raise click.Abort()
+            info = ConfigManager.get(Provider.youtube).data
+            credentials = Credentials.from_authorized_user_info(
+                info, scopes=cls.scopes
+            )
             cls.client = build("youtube", "v3", credentials=credentials)
         return cls.client

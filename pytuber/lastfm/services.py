@@ -11,13 +11,12 @@ from pytuber.storage import Registry
 
 class LastService:
     @classmethod
-    def get_tracks(cls, type, limit, **kwargs):
+    def get_tracks(cls, type, **kwargs):
         """
         Retrieve from last.fm  a tracks list by the playlist type and
         arguments.
 
         :param str type: The playlist type
-        :param int limit: The limit to be applied
         :param dict kwargs: The playlist arguments like username, country, artist
         :rtype: :class:`list` of :class:`~pydrag.Track`
         """
@@ -25,31 +24,33 @@ class LastService:
         ptype = PlaylistType(type)
         if ptype == PlaylistType.USER_LOVED_TRACKS:
             user = cls.get_user(kwargs["username"])
-            return user.get_loved_tracks(limit=limit).data
+            return user.get_loved_tracks(limit=kwargs["limit"]).data
         elif ptype == PlaylistType.USER_RECENT_TRACKS:
             user = cls.get_user(kwargs["username"])
-            return user.get_recent_tracks(limit=limit).data
+            return user.get_recent_tracks(limit=kwargs["limit"]).data
         elif ptype == PlaylistType.USER_TOP_TRACKS:
             user = cls.get_user(kwargs["username"])
             return user.get_top_tracks(
-                period=constants.Period.overall, limit=limit
+                period=constants.Period.overall, limit=kwargs["limit"]
             ).data
         elif ptype == PlaylistType.USER_FRIENDS_RECENT_TRACKS:
             user = cls.get_user(kwargs["username"])
-            friends = user.get_friends(limit=limit, recent_tracks=True)
+            friends = user.get_friends(
+                limit=kwargs["limit"], recent_tracks=True
+            )
             return [f.recent_track for f in friends if f.recent_track]
         elif ptype == PlaylistType.CHART:
-            return Track.get_top_tracks_chart(limit=limit).data
+            return Track.get_top_tracks_chart(limit=kwargs["limit"]).data
         elif ptype == PlaylistType.COUNTRY:
             return Track.get_top_tracks_by_country(
-                country=kwargs["country"], limit=limit
+                country=kwargs["country"], limit=kwargs["limit"]
             ).data
         elif ptype == PlaylistType.TAG:
             tag = cls.get_tag(kwargs["tag"])
-            return tag.get_top_tracks(limit=limit).data
+            return tag.get_top_tracks(limit=kwargs["limit"]).data
         elif ptype == PlaylistType.ARTIST:
             artist = cls.get_artist(kwargs["artist"])
-            return artist.get_top_tracks(limit=limit).data
+            return artist.get_top_tracks(limit=kwargs["limit"]).data
 
     @classmethod
     def get_tags(cls, refresh=False) -> List[Tag]:

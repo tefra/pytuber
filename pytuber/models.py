@@ -36,7 +36,7 @@ class Config(Document):
 class Track(Document):
     artist: str = attr.ib()
     name: str = attr.ib()
-    id: str = attr.ib()
+    id: str = attr.ib(default=None)
     duration: int = attr.ib(default=None)
     youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
 
@@ -55,7 +55,6 @@ class Track(Document):
 class Playlist(Document):
     type: str = attr.ib(converter=str)
     provider: str = attr.ib(converter=str)
-    limit: int = attr.ib(converter=int, default=100)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib(default=None)
     title: str = attr.ib(default=None)
@@ -82,7 +81,7 @@ class Playlist(Document):
             json.dumps(
                 {
                     field: getattr(self, field)
-                    for field in ["arguments", "provider", "type", "limit"]
+                    for field in ["arguments", "provider", "type"]
                 }
             ).encode()
         ).decode("utf-8")

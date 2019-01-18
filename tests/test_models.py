@@ -27,7 +27,6 @@ class PlaylistTests(TestCase):
         expected = {
             "type": "type_a",
             "provider": "provider_a",
-            "limit": 100,
             "arguments": {"a": 0},
             "id": "id_a",
             "title": None,
@@ -44,14 +43,13 @@ class PlaylistTests(TestCase):
         )
 
         expected = (
-            "eyJhcmd1bWVudHMiOiB7ImEiOiAwfSwgInByb3ZpZGVyIjogInByb3"
-            "ZpZGVyX2EiLCAidHlwZSI6ICJ0eXBlX2EiLCAibGltaXQiOiAxMDB9"
+            "eyJhcmd1bWVudHMiOiB7ImEiOiAwfSwgInByb3ZpZGVyIj"
+            "ogInByb3ZpZGVyX2EiLCAidHlwZSI6ICJ0eXBlX2EifQ=="
         )
         self.assertEqual(expected, playlist.mime)
 
         expected = {
             "arguments": {"a": 0},
-            "limit": 100,
             "provider": "provider_a",
             "type": "type_a",
         }
@@ -164,9 +162,7 @@ class PlaylistManagerTests(TestCase):
         self.assertEqual("playlist", PlaylistManager.namespace)
 
     def test_update_sets_synced_if_tracks_are_updated(self):
-        playlist = PlaylistManager.set(
-            dict(id=1, type=None, provider=None, limit=10)
-        )
+        playlist = PlaylistManager.set(dict(id=1, type=None, provider=None))
 
         new = PlaylistManager.update(playlist, dict(tracks=[1, 2, 3]))
         self.assertEqual(

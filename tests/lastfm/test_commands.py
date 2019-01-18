@@ -81,7 +81,7 @@ class CommandAddTests(CommandTestCase):
             "[4] user_friends_recent_tracks",
             "Select a playlist type 1-4: 2",
             "Maximum tracks [50]: 50",
-            "Optional Title: My Favorite  ",
+            "Title: My Favorite  ",
             "Added playlist: id_a!",
         )
         self.assertEqual(0, result.exit_code)
@@ -90,8 +90,7 @@ class CommandAddTests(CommandTestCase):
             dict(
                 type=UserPlaylistType.USER_TOP_TRACKS,
                 provider=Provider.lastfm,
-                arguments=dict(username="bbb"),
-                limit=50,
+                arguments=dict(limit=50, username="bbb"),
                 title="My Favorite",
             )
         )
@@ -105,7 +104,7 @@ class CommandAddTests(CommandTestCase):
 
         expected_output = (
             "Maximum tracks [50]: 50",
-            "Optional Title:  ",
+            "Title:  ",
             "Added playlist: id_a!",
         )
         self.assertEqual(0, result.exit_code)
@@ -115,7 +114,7 @@ class CommandAddTests(CommandTestCase):
             dict(
                 type=PlaylistType.CHART,
                 provider=Provider.lastfm,
-                limit=50,
+                arguments=dict(limit=50),
                 title="",
             )
         )
@@ -132,7 +131,7 @@ class CommandAddTests(CommandTestCase):
         expected_output = (
             "Country Code: gr",
             "Maximum tracks [50]: 50",
-            "Optional Title:  ",
+            "Title:  ",
             "Added playlist: id_a!",
         )
         self.assertEqual(0, result.exit_code)
@@ -141,8 +140,7 @@ class CommandAddTests(CommandTestCase):
             dict(
                 type=PlaylistType.COUNTRY,
                 provider=Provider.lastfm,
-                arguments=dict(country="greece"),
-                limit=50,
+                arguments=dict(limit=50, country="greece"),
                 title="",
             )
         )
@@ -159,7 +157,7 @@ class CommandAddTests(CommandTestCase):
         expected_output = (
             "Tag: rock",
             "Maximum tracks [50]: 50",
-            "Optional Title:  ",
+            "Title:  ",
             "Updated playlist: id_a!",
         )
         self.assertEqual(0, result.exit_code)
@@ -168,8 +166,7 @@ class CommandAddTests(CommandTestCase):
             dict(
                 type=PlaylistType.TAG,
                 provider=Provider.lastfm,
-                arguments=dict(tag="rock"),
-                limit=50,
+                arguments=dict(limit=50, tag="rock"),
                 title="",
             )
         )
@@ -189,7 +186,7 @@ class CommandAddTests(CommandTestCase):
         expected_output = (
             "Artist: Queen",
             "Maximum tracks [50]: 50",
-            "Optional Title: Queen....",
+            "Title: Queen....",
             "Added playlist: id_a!",
         )
         self.assertEqual(0, result.exit_code)
@@ -198,8 +195,7 @@ class CommandAddTests(CommandTestCase):
             dict(
                 type=PlaylistType.ARTIST,
                 provider=Provider.lastfm,
-                arguments=dict(artist="Queen"),
-                limit=50,
+                arguments=dict(limit=50, artist="Queen"),
                 title="Queen....",
             )
         )
@@ -241,7 +237,6 @@ class CommandListPlaylistsTests(CommandTestCase):
     def test_list_without_id(self, find):
         find.return_value = PlaylistFixture.get(
             2,
-            limit=[10, 15],
             youtube_id=["456ybnm", None],
             modified=[1546727685, None],
             synced=[None, 1546727285],
@@ -250,10 +245,10 @@ class CommandListPlaylistsTests(CommandTestCase):
         result = self.runner.invoke(cli, ["lastfm", "list"])
 
         expected_output = (
-            "ID    YoutubeID    Title    Arguments      Limit  Modified          Synced            Uploaded",
-            "----  -----------  -------  -----------  -------  ----------------  ----------------  ----------------",
-            "id_a  456ybnm      Type A   a: 0              10  2019-01-05 22:34  -                 -",
-            "id_b               Type B   b: 1              15  -                 2019-01-05 22:28  2019-01-05 22:29",
+            "ID    YoutubeID    Title    Arguments    Modified          Synced            Uploaded",
+            "----  -----------  -------  -----------  ----------------  ----------------  ----------------",
+            "id_a  456ybnm      Type A   a: 0         2019-01-05 22:34  -                 -",
+            "id_b               Type B   b: 1         -                 2019-01-05 22:28  2019-01-05 22:29",
         )
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
@@ -339,10 +334,7 @@ class CommandSyncPlaylistsTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         find.assert_called_once_with(provider=Provider.lastfm)
         get_tracks.assert_has_calls(
-            [
-                mock.call(a=0, limit=100, type="type_a"),
-                mock.call(b=1, limit=100, type="type_b"),
-            ]
+            [mock.call(a=0, type="type_a"), mock.call(b=1, type="type_b")]
         )
         set.assert_has_calls(
             [
@@ -398,7 +390,7 @@ class CommandSyncPlaylistsTests(CommandTestCase):
 
         self.assertEqual(0, result.exit_code)
         find.assert_called_once_with(provider=Provider.lastfm)
-        get_tracks.assert_called_once_with(b=1, limit=100, type="type_b")
+        get_tracks.assert_called_once_with(b=1, type="type_b")
         set.assert_has_calls(
             [
                 mock.call(

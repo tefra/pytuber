@@ -78,9 +78,7 @@ option_limit = partial(
     prompt="Maximum tracks",
     default=lambda: History.get("limit", 50),
 )
-option_title = partial(
-    click.option, "--title", help="Custom title", prompt="Optional Title"
-)
+option_title = partial(click.option, "--title", help="title", prompt="Title")
 
 
 @add.command("user")
@@ -116,8 +114,7 @@ def add_user_playlist(user: str, playlist_type: int, limit: int, title: str):
         dict(
             type=UserPlaylistType.from_choice(playlist_type),
             provider=Provider.lastfm,
-            arguments=dict(username=user),
-            limit=limit,
+            arguments=dict(username=user, limit=limit),
             title=title.strip(),
         )
     )
@@ -139,7 +136,7 @@ def add_chart_playlist(limit: int, title: str):
         dict(
             type=PlaylistType.CHART,
             provider=Provider.lastfm,
-            limit=limit,
+            arguments=dict(limit=limit),
             title=title.strip(),
         )
     )
@@ -167,8 +164,7 @@ def add_country_playlist(country: str, limit: int, title: str):
         dict(
             type=PlaylistType.COUNTRY,
             provider=Provider.lastfm,
-            arguments=dict(country=country),
-            limit=limit,
+            arguments=dict(country=country, limit=limit),
             title=title.strip(),
         )
     )
@@ -196,8 +192,7 @@ def add_tag_playlist(tag: str, limit: int, title: str):
         dict(
             type=PlaylistType.TAG,
             provider=Provider.lastfm,
-            arguments=dict(tag=tag),
-            limit=limit,
+            arguments=dict(tag=tag, limit=limit),
             title=title.strip(),
         )
     )
@@ -223,8 +218,7 @@ def add_artist_playlist(artist: str, limit: int, title: str):
         dict(
             type=PlaylistType.ARTIST,
             provider=Provider.lastfm,
-            arguments=dict(artist=artist),
-            limit=limit,
+            arguments=dict(artist=artist, limit=limit),
             title=title.strip(),
         )
     )
@@ -275,7 +269,6 @@ def list_playlists(id: Optional[str]):
                         p.youtube_id,
                         p.display_type,
                         p.display_arguments,
-                        p.limit,
                         date(p.modified),
                         date(p.synced),
                         date(p.uploaded),
@@ -287,7 +280,6 @@ def list_playlists(id: Optional[str]):
                     "YoutubeID",
                     "Title",
                     "Arguments",
-                    "Limit",
                     "Modified",
                     "Synced",
                     "Uploaded",
@@ -319,7 +311,7 @@ def sync_playlists(ids: Tuple[str]):
     with click.progressbar(playlists, label="Syncing playlists") as bar:
         for playlist in bar:
             tracklist = LastService.get_tracks(
-                type=playlist.type, limit=playlist.limit, **playlist.arguments
+                type=playlist.type, **playlist.arguments
             )
 
             track_ids: List[str] = []

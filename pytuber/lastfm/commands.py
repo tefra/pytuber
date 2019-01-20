@@ -1,6 +1,5 @@
-from datetime import timedelta
 from functools import partial
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import click
 from tabulate import tabulate
@@ -20,7 +19,6 @@ from pytuber.models import (
     Provider,
     TrackManager,
 )
-from pytuber.utils import date
 
 
 @click.group()
@@ -228,75 +226,6 @@ def add_artist_playlist(artist: str, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
-
-
-@lastfm.command("list")
-@click.argument("id", required=False)
-def list_playlists(id: Optional[str]):
-    """List all playlists or the contents of a playlist."""
-
-    if id:
-        playlist = PlaylistManager.get(id)
-        click.echo_via_pager(
-            tabulate(
-                [
-                    (
-                        t.artist,
-                        t.name,
-                        str(timedelta(seconds=t.duration))
-                        if t.duration
-                        else "-",
-                        t.youtube_id,
-                    )
-                    for t in [TrackManager.get(id) for id in playlist.tracks]
-                ],
-                showindex=True,
-                headers=(
-                    "No",
-                    "Artist",
-                    "Track Name",
-                    "Duration",
-                    "YoutubeID",
-                ),
-            )
-        )
-    else:
-        click.secho(
-            tabulate(
-                [
-                    (
-                        p.id,
-                        p.youtube_id,
-                        p.display_type,
-                        p.display_arguments,
-                        date(p.modified),
-                        date(p.synced),
-                        date(p.uploaded),
-                    )
-                    for p in PlaylistManager.find(provider=Provider.lastfm)
-                ],
-                headers=(
-                    "ID",
-                    "YoutubeID",
-                    "Title",
-                    "Arguments",
-                    "Modified",
-                    "Synced",
-                    "Uploaded",
-                ),
-            )
-        )
-
-
-@lastfm.command("remove")
-@click.argument("ids", required=True, nargs=-1)
-def remove_playlists(ids: Tuple[str]):
-    """Remove one or more playlists by id."""
-
-    click.confirm("Do you want to continue?", abort=True)
-    for id in ids:
-        PlaylistManager.remove(id)
-        click.secho("Removed playlist: {}!".format(id))
 
 
 @lastfm.command("sync")

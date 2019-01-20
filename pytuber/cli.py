@@ -6,11 +6,11 @@ from click import Context
 from pytuber.core.commands import (
     list_playlists,
     remove_playlists,
+    setup_youtube,
     show_playlist,
 )
-from pytuber.lastfm.commands import lastfm
+from pytuber.lastfm.commands.cmd_setup import setup_lastfm
 from pytuber.storage import Registry
-from pytuber.youtube.commands import youtube
 
 
 @click.group()
@@ -24,13 +24,22 @@ def cli(ctx: Context):
     ctx.call_on_close(lambda: Registry.persist(cfg))
 
 
+@cli.group()
+def setup():
+    pass
+
+
+setup.add_command(setup_lastfm)
+setup.add_command(setup_youtube)
+
+
 cli.add_command(list_playlists)
 cli.add_command(show_playlist)
 cli.add_command(remove_playlists)
 
 
-cli.add_command(youtube)
-cli.add_command(lastfm)
+# cli.add_command(youtube)
+# cli.add_command(lastfm)
 
 if __name__ == "__main__":
     cli()

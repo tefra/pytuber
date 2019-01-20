@@ -9,7 +9,10 @@ from pytuber.core.commands import (
     setup_youtube,
     show_playlist,
 )
+from pytuber.lastfm.commands.cmd_add import lastfm_playlist
 from pytuber.lastfm.commands.cmd_setup import setup_lastfm
+from pytuber.lastfm.commands.cmd_sync import lastfm_sync
+from pytuber.lastfm.commands.cmd_tags import tags
 from pytuber.storage import Registry
 
 
@@ -29,13 +32,29 @@ def setup():
     pass
 
 
+@cli.group()
+def add():
+    pass
+
+
+@cli.group()
+def sync():
+    pass
+
+
+sync.add_command(lastfm_sync)
+
+
 setup.add_command(setup_lastfm)
 setup.add_command(setup_youtube)
+
+add.add_command(lastfm_playlist)
 
 
 cli.add_command(list_playlists)
 cli.add_command(show_playlist)
 cli.add_command(remove_playlists)
+cli.add_command(tags)
 
 
 # cli.add_command(youtube)

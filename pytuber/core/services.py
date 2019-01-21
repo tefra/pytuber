@@ -2,8 +2,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+from pytuber.core.models import PlaylistItem
 from pytuber.models import ConfigManager, Playlist, Provider, Track
-from pytuber.youtube.models import PlaylistItem
 
 
 class YouService:

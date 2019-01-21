@@ -1,8 +1,8 @@
 import click
 
+from pytuber.core.services import YouService
 from pytuber.models import PlaylistManager, TrackManager
 from pytuber.utils import spinner
-from pytuber.youtube.services import YouService
 
 
 @click.group("youtube")

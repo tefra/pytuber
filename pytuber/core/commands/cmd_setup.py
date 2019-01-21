@@ -1,7 +1,7 @@
 import click
 
+from pytuber.core.services import YouService
 from pytuber.models import ConfigManager, Provider
-from pytuber.youtube.services import YouService
 
 
 @click.command("youtube")

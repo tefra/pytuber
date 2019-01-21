@@ -8,12 +8,12 @@ from pytuber.models import PlaylistManager, Provider, TrackManager
 from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 
-class CommandSyncTests(CommandTestCase):
+class CommandFetchTests(CommandTestCase):
     @mock.patch.object(TrackManager, "set")
     @mock.patch.object(LastService, "get_tracks")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_sync_playlists(self, find, update, get_tracks, set):
+    def test_fetch_playlists(self, find, update, get_tracks, set):
 
         tracks = TrackFixture.get(6)
         playlists = PlaylistFixture.get(2)
@@ -29,7 +29,7 @@ class CommandSyncTests(CommandTestCase):
             [last_tracks[3], last_tracks[4], last_tracks[5]],
         ]
 
-        result = self.runner.invoke(cli, ["sync", "lastfm", "playlists"])
+        result = self.runner.invoke(cli, ["fetch", "lastfm", "playlists"])
 
         self.assertEqual(0, result.exit_code)
         find.assert_called_once_with(provider=Provider.lastfm)
@@ -70,7 +70,7 @@ class CommandSyncTests(CommandTestCase):
     @mock.patch.object(LastService, "get_tracks")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_sync_one(self, find, update, get_tracks, set):
+    def test_fetch_playlist_with_id(self, find, update, get_tracks, set):
         tracks = TrackFixture.get(3)
         playlists = PlaylistFixture.get(2)
         last_tracks = [
@@ -85,7 +85,7 @@ class CommandSyncTests(CommandTestCase):
         ]
 
         result = self.runner.invoke(
-            cli, ["sync", "lastfm", "playlists", playlists[1].id]
+            cli, ["fetch", "lastfm", "playlists", playlists[1].id]
         )
 
         self.assertEqual(0, result.exit_code)

@@ -6,58 +6,11 @@ from pytuber.youtube.services import YouService
 
 
 @click.group("youtube")
-def youtube():
-    pass
+def youtube_push():
+    """Last.fm is a music service that learns what you love."""
 
 
-@youtube.command()
-def purge():
-    """Cleanup youtube related data from playlists and tracks."""
-
-    for playlist in PlaylistManager.find():
-        if playlist.youtube_id:
-            PlaylistManager.update(playlist, dict(youtube_id=None))
-
-    for track in TrackManager.find():
-        if track.youtube_id:
-            TrackManager.update(track, dict(youtube_id=None))
-
-
-@youtube.group()
-def push():
-    """Push local playlists and tracks to youtube."""
-
-
-@youtube.group()
-def fetch():
-    """Fetch playlist and tracks information from youtube."""
-
-
-@fetch.command("playlists")
-def fetch_playlists():
-    """Fetch remote information and update local playlists."""
-    with spinner("Fetching playlists information") as sp:
-        for playlist in YouService.get_playlists():
-            PlaylistManager.set(playlist.asdict())
-            sp.write("Imported playlist {}".format(playlist.id))
-
-
-@fetch.command("tracks")
-def fetch_tracks():
-    """Match local tracks to youtube videos."""
-
-    tracks = TrackManager.find(youtube_id=None)
-    if len(tracks) == 0:
-        return click.secho("There are no new tracks")
-
-    click.secho("Fetching tracks information", bold=True)
-    for track in tracks:
-        with spinner("Track: {} - {}".format(track.artist, track.name)):
-            youtube_id = YouService.search_track(track)
-            TrackManager.update(track, dict(youtube_id=youtube_id))
-
-
-@push.command("playlists")
+@youtube_push.command("playlists")
 def push_playlists():
     """Create new playlists on youtube."""
 
@@ -72,7 +25,7 @@ def push_playlists():
             PlaylistManager.update(playlist, dict(youtube_id=youtube_id))
 
 
-@push.command("tracks")
+@youtube_push.command("tracks")
 def push_tracks():
     online_playlists = PlaylistManager.find(youtube_id=lambda x: x is not None)
     click.secho("Syncing playlists", bold=True)

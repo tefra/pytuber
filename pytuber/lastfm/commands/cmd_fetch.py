@@ -6,14 +6,14 @@ from pytuber.lastfm.services import LastService
 from pytuber.models import PlaylistManager, Provider, TrackManager
 
 
-@click.group()
-def lastfm():
+@click.group("lastfm")
+def lastfm_fetch():
     """Last.fm is a music service that learns what you love."""
 
 
-@lastfm.command("sync")
+@lastfm_fetch.command("playlists")
 @click.argument("ids", required=False, nargs=-1)
-def sync_playlists(ids: Tuple[str]):
+def playlists(ids: Tuple[str]):
     """Sync one or more playlists by id, leave empty to sync all."""
 
     playlists = PlaylistManager.find(provider=Provider.lastfm)

@@ -3,15 +3,15 @@ import os
 import click
 from click import Context
 
-from pytuber.core.commands import (
-    list_playlists,
-    remove_playlists,
-    setup_youtube,
-    show_playlist,
-)
+from pytuber.core.commands.cmd_fetch import youtube_fetch
+from pytuber.core.commands.cmd_list import list_playlists
+from pytuber.core.commands.cmd_push import youtube_push
+from pytuber.core.commands.cmd_remove import remove_playlists
+from pytuber.core.commands.cmd_setup import setup_youtube
+from pytuber.core.commands.cmd_show import show_playlist
 from pytuber.lastfm.commands.cmd_add import lastfm_playlist
+from pytuber.lastfm.commands.cmd_fetch import lastfm_fetch
 from pytuber.lastfm.commands.cmd_setup import setup_lastfm
-from pytuber.lastfm.commands.cmd_sync import lastfm_sync
 from pytuber.lastfm.commands.cmd_tags import tags
 from pytuber.storage import Registry
 
@@ -38,11 +38,20 @@ def add():
 
 
 @cli.group()
-def sync():
+def fetch():
     pass
 
 
-sync.add_command(lastfm_sync)
+@cli.group()
+def push():
+    pass
+
+
+push.add_command(youtube_push)
+
+
+fetch.add_command(lastfm_fetch)
+fetch.add_command(youtube_fetch)
 
 
 setup.add_command(setup_lastfm)

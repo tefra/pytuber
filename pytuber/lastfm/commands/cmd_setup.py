@@ -7,7 +7,7 @@ from pytuber.models import ConfigManager, Provider
 @click.option(
     "--api-key", help="Your last.fm api key", prompt="Last.fm Api Key"
 )
-def setup_lastfm(api_key: str) -> None:
+def setup(api_key: str) -> None:
     """
     Configure your last.fm api account.
 

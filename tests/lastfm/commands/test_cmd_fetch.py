@@ -29,7 +29,7 @@ class CommandFetchTests(CommandTestCase):
             [last_tracks[3], last_tracks[4], last_tracks[5]],
         ]
 
-        result = self.runner.invoke(cli, ["fetch", "lastfm", "playlists"])
+        result = self.runner.invoke(cli, ["fetch", "lastfm"])
 
         self.assertEqual(0, result.exit_code)
         find.assert_called_once_with(provider=Provider.lastfm)
@@ -72,9 +72,7 @@ class CommandFetchTests(CommandTestCase):
             [last_tracks[0], last_tracks[1], last_tracks[2]]
         ]
 
-        result = self.runner.invoke(
-            cli, ["fetch", "lastfm", "playlists", playlists[1].id]
-        )
+        result = self.runner.invoke(cli, ["fetch", "lastfm", playlists[1].id])
 
         self.assertEqual(0, result.exit_code)
         find.assert_called_once_with(provider=Provider.lastfm)

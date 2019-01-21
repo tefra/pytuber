@@ -11,9 +11,11 @@ from pytuber.lastfm.params import (
 )
 from pytuber.models import History, PlaylistManager, Provider
 
+from .cmd_fetch import fetch_playlists
+
 
 @click.group("lastfm")
-def lastfm_playlist():
+def add_playlist():
     """Last.fm is a music service that learns what you love."""
 
 
@@ -28,7 +30,7 @@ option_limit = partial(
 option_title = partial(click.option, "--title", help="title", prompt="Title")
 
 
-@lastfm_playlist.command()
+@add_playlist.command()
 @click.option(
     "--user",
     help="The user for whom the playlist will be generated",
@@ -44,7 +46,10 @@ option_title = partial(click.option, "--title", help="title", prompt="Title")
 )
 @option_limit()
 @option_title()
-def user_playlist(user: str, playlist_type: int, limit: int, title: str):
+@click.pass_context
+def user_playlist(
+    ctx: click.Context, user: str, playlist_type: int, limit: int, title: str
+):
     """
     Add a user type playlist. This type of playlists are based on a user's
     music preference and history.
@@ -70,12 +75,14 @@ def user_playlist(user: str, playlist_type: int, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
+    ctx.invoke(fetch_playlists, ids=[playlist.id])
 
 
-@lastfm_playlist.command()
+@add_playlist.command()
 @option_limit()
 @option_title()
-def chart_playlist(limit: int, title: str):
+@click.pass_context
+def chart_playlist(ctx: click.Context, limit: int, title: str):
     """Add a top tracks playlist."""
 
     History.set(limit=limit)
@@ -92,9 +99,10 @@ def chart_playlist(limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
+    ctx.invoke(fetch_playlists, ids=[playlist.id])
 
 
-@lastfm_playlist.command()
+@add_playlist.command()
 @click.option(
     "--country",
     help="An alpha-2 ISO-3166 country code",
@@ -103,7 +111,8 @@ def chart_playlist(limit: int, title: str):
 )
 @option_limit()
 @option_title()
-def country_playlist(country: str, limit: int, title: str):
+@click.pass_context
+def country_playlist(ctx: click.Context, country: str, limit: int, title: str):
     """Add a top tracks playlist by country."""
 
     History.set(limit=limit)
@@ -120,9 +129,10 @@ def country_playlist(country: str, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
+    ctx.invoke(fetch_playlists, ids=[playlist.id])
 
 
-@lastfm_playlist.command()
+@add_playlist.command()
 @click.option(
     "--tag",
     help="A last.fm tag, see tags command",
@@ -131,7 +141,8 @@ def country_playlist(country: str, limit: int, title: str):
 )
 @option_limit()
 @option_title()
-def tag_playlist(tag: str, limit: int, title: str):
+@click.pass_context
+def tag_playlist(ctx: click.Context, tag: str, limit: int, title: str):
     """Add a top tracks playlist by tag."""
 
     History.set(limit=limit)
@@ -149,15 +160,17 @@ def tag_playlist(tag: str, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
+    ctx.invoke(fetch_playlists, ids=[playlist.id])
 
 
-@lastfm_playlist.command()
+@add_playlist.command()
 @click.option(
     "--artist", help="An artist name", prompt="Artist", type=ArtistParamType()
 )
 @option_limit()
 @option_title()
-def artist_playlist(artist: str, limit: int, title: str):
+@click.pass_context
+def artist_playlist(ctx: click.Context, artist: str, limit: int, title: str):
     """Add a top tracks playlist by artist."""
 
     History.set(limit=limit)
@@ -175,3 +188,4 @@ def artist_playlist(artist: str, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
+    ctx.invoke(fetch_playlists, ids=[playlist.id])

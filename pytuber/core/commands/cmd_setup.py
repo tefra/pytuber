@@ -6,7 +6,7 @@ from pytuber.models import ConfigManager, Provider
 
 @click.command("youtube")
 @click.argument("client-secrets", type=click.Path(), required=True)
-def setup_youtube(client_secrets: str) -> None:
+def setup(client_secrets: str) -> None:
     """
     Configure your youtube api credentials.
 

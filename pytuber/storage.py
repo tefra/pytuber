@@ -21,6 +21,14 @@ NOTHING = object()
 
 class Registry(dict, metaclass=Singleton):
     @classmethod
+    def exists(cls, *keys):
+        try:
+            reduce(dict.__getitem__, keys, cls())
+            return True
+        except KeyError:
+            return False
+
+    @classmethod
     def get(cls, *keys, default=NOTHING):
         try:
             return reduce(dict.__getitem__, keys, cls())

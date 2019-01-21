@@ -113,6 +113,11 @@ class Manager:
         return list(Registry.get(cls.namespace, default={}).keys())
 
     @classmethod
+    def exists(cls, obj):
+        key = getattr(obj, cls.key)
+        return Registry.exists(cls.namespace, key)
+
+    @classmethod
     def get(cls, key, **kwargs):
         with contextlib.suppress(KeyError):
             data = Registry.get(cls.namespace, str(key), **kwargs)

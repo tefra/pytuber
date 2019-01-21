@@ -43,20 +43,25 @@ class CommandYoutubePushTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertIn("There are no new playlists", result.output)
 
+    @mock.patch("pytuber.core.commands.cmd_push.timestamp")
     @mock.patch.object(YouService, "remove_playlist_item")
     @mock.patch.object(YouService, "create_playlist_item")
     @mock.patch.object(YouService, "get_playlist_items")
     @mock.patch.object(TrackManager, "find")
+    @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
     def test_tracks(
         self,
         find_playlists,
+        update_playlist,
         find_tracks,
         get_playlist_items,
         create_playlist_item,
         remove_playlist_item,
+        timestamp,
     ):
 
+        timestamp.return_value = 101
         tracks = TrackFixture.get(
             6, youtube_id=["$a", "$b", "$c", "$d", "$e", "$f"]
         )
@@ -106,3 +111,4 @@ class CommandYoutubePushTests(CommandTestCase):
             ]
         )
         remove_playlist_item.assert_called_once_with(PlaylistItem(2, "$e"))
+        update_playlist.assert_called_once_with(p_one, dict(uploaded=101))

@@ -2,62 +2,69 @@ import os
 
 import click
 
-from pytuber.core.commands.cmd_fetch import youtube_fetch
-from pytuber.core.commands.cmd_list import list_playlists
-from pytuber.core.commands.cmd_push import youtube_push
-from pytuber.core.commands.cmd_remove import remove_playlists
-from pytuber.core.commands.cmd_setup import setup_youtube
-from pytuber.core.commands.cmd_show import show_playlist
-from pytuber.lastfm.commands.cmd_add import lastfm_playlist
-from pytuber.lastfm.commands.cmd_fetch import lastfm_fetch
-from pytuber.lastfm.commands.cmd_setup import setup_lastfm
-from pytuber.lastfm.commands.cmd_tags import tags
+from pytuber.core import commands as core
+from pytuber.lastfm import commands as lastfm
 from pytuber.storage import Registry
 
 
 @click.group()
 @click.pass_context
 def cli(ctx: click.Context):
-    """Create and upload youtube playlists from various sources like
-    last.fm."""
+    """
+    Create and upload youtube playlists from various sources like last.fm.
+
+    Usage Example:
+
+    $ pytuber add lastfm tag-playlist
+
+    $ pytuber fetch youtube --all
+
+    $ pytuber push youtube --all
+    """
     cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
 
     Registry.from_file(cfg)
     ctx.call_on_close(lambda: Registry.persist(cfg))
 
 
+cli.add_command(core.list_playlists)
+cli.add_command(core.show_playlist)
+cli.add_command(core.remove_playlists)
+cli.add_command(lastfm.tags)
+
+
 @cli.group()
 def setup():
-    """Setup providers api keys and credentials."""
+    """Configure api keys and credentials."""
+
+
+setup.add_command(lastfm.setup)
+setup.add_command(core.setup)
 
 
 @cli.group()
 def add():
-    """Add provider playlists."""
+    """Add playlist."""
+
+
+add.add_command(lastfm.add_playlist)
 
 
 @cli.group()
 def fetch():
-    """Fetch provider playlist information."""
+    """Retrieve playlist or track info."""
+
+
+fetch.add_command(lastfm.fetch_playlists)
+fetch.add_command(core.fetch)
 
 
 @cli.group()
 def push():
-    """Push playlists to youtube."""
+    """Update playlists and tracks."""
 
 
-push.add_command(youtube_push)
-fetch.add_command(lastfm_fetch)
-fetch.add_command(youtube_fetch)
-setup.add_command(setup_lastfm)
-setup.add_command(setup_youtube)
-add.add_command(lastfm_playlist)
-
-cli.add_command(list_playlists)
-cli.add_command(show_playlist)
-cli.add_command(remove_playlists)
-cli.add_command(tags)
-
+push.add_command(core.push)
 
 if __name__ == "__main__":
     cli()

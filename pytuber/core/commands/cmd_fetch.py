@@ -5,21 +5,35 @@ from pytuber.models import PlaylistManager, TrackManager
 from pytuber.utils import spinner
 
 
-@click.group("youtube")
-def youtube_fetch():
-    """Last.fm is a music service that learns what you love."""
+@click.group("youtube", invoke_without_command=True)
+@click.option("--all", is_flag=True, default=False, help="Fetch everything")
+@click.pass_context
+def fetch(ctx: click.Context, all=False):
+    """Fetch information from youtube."""
+    if ctx.invoked_subcommand is None:
+        if all:
+            ctx.invoke(fetch_playlists)
+            ctx.invoke(fetch_tracks)
+        else:
+            click.secho(ctx.get_help())
+            click.Abort()
 
 
-@youtube_fetch.command("playlists")
+@fetch.command("playlists")
 def fetch_playlists():
     """Fetch remote information and update local playlists."""
     with spinner("Fetching playlists information") as sp:
         for playlist in YouService.get_playlists():
+            exists = PlaylistManager.exists(playlist)
             PlaylistManager.set(playlist.asdict())
-            sp.write("Imported playlist {}".format(playlist.id))
+            sp.write(
+                "{} playlist {}".format(
+                    "Updated" if exists else "Imported", playlist.id
+                )
+            )
 
 
-@youtube_fetch.command("tracks")
+@fetch.command("tracks")
 def fetch_tracks():
     """Match local tracks to youtube videos."""
 

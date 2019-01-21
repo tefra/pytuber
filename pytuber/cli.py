@@ -29,45 +29,36 @@ def cli(ctx: Context):
 
 @cli.group()
 def setup():
-    pass
+    """Setup providers api keys and credentials."""
 
 
 @cli.group()
 def add():
-    pass
+    """Add provider playlists."""
 
 
 @cli.group()
 def fetch():
-    pass
+    """Fetch provider playlist information."""
 
 
 @cli.group()
 def push():
-    pass
+    """Push playlists to youtube."""
 
 
 push.add_command(youtube_push)
-
-
 fetch.add_command(lastfm_fetch)
 fetch.add_command(youtube_fetch)
-
-
 setup.add_command(setup_lastfm)
 setup.add_command(setup_youtube)
-
 add.add_command(lastfm_playlist)
-
 
 cli.add_command(list_playlists)
 cli.add_command(show_playlist)
 cli.add_command(remove_playlists)
 cli.add_command(tags)
 
-
-# cli.add_command(youtube)
-# cli.add_command(lastfm)
 
 if __name__ == "__main__":
     cli()

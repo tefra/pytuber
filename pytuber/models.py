@@ -37,7 +37,6 @@ class Track(Document):
     artist: str = attr.ib()
     name: str = attr.ib()
     id: str = attr.ib(default=None)
-    duration: int = attr.ib(default=None)
     youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
 
     def __attrs_post_init__(self):

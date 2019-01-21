@@ -12,15 +12,15 @@ class CommandShowPlaylistsTests(CommandTestCase):
         playlist = PlaylistFixture.one(tracks=[1, 2, 3])
 
         get_playlist.return_value = playlist
-        get_track.side_effect = TrackFixture.get(3, duration=[120, 1844, 0])
+        get_track.side_effect = TrackFixture.get(3, youtube_id=[None, "a", ""])
 
         result = self.runner.invoke(cli, ["show", playlist.id])
 
         expected_output = (
-            "No  Artist    Track Name    Duration    YoutubeID",
-            "----  --------  ------------  ----------  -----------",
-            "   0  artist_a  name_a        0:02:00",
-            "   1  artist_b  name_b        0:30:44",
+            "No  Artist    Track Name    Youtube",
+            "----  --------  ------------  ---------",
+            "   0  artist_a  name_a        -",
+            "   1  artist_b  name_b        ✔",
             "   2  artist_c  name_c        -",
         )
         self.assertEqual(0, result.exit_code)

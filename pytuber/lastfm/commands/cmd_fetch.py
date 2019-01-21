@@ -29,11 +29,7 @@ def playlists(ids: Tuple[str]):
             track_ids: List[str] = []
             for entry in tracklist:
                 id = TrackManager.set(
-                    dict(
-                        artist=entry.artist.name,
-                        name=entry.name,
-                        duration=entry.duration,
-                    )
+                    dict(artist=entry.artist.name, name=entry.name)
                 ).id
 
                 if id not in track_ids:

@@ -18,10 +18,10 @@ class CommandListPlaylistsTests(CommandTestCase):
         result = self.runner.invoke(cli, ["list"])
 
         expected_output = (
-            "ID    Provider    YoutubeID    Title    Arguments    Modified          Synced            Uploaded",
-            "----  ----------  -----------  -------  -----------  ----------------  ----------------  ----------------",
-            "id_a  provider_a  456ybnm      Type A   a: 0         2019-01-05 22:34  -                 -",
-            "id_b  provider_b               Type B   b: 1         -                 2019-01-05 22:28  2019-01-05 22:29",
+            "ID    Provider    Youtube    Title    Arguments    Modified          Synced            Uploaded",
+            "----  ----------  ---------  -------  -----------  ----------------  ----------------  ----------------",
+            "id_a  provider_a  ✔          Type A   a: 0         2019-01-05 22:34  -                 -",
+            "id_b  provider_b  -          Type B   b: 1         -                 2019-01-05 22:28  2019-01-05 22:29",
         )
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)

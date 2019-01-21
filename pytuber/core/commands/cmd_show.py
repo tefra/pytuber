@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Optional
 
 import click
@@ -16,15 +15,10 @@ def show_playlist(id: Optional[str]):
     click.echo_via_pager(
         tabulate(
             [
-                (
-                    t.artist,
-                    t.name,
-                    str(timedelta(seconds=t.duration)) if t.duration else "-",
-                    t.youtube_id,
-                )
+                (t.artist, t.name, "✔" if t.youtube_id else "-")
                 for t in [TrackManager.get(id) for id in playlist.tracks]
             ],
             showindex=True,
-            headers=("No", "Artist", "Track Name", "Duration", "YoutubeID"),
+            headers=("No", "Artist", "Track Name", "Youtube"),
         )
     )

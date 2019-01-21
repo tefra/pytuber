@@ -17,7 +17,7 @@ def list_playlists(provider: str):
                 (
                     p.id,
                     p.provider,
-                    p.youtube_id,
+                    "✔" if p.youtube_id else "-",
                     p.display_type,
                     p.display_arguments,
                     date(p.modified),
@@ -29,7 +29,7 @@ def list_playlists(provider: str):
             headers=(
                 "ID",
                 "Provider",
-                "YoutubeID",
+                "Youtube",
                 "Title",
                 "Arguments",
                 "Modified",

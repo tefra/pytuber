@@ -38,24 +38,12 @@ class CommandFetchTests(CommandTestCase):
         )
         set.assert_has_calls(
             [
-                mock.call(
-                    {"artist": "artist_a", "name": "name_a", "duration": None}
-                ),
-                mock.call(
-                    {"artist": "artist_b", "name": "name_b", "duration": None}
-                ),
-                mock.call(
-                    {"artist": "artist_c", "name": "name_c", "duration": None}
-                ),
-                mock.call(
-                    {"artist": "artist_d", "name": "name_d", "duration": None}
-                ),
-                mock.call(
-                    {"artist": "artist_e", "name": "name_e", "duration": None}
-                ),
-                mock.call(
-                    {"artist": "artist_f", "name": "name_f", "duration": None}
-                ),
+                mock.call({"artist": "artist_a", "name": "name_a"}),
+                mock.call({"artist": "artist_b", "name": "name_b"}),
+                mock.call({"artist": "artist_c", "name": "name_c"}),
+                mock.call({"artist": "artist_d", "name": "name_d"}),
+                mock.call({"artist": "artist_e", "name": "name_e"}),
+                mock.call({"artist": "artist_f", "name": "name_f"}),
             ]
         )
 
@@ -93,15 +81,9 @@ class CommandFetchTests(CommandTestCase):
         get_tracks.assert_called_once_with(b=1, type="type_b")
         set.assert_has_calls(
             [
-                mock.call(
-                    {"artist": "artist_a", "name": "name_a", "duration": None}
-                ),
-                mock.call(
-                    {"artist": "artist_b", "name": "name_b", "duration": None}
-                ),
-                mock.call(
-                    {"artist": "artist_c", "name": "name_c", "duration": None}
-                ),
+                mock.call({"artist": "artist_a", "name": "name_a"}),
+                mock.call({"artist": "artist_b", "name": "name_b"}),
+                mock.call({"artist": "artist_c", "name": "name_c"}),
             ]
         )
 

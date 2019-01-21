@@ -20,7 +20,6 @@ def list_playlists(provider: str):
                     "✔" if p.youtube_id else "-",
                     p.display_type,
                     p.display_arguments,
-                    date(p.modified),
                     date(p.synced),
                     date(p.uploaded),
                 )
@@ -32,7 +31,6 @@ def list_playlists(provider: str):
                 "Youtube",
                 "Title",
                 "Arguments",
-                "Modified",
                 "Synced",
                 "Uploaded",
             ),

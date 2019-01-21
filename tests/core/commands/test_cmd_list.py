@@ -11,17 +11,16 @@ class CommandListPlaylistsTests(CommandTestCase):
         find.return_value = PlaylistFixture.get(
             2,
             youtube_id=["456ybnm", None],
-            modified=[1546727685, None],
             synced=[None, 1546727285],
             uploaded=[None, 1546727385],
         )
         result = self.runner.invoke(cli, ["list"])
 
         expected_output = (
-            "ID    Provider    Youtube    Title    Arguments    Modified          Synced            Uploaded",
-            "----  ----------  ---------  -------  -----------  ----------------  ----------------  ----------------",
-            "id_a  provider_a  ✔          Type A   a: 0         2019-01-05 22:34  -                 -",
-            "id_b  provider_b  -          Type B   b: 1         -                 2019-01-05 22:28  2019-01-05 22:29",
+            "ID    Provider    Youtube    Title    Arguments    Synced            Uploaded",
+            "----  ----------  ---------  -------  -----------  ----------------  ----------------",
+            "id_a  provider_a  ✔          Type A   a: 0         -                 -",
+            "id_b  provider_b  -          Type B   b: 1         2019-01-05 22:28  2019-01-05 22:29",
         )
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)

@@ -35,13 +35,7 @@ class PlaylistTests(TestCase):
             "synced": None,
             "uploaded": None,
         }
-        modified = actual.pop("modified")
         self.assertDictEqual(expected, actual)
-        self.assertEqual(
-            datetime.fromtimestamp(modified).strftime("%Y-%m-%d %H:%M"),
-            datetime.utcnow().strftime("%Y-%m-%d %H:%M"),
-        )
-
         expected = (
             "eyJhcmd1bWVudHMiOiB7ImEiOiAwfSwgInByb3ZpZGVyIj"
             "ogInByb3ZpZGVyX2EiLCAidHlwZSI6ICJ0eXBlX2EifQ=="

@@ -7,7 +7,7 @@ from pytuber.models import PlaylistManager, TrackManager
 
 
 @click.command("show")
-@click.argument("id", required=False)
+@click.argument("id", type=click.STRING)
 def show_playlist(id: Optional[str]):
     """Show a playlist track list."""
 

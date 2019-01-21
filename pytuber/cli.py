@@ -1,7 +1,6 @@
 import os
 
 import click
-from click import Context
 
 from pytuber.core.commands.cmd_fetch import youtube_fetch
 from pytuber.core.commands.cmd_list import list_playlists
@@ -18,7 +17,7 @@ from pytuber.storage import Registry
 
 @click.group()
 @click.pass_context
-def cli(ctx: Context):
+def cli(ctx: click.Context):
     """Create and upload youtube playlists from various sources like
     last.fm."""
     cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")

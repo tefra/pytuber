@@ -59,7 +59,6 @@ class Playlist(Document):
     title: str = attr.ib(default=None)
     youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
     tracks: List[str] = attr.ib(factory=list, metadata=dict(keep=True))
-    modified: int = attr.ib(factory=timestamp)
     synced: int = attr.ib(default=None, metadata=dict(keep=True))
     uploaded: int = attr.ib(default=None, metadata=dict(keep=True))
 
@@ -108,6 +107,10 @@ class Manager:
     namespace: str
     model: Type
     key: str
+
+    @classmethod
+    def keys(cls):
+        return list(Registry.get(cls.namespace, default={}).keys())
 
     @classmethod
     def get(cls, key, **kwargs):

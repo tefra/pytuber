@@ -18,7 +18,7 @@ def show_playlist(id: Optional[str]):
                 (t.artist, t.name, "✔" if t.youtube_id else "-")
                 for t in [TrackManager.get(id) for id in playlist.tracks]
             ],
-            showindex=True,
+            showindex="always",
             headers=("No", "Artist", "Track Name", "Youtube"),
         )
     )

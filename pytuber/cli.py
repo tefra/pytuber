@@ -7,20 +7,34 @@ from pytuber.lastfm import commands as lastfm
 from pytuber.storage import Registry
 
 
-@click.group()
+@click.group(
+    help="""\b
+Create and upload youtube playlists from various sources like last.fm.
+\b
+Usage Example:
+\b
+On a fresh install configure youtube and any other 3rd party providers
+ $ pytuber setup youtube
+ $ pytuber setup lastfm
+\b
+If you have pytuber playlists uploaded on youtube but not your local
+ $ pytuber fetch youtube --playlist
+\b
+Update the track lists from the original provider
+ $ pytuber fetch lastfm
+\b
+Create a new playlist
+ $ pytuber add lastfm tag-playlist
+\b
+Match any new tracks with youtube videos
+ $ pytuber fetch youtube --tracks
+\b
+Push your updates to youtube
+ $ pytuber push youtube --all
+ """
+)
 @click.pass_context
 def cli(ctx: click.Context):
-    """
-    Create and upload youtube playlists from various sources like last.fm.
-
-    Usage Example:
-
-    $ pytuber add lastfm tag-playlist
-
-    $ pytuber fetch youtube --all
-
-    $ pytuber push youtube --all
-    """
     cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
 
     Registry.from_file(cfg)

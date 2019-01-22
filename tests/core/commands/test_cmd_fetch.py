@@ -6,17 +6,25 @@ from pytuber.models import PlaylistManager, TrackManager
 from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 
-class CommandYoutubeFetchTests(CommandTestCase):
+class CommandFetchTests(CommandTestCase):
+    @mock.patch("pytuber.core.commands.cmd_fetch.fetch_tracks")
+    @mock.patch("pytuber.core.commands.cmd_fetch.fetch_playlists")
+    def test_all(self, fetch_playlists, fetch_tracks):
+        self.runner.invoke(cli, ["fetch", "youtube", "--all"])
+
+        fetch_playlists.assert_called_once()
+        fetch_tracks.assert_called_once()
+
     @mock.patch.object(TrackManager, "update")
     @mock.patch.object(YouService, "search_track")
     @mock.patch.object(TrackManager, "find")
-    def test_tracks(self, find, search, update):
+    def test_fetch_tracks(self, find, search, update):
         track_one, track_two = TrackFixture.get(2)
         find.return_value = [track_one, track_two]
 
         search.side_effect = ["y1", "y3"]
         result = self.runner.invoke(
-            cli, ["fetch", "youtube", "tracks"], catch_exceptions=False
+            cli, ["fetch", "youtube", "--tracks"], catch_exceptions=False
         )
 
         expected_messages = (
@@ -37,9 +45,9 @@ class CommandYoutubeFetchTests(CommandTestCase):
             ]
         )
 
-    def test_tracks_empty_list(self):
+    def test_fetch_tracks_empty_list(self):
         result = self.runner.invoke(
-            cli, ["fetch", "youtube", "tracks"], catch_exceptions=False
+            cli, ["fetch", "youtube", "--tracks"], catch_exceptions=False
         )
 
         self.assertEqual(0, result.exit_code)
@@ -47,12 +55,12 @@ class CommandYoutubeFetchTests(CommandTestCase):
 
     @mock.patch.object(PlaylistManager, "set")
     @mock.patch.object(YouService, "get_playlists")
-    def test_playlists(self, get_playlists, set_playlist):
+    def test_fetch_playlists(self, get_playlists, set_playlist):
         p_one, p_two = PlaylistFixture.get(2)
         get_playlists.return_value = [p_one, p_two]
 
         result = self.runner.invoke(
-            cli, ["fetch", "youtube", "playlists"], catch_exceptions=False
+            cli, ["fetch", "youtube", "--playlists"], catch_exceptions=False
         )
 
         expected_messages = (

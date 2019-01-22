@@ -5,8 +5,8 @@ from pytuber.lastfm.services import LastService
 
 
 @click.command()
-@click.option("--refresh", help="Refresh cache", is_flag=True, default=False)
-def tags(refresh: bool):
+@click.option("--refresh", help="Refresh cache", is_flag=True)
+def tags(refresh: bool = False):
     """Show a list of the most popular user tags from last.fm."""
     values = [
         (tag.name, tag.count, tag.reach)
@@ -15,6 +15,8 @@ def tags(refresh: bool):
 
     click.echo_via_pager(
         tabulate(
-            values, showindex=True, headers=("No", "Name", "Count", "Reach")
+            values,
+            showindex="always",
+            headers=("No", "Name", "Count", "Reach"),
         )
     )

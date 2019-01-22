@@ -5,24 +5,30 @@ from pytuber.models import PlaylistManager, TrackManager
 from pytuber.utils import spinner, timestamp
 
 
-@click.group("youtube", invoke_without_command=True)
-@click.option("--all", is_flag=True, default=False, help="Fetch everything")
+@click.command("youtube")
+@click.option("--all", is_flag=True, help="Perform all tasks")
+@click.option("--playlists", is_flag=True, help="Create new playlists")
+@click.option("--tracks", is_flag=True, help="Update playlist items")
 @click.pass_context
-def push(ctx: click.Context, all=False):
-    """Fetch information from youtube."""
-    if ctx.invoked_subcommand is None:
-        if all:
-            ctx.invoke(push_playlists)
-            ctx.invoke(push_tracks)
-        else:
-            click.secho(ctx.get_help())
-            click.Abort()
+def push(
+    ctx: click.Context,
+    tracks: bool = False,
+    playlists: bool = False,
+    all: bool = False,
+):
+    """Update youtube playlists and tracks."""
+
+    if not all and not playlists and not tracks:
+        click.secho(ctx.get_help())
+        click.Abort()
+
+    if all or playlists:
+        push_playlists()
+    if all or tracks:
+        push_tracks()
 
 
-@push.command("playlists")
 def push_playlists():
-    """Create new playlists on youtube."""
-
     playlists = PlaylistManager.find(youtube_id=None)
     if len(playlists) == 0:
         return click.secho("There are no new playlists")
@@ -34,9 +40,7 @@ def push_playlists():
             PlaylistManager.update(playlist, dict(youtube_id=youtube_id))
 
 
-@push.command("tracks")
 def push_tracks():
-    """Update your youtube playlist items."""
     online_playlists = PlaylistManager.find(youtube_id=lambda x: x is not None)
     click.secho("Syncing playlists", bold=True)
     for playlist in online_playlists:

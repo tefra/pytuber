@@ -7,16 +7,24 @@ from pytuber.models import PlaylistManager, TrackManager
 from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 
-class CommandYoutubePushTests(CommandTestCase):
+class CommandPushTests(CommandTestCase):
+    @mock.patch("pytuber.core.commands.cmd_push.push_tracks")
+    @mock.patch("pytuber.core.commands.cmd_push.push_playlists")
+    def test_push_all(self, push_playlists, push_tracks):
+        self.runner.invoke(cli, ["push", "youtube", "--all"])
+
+        push_playlists.assert_called_once()
+        push_tracks.assert_called_once()
+
     @mock.patch.object(YouService, "create_playlist")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_playlists(self, find, update, create_playlist):
+    def test_push_playlists(self, find, update, create_playlist):
         p_one, p_two = PlaylistFixture.get(2)
         find.return_value = [p_one, p_two]
         create_playlist.side_effect = ["y1", "y2"]
         result = self.runner.invoke(
-            cli, ["push", "youtube", "playlists"], catch_exceptions=False
+            cli, ["push", "youtube", "--playlists"], catch_exceptions=False
         )
 
         expected_messages = (
@@ -35,9 +43,9 @@ class CommandYoutubePushTests(CommandTestCase):
             ]
         )
 
-    def test_playlists_empty_list(self):
+    def test_push_playlists_empty_list(self):
         result = self.runner.invoke(
-            cli, ["push", "youtube", "playlists"], catch_exceptions=False
+            cli, ["push", "youtube", "--playlists"], catch_exceptions=False
         )
 
         self.assertEqual(0, result.exit_code)
@@ -50,7 +58,7 @@ class CommandYoutubePushTests(CommandTestCase):
     @mock.patch.object(TrackManager, "find")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_tracks(
+    def test_push_tracks(
         self,
         find_playlists,
         update_playlist,
@@ -82,7 +90,7 @@ class CommandYoutubePushTests(CommandTestCase):
         ]
 
         result = self.runner.invoke(
-            cli, ["push", "youtube", "tracks"], catch_exceptions=False
+            cli, ["push", "youtube", "--tracks"], catch_exceptions=False
         )
 
         expected_output = (

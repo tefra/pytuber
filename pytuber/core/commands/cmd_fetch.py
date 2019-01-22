@@ -5,23 +5,30 @@ from pytuber.models import PlaylistManager, TrackManager
 from pytuber.utils import spinner
 
 
-@click.group("youtube", invoke_without_command=True)
-@click.option("--all", is_flag=True, default=False, help="Fetch everything")
+@click.command("youtube")
+@click.option("--all", is_flag=True, help="Perform all tasks")
+@click.option("--playlists", is_flag=True, help="Create new playlists")
+@click.option("--tracks", is_flag=True, help="Update playlist items")
 @click.pass_context
-def fetch(ctx: click.Context, all=False):
-    """Fetch information from youtube."""
-    if ctx.invoked_subcommand is None:
-        if all:
-            ctx.invoke(fetch_playlists)
-            ctx.invoke(fetch_tracks)
-        else:
-            click.secho(ctx.get_help())
-            click.Abort()
+def fetch(
+    ctx: click.Context,
+    tracks: bool = False,
+    playlists: bool = False,
+    all: bool = False,
+):
+    """Fetch youtube online playlist and tracks data."""
+
+    if not all and not playlists and not tracks:
+        click.secho(ctx.get_help())
+        click.Abort()
+
+    if all or playlists:
+        fetch_playlists()
+    if all or tracks:
+        fetch_tracks()
 
 
-@fetch.command("playlists")
 def fetch_playlists():
-    """Fetch remote information and update local playlists."""
     with spinner("Fetching playlists information") as sp:
         for playlist in YouService.get_playlists():
             exists = PlaylistManager.exists(playlist)
@@ -33,10 +40,7 @@ def fetch_playlists():
             )
 
 
-@fetch.command("tracks")
 def fetch_tracks():
-    """Match local tracks to youtube videos."""
-
     tracks = TrackManager.find(youtube_id=None)
     if len(tracks) == 0:
         return click.secho("There are no new tracks")

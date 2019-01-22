@@ -1,14 +1,13 @@
 .. include:: ../README.rst
 
-Table of Contents
------------------
+How to Use
+==========
 
 .. toctree::
-    :maxdepth: 2
-    :numbered:
+    :maxdepth: 3
 
-    usage/youtube
-    usage/lastfm
+    credentials
+    usage
 
 
 Indices and tables

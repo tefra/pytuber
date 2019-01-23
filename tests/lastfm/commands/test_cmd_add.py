@@ -1,6 +1,7 @@
 from unittest import mock
 
 from pytuber import cli
+from pytuber.core.models import PlaylistManager, Provider
 from pytuber.lastfm.models import PlaylistType, UserPlaylistType
 from pytuber.lastfm.params import (
     ArtistParamType,
@@ -8,7 +9,6 @@ from pytuber.lastfm.params import (
     TagParamType,
     UserParamType,
 )
-from pytuber.models import PlaylistManager, Provider
 from tests.utils import CommandTestCase, PlaylistFixture
 
 

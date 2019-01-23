@@ -3,10 +3,9 @@ from unittest import mock
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from pytuber.core.models import PlaylistItem
+from pytuber.core.models import ConfigManager, PlaylistItem
 from pytuber.core.services import YouService
 from pytuber.exceptions import NotFound
-from pytuber.models import ConfigManager
 from tests.utils import PlaylistFixture, TestCase, TrackFixture
 
 

@@ -1,5 +1,5 @@
 from pytuber import cli
-from pytuber.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager, Provider
 from tests.utils import CommandTestCase
 
 

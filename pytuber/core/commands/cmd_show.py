@@ -4,7 +4,7 @@ import click
 from tabulate import tabulate
 
 from pytuber.core import params
-from pytuber.models import PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager, TrackManager
 
 
 @click.command()

@@ -3,8 +3,8 @@ from typing import List
 import click
 from tabulate import tabulate
 
+from pytuber.core.models import PlaylistManager, Provider, TrackManager
 from pytuber.lastfm.services import LastService
-from pytuber.models import PlaylistManager, Provider, TrackManager
 
 
 @click.command("lastfm")

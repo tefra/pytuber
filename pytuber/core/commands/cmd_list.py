@@ -2,7 +2,7 @@ import click
 from tabulate import tabulate
 
 from pytuber.core import params
-from pytuber.models import PlaylistManager
+from pytuber.core.models import PlaylistManager
 from pytuber.utils import date
 
 

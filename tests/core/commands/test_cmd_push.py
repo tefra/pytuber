@@ -1,9 +1,8 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.models import PlaylistItem
+from pytuber.core.models import PlaylistItem, PlaylistManager, TrackManager
 from pytuber.core.services import YouService
-from pytuber.models import PlaylistManager, TrackManager
 from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 

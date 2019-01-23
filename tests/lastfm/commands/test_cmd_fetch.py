@@ -3,8 +3,8 @@ from unittest import mock
 import pydrag
 
 from pytuber import cli
+from pytuber.core.models import PlaylistManager, Provider, TrackManager
 from pytuber.lastfm.services import LastService
-from pytuber.models import PlaylistManager, Provider, TrackManager
 from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 

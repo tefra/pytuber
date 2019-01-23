@@ -1,6 +1,6 @@
 import click
 
-from pytuber.models import PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager, TrackManager
 
 
 @click.command("clean")

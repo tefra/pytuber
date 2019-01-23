@@ -5,10 +5,10 @@ from unittest import mock
 from pydrag import Artist, Tag, Track, User, constants
 from pydrag.models.common import ListModel
 
+from pytuber.core.models import ConfigManager, Provider
 from pytuber.exceptions import NotFound
 from pytuber.lastfm.models import PlaylistType
 from pytuber.lastfm.services import LastService
-from pytuber.models import ConfigManager, Provider
 from pytuber.storage import Registry
 from tests.utils import TestCase
 

@@ -1,6 +1,6 @@
 import click
 
-from pytuber.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager, Provider
 
 
 @click.command("lastfm")

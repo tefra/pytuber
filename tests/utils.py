@@ -5,7 +5,7 @@ from unittest import mock
 
 from click.testing import CliRunner
 
-from pytuber.models import Playlist, Track
+from pytuber.core.models import Playlist, Track
 from pytuber.storage import Registry
 
 

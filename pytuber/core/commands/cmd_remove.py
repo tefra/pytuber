@@ -3,7 +3,7 @@ from typing import Tuple
 import click
 
 from pytuber.core import params
-from pytuber.models import PlaylistManager
+from pytuber.core.models import PlaylistManager
 
 
 @click.command()

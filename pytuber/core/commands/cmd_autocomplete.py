@@ -1,8 +1,8 @@
 import click
 import click_completion
 
+from pytuber.core.models import ConfigManager, Provider
 from pytuber.core.services import YouService
-from pytuber.models import ConfigManager, Provider
 
 
 @click.command("youtube")

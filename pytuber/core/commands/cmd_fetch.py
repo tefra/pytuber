@@ -1,7 +1,7 @@
 import click
 
+from pytuber.core.models import PlaylistManager, TrackManager
 from pytuber.core.services import YouService
-from pytuber.models import PlaylistManager, TrackManager
 from pytuber.utils import spinner
 
 

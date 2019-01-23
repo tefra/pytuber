@@ -4,8 +4,8 @@ from typing import List
 import click
 from pydrag import Artist, Tag, Track, User, configure, constants
 
+from pytuber.core.models import ConfigManager, Provider
 from pytuber.lastfm.models import PlaylistType
-from pytuber.models import ConfigManager, Provider
 from pytuber.storage import Registry
 
 

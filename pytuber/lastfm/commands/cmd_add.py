@@ -2,6 +2,7 @@ from functools import partial
 
 import click
 
+from pytuber.core.models import History, PlaylistManager, Provider
 from pytuber.lastfm.models import PlaylistType, UserPlaylistType
 from pytuber.lastfm.params import (
     ArtistParamType,
@@ -9,7 +10,6 @@ from pytuber.lastfm.params import (
     TagParamType,
     UserParamType,
 )
-from pytuber.models import History, PlaylistManager, Provider
 
 from .cmd_fetch import fetch_tracks
 

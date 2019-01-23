@@ -4,8 +4,7 @@ from datetime import datetime
 
 import attr
 
-from pytuber.exceptions import NotFound
-from pytuber.models import (
+from pytuber.core.models import (
     Config,
     ConfigManager,
     Document,
@@ -16,6 +15,7 @@ from pytuber.models import (
     Track,
     TrackManager,
 )
+from pytuber.exceptions import NotFound
 from pytuber.storage import Registry
 from tests.utils import PlaylistFixture, TestCase, TrackFixture
 

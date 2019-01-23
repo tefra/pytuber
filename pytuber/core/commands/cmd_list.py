@@ -5,9 +5,9 @@ from pytuber.models import PlaylistManager
 from pytuber.utils import date
 
 
-@click.command("list")
+@click.command()
 @click.option("--provider", required=False)
-def list_playlists(provider: str):
+def list(provider: str):
     """List all playlists, filtered by provider optionally."""
 
     kwargs = dict(provider=provider) if provider else dict()

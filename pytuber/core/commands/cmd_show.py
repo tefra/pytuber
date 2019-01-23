@@ -6,9 +6,9 @@ from tabulate import tabulate
 from pytuber.models import PlaylistManager, TrackManager
 
 
-@click.command("show")
+@click.command()
 @click.argument("id", type=click.STRING)
-def show_playlist(id: Optional[str]):
+def show(id: Optional[str]):
     """Show a playlist track list."""
 
     playlist = PlaylistManager.get(id)

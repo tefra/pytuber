@@ -13,12 +13,10 @@ from tests.utils import CommandTestCase, PlaylistFixture
 
 
 class CommandAddTests(CommandTestCase):
-    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_playlists")
+    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(UserParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
-    def test_user_playlist(
-        self, create_playlist, convert, fetch_last_playlist
-    ):
+    def test_user_playlist(self, create_playlist, convert, fetch_tracks):
         convert.return_value = "bbb"
         create_playlist.return_value = PlaylistFixture.one()
         result = self.runner.invoke(
@@ -50,11 +48,11 @@ class CommandAddTests(CommandTestCase):
                 title="My Favorite",
             )
         )
-        fetch_last_playlist.assert_called_once_with(ids=["id_a"])
+        fetch_tracks.assert_called_once_with("id_a")
 
-    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_playlists")
+    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(PlaylistManager, "set")
-    def test_chart_playlist(self, create_playlist, fetch_last_playlist):
+    def test_chart_playlist(self, create_playlist, fetch_tracks):
         create_playlist.return_value = PlaylistFixture.one()
         result = self.runner.invoke(
             cli, ["add", "lastfm", "chart-playlist"], input="50\n "
@@ -76,13 +74,13 @@ class CommandAddTests(CommandTestCase):
                 title="",
             )
         )
-        fetch_last_playlist.assert_called_once_with(ids=["id_a"])
+        fetch_tracks.assert_called_once_with("id_a")
 
-    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_playlists")
+    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(CountryParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
     def test_country_playlist(
-        self, create_playlist, country_param_type, fetch_last_playlist
+        self, create_playlist, country_param_type, fetch_tracks
     ):
         country_param_type.return_value = "greece"
         create_playlist.return_value = PlaylistFixture.one()
@@ -106,12 +104,12 @@ class CommandAddTests(CommandTestCase):
                 title="",
             )
         )
-        fetch_last_playlist.assert_called_once_with(ids=["id_a"])
+        fetch_tracks.assert_called_once_with("id_a")
 
-    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_playlists")
+    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(TagParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
-    def test_tag_playlist(self, create_playlist, convert, fetch_last_playlist):
+    def test_tag_playlist(self, create_playlist, convert, fetch_tracks):
         convert.return_value = "rock"
         create_playlist.return_value = PlaylistFixture.one(synced=111)
         result = self.runner.invoke(
@@ -134,13 +132,13 @@ class CommandAddTests(CommandTestCase):
                 title="",
             )
         )
-        fetch_last_playlist.assert_called_once_with(ids=["id_a"])
+        fetch_tracks.assert_called_once_with("id_a")
 
-    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_playlists")
+    @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(ArtistParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
     def test_artist_playlist(
-        self, create_playlist, artist_param, fetch_last_playlist
+        self, create_playlist, artist_param, fetch_tracks
     ):
         artist_param.return_value = "Queen"
         create_playlist.return_value = PlaylistFixture.one()
@@ -167,4 +165,4 @@ class CommandAddTests(CommandTestCase):
                 title="Queen....",
             )
         )
-        fetch_last_playlist.assert_called_once_with(ids=["id_a"])
+        fetch_tracks.assert_called_once_with("id_a")

@@ -5,9 +5,9 @@ import click
 from pytuber.models import PlaylistManager
 
 
-@click.command("remove")
+@click.command()
 @click.argument("ids", required=True, nargs=-1)
-def remove_playlists(ids: Tuple[str]):
+def remove(ids: Tuple[str]):
     """Delete one or more playlists by id."""
 
     click.confirm("Do you want to continue?", abort=True)

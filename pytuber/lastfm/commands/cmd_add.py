@@ -11,11 +11,11 @@ from pytuber.lastfm.params import (
 )
 from pytuber.models import History, PlaylistManager, Provider
 
-from .cmd_fetch import fetch_playlists
+from .cmd_fetch import fetch_tracks
 
 
 @click.group("lastfm")
-def add_playlist():
+def add():
     """Last.fm is a music service that learns what you love."""
 
 
@@ -23,14 +23,14 @@ option_limit = partial(
     click.option,
     "--limit",
     help="The maximum number of tracks",
-    type=click.IntRange(50, 1000),
+    type=click.IntRange(1, 1000),
     prompt="Maximum tracks",
     default=lambda: History.get("limit", 50),
 )
 option_title = partial(click.option, "--title", help="title", prompt="Title")
 
 
-@add_playlist.command()
+@add.command()
 @click.option(
     "--user",
     help="The user for whom the playlist will be generated",
@@ -75,10 +75,10 @@ def user_playlist(
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
-    ctx.invoke(fetch_playlists, ids=[playlist.id])
+    fetch_tracks(playlist.id)
 
 
-@add_playlist.command()
+@add.command()
 @option_limit()
 @option_title()
 @click.pass_context
@@ -99,10 +99,11 @@ def chart_playlist(ctx: click.Context, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
-    ctx.invoke(fetch_playlists, ids=[playlist.id])
+
+    fetch_tracks(playlist.id)
 
 
-@add_playlist.command()
+@add.command()
 @click.option(
     "--country",
     help="An alpha-2 ISO-3166 country code",
@@ -129,10 +130,10 @@ def country_playlist(ctx: click.Context, country: str, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
-    ctx.invoke(fetch_playlists, ids=[playlist.id])
+    fetch_tracks(playlist.id)
 
 
-@add_playlist.command()
+@add.command()
 @click.option(
     "--tag",
     help="A last.fm tag, see tags command",
@@ -160,10 +161,10 @@ def tag_playlist(ctx: click.Context, tag: str, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
-    ctx.invoke(fetch_playlists, ids=[playlist.id])
+    fetch_tracks(playlist.id)
 
 
-@add_playlist.command()
+@add.command()
 @click.option(
     "--artist", help="An artist name", prompt="Artist", type=ArtistParamType()
 )
@@ -188,4 +189,4 @@ def artist_playlist(ctx: click.Context, artist: str, limit: int, title: str):
             "Updated" if playlist.synced else "Added", playlist.id
         )
     )
-    ctx.invoke(fetch_playlists, ids=[playlist.id])
+    fetch_tracks(playlist.id)

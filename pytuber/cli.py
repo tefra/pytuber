@@ -41,10 +41,9 @@ def cli(ctx: click.Context):
     ctx.call_on_close(lambda: Registry.persist(cfg))
 
 
-cli.add_command(core.list_playlists)
-cli.add_command(core.show_playlist)
-cli.add_command(core.remove_playlists)
-cli.add_command(lastfm.tags)
+cli.add_command(core.list)
+cli.add_command(core.show)
+cli.add_command(core.remove)
 
 
 @cli.group()
@@ -61,7 +60,7 @@ def add():
     """Add playlist."""
 
 
-add.add_command(lastfm.add_playlist)
+add.add_command(lastfm.add)
 
 
 @cli.group()
@@ -69,7 +68,7 @@ def fetch():
     """Retrieve playlist or track info."""
 
 
-fetch.add_command(lastfm.fetch_playlists)
+fetch.add_command(lastfm.fetch)
 fetch.add_command(core.fetch)
 
 

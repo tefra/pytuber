@@ -1,12 +1,12 @@
 from datetime import timedelta
 from typing import List
 
-import click
 from pydrag import Artist, Tag, Track, User, configure, constants
 
 from pytuber.core.models import ConfigManager, Provider
 from pytuber.lastfm.models import PlaylistType
 from pytuber.storage import Registry
+from pytuber.utils import spinner
 
 
 class LastService:
@@ -67,7 +67,7 @@ class LastService:
         def retrieve_tags():
             page = 1
             tags = []  # type: List[dict]
-            with click.progressbar(length=4, label="Fetching tags") as bar:
+            with spinner("Fetching tags"):
                 while len(tags) < 1000:
                     tags.extend(
                         [
@@ -75,7 +75,6 @@ class LastService:
                             for t in Tag.get_top_tags(limit=250, page=page)
                         ]
                     )
-                    bar.update(page)
                     page += 1
             return tags
 

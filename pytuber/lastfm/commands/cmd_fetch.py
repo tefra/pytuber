@@ -5,6 +5,7 @@ from tabulate import tabulate
 
 from pytuber.core.models import PlaylistManager, Provider, TrackManager
 from pytuber.lastfm.services import LastService
+from pytuber.utils import spinner
 
 
 @click.command("lastfm")
@@ -29,9 +30,8 @@ def fetch_tracks(*args):
     if args:
         kwargs["id"] = lambda x: x in args
 
-    playlists = PlaylistManager.find(**kwargs)
-    with click.progressbar(playlists, label="Syncing playlists") as bar:
-        for playlist in bar:
+    with spinner("Fetching track lists") as sp:
+        for playlist in PlaylistManager.find(**kwargs):
             tracklist = LastService.get_tracks(
                 type=playlist.type, **playlist.arguments
             )
@@ -45,6 +45,9 @@ def fetch_tracks(*args):
                 if id not in track_ids:
                     track_ids.append(id)
 
+            sp.write(
+                "Playlist: {} - {} tracks".format(playlist.id, len(track_ids))
+            )
             PlaylistManager.update(playlist, dict(tracks=track_ids))
 
 

@@ -28,7 +28,7 @@ Download your ``client_secret.json`` and assuming the file is on your user downl
 
 .. code-block:: console
 
-   $ pytuber setup youtube --client-secrets ~/Downloads/client_secret_foobar.json
+   $ pytuber setup youtube ~/Downloads/client_secret_foobar.json
 
 
 Last.fm

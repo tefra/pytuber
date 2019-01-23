@@ -3,11 +3,12 @@ from typing import Optional
 import click
 from tabulate import tabulate
 
+from pytuber.core import params
 from pytuber.models import PlaylistManager, TrackManager
 
 
 @click.command()
-@click.argument("id", type=click.STRING)
+@click.argument("id", type=params.PlaylistParamType())
 def show(id: Optional[str]):
     """Show a playlist track list."""
 

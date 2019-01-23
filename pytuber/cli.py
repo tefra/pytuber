@@ -1,10 +1,13 @@
 import os
 
 import click
+import click_completion
 
 from pytuber.core import commands as core
 from pytuber.lastfm import commands as lastfm
 from pytuber.storage import Registry
+
+click_completion.init(complete_options=True)
 
 
 @click.group(
@@ -53,6 +56,7 @@ def setup():
 
 setup.add_command(lastfm.setup)
 setup.add_command(core.setup)
+setup.add_command(core.autocomplete)
 
 
 @cli.group()

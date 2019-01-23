@@ -1,12 +1,13 @@
 import click
 from tabulate import tabulate
 
+from pytuber.core import params
 from pytuber.models import PlaylistManager
 from pytuber.utils import date
 
 
 @click.command()
-@click.option("--provider", required=False)
+@click.option("--provider", type=params.ProviderParamType(), required=False)
 def list(provider: str):
     """List all playlists, filtered by provider optionally."""
 

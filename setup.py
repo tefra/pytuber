@@ -14,6 +14,7 @@ if __name__ == "__main__":
         version=meta["version"],
         install_requires=[
             "click == 7.0",
+            "click_completion == 0.5.0",
             "pydrag == 18.1",
             "attrs == 18.2.0",
             "tabulate == 0.8.2",

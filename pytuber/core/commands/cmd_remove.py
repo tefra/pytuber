@@ -2,11 +2,14 @@ from typing import Tuple
 
 import click
 
+from pytuber.core import params
 from pytuber.models import PlaylistManager
 
 
 @click.command()
-@click.argument("ids", required=True, nargs=-1)
+@click.argument(
+    "ids", type=params.PlaylistParamType(), required=True, nargs=-1
+)
 def remove(ids: Tuple[str]):
     """Delete one or more playlists by id."""
 

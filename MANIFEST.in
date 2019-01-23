@@ -1,0 +1,12 @@
+include LICENSE READNE.rst tox.ini
+recursive-include docs *
+recursive-include tests *
+recursive-include pytuber *
+
+
+prune docs/_build
+exclude .travis.yml
+exclude .readthedocs.yml
+exclude .pre-commit-config.yaml
+
+global-exclude .DS_Store *.pyc

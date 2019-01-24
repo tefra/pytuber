@@ -28,8 +28,8 @@ class CommandPushTests(CommandTestCase):
 
         expected_messages = (
             "Creating playlists",
-            "Playlist: {}".format(p_one.display_type),
-            "Playlist: {}".format(p_two.display_type),
+            "Playlist: {}".format(p_one.title),
+            "Playlist: {}".format(p_two.title),
         )
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_messages, result.output)
@@ -94,13 +94,13 @@ class CommandPushTests(CommandTestCase):
 
         expected_output = (
             "Syncing playlists",
-            "Fetching playlist items: Type A",
+            "Fetching playlist items: title_a",
             "Adding new playlist items",
             "Adding video: $b",
             "Adding video: $c",
             "Removing playlist items",
             "Removing video: $e",
-            "Fetching playlist items: Type B",
+            "Fetching playlist items: title_b",
             "Playlist is already synced!",
         )
 

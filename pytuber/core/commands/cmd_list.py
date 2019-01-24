@@ -19,7 +19,7 @@ def list(provider: str):
                     p.id,
                     p.provider,
                     "✔" if p.youtube_id else "-",
-                    p.display_type,
+                    p.title,
                     p.display_arguments,
                     date(p.synced),
                     date(p.uploaded),

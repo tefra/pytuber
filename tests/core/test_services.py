@@ -86,9 +86,7 @@ class YouServiceTests(TestCase):
         self.assertEqual("101", YouService.create_playlist(playlist))
         insert.assert_called_once_with(
             body=dict(
-                snippet=dict(
-                    title=playlist.display_type, description=playlist.mime
-                ),
+                snippet=dict(title=playlist.title, description=playlist.mime),
                 status=dict(privacyStatus="private"),
             ),
             part="snippet,status",

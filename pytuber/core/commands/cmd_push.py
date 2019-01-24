@@ -35,7 +35,7 @@ def push_playlists():
 
     click.secho("Creating playlists", bold=True)
     for playlist in playlists:
-        with spinner("Playlist: {}".format(playlist.display_type)):
+        with spinner("Playlist: {}".format(playlist.title)):
             youtube_id = YouService.create_playlist(playlist)
             PlaylistManager.update(playlist, dict(youtube_id=youtube_id))
 
@@ -45,9 +45,7 @@ def push_tracks():
     click.secho("Syncing playlists", bold=True)
     for playlist in online_playlists:
         add = items = remove = []
-        with spinner(
-            "Fetching playlist items: {}".format(playlist.display_type)
-        ):
+        with spinner("Fetching playlist items: {}".format(playlist.title)):
             items = YouService.get_playlist_items(playlist)
             online = set([item.video_id for item in items])
             offline = set(

@@ -19,8 +19,8 @@ class CommandListPlaylistsTests(CommandTestCase):
         expected_output = (
             "ID    Provider    Youtube    Title    Arguments    Synced            Uploaded",
             "----  ----------  ---------  -------  -----------  ----------------  ----------------",
-            "id_a  provider_a  ✔          Type A   a: 0         -                 -",
-            "id_b  provider_b  -          Type B   b: 1         2019-01-05 22:28  2019-01-05 22:29",
+            "id_a  provider_a  ✔          title_a  a: 0         -                 -",
+            "id_b  provider_b  -          title_b  b: 1         2019-01-05 22:28  2019-01-05 22:29",
         )
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)

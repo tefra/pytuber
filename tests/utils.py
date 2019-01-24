@@ -81,6 +81,7 @@ class PlaylistFixture(Fixture):
     def generate(cls, letter, num, **kwargs):
         params = dict(
             id="id_%s" % letter,
+            title="title_%s" % letter,
             type="type_%s" % letter,
             provider="provider_%s" % letter,
             arguments={letter: num},

@@ -52,11 +52,11 @@ class Track(Document):
 
 @attr.s
 class Playlist(Document):
+    title: str = attr.ib(converter=str)
     type: str = attr.ib(converter=str)
     provider: str = attr.ib(converter=str)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib(default=None)
-    title: str = attr.ib(default=None)
     youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
     tracks: List[str] = attr.ib(factory=list, metadata=dict(keep=True))
     synced: int = attr.ib(default=None, metadata=dict(keep=True))
@@ -79,7 +79,7 @@ class Playlist(Document):
             json.dumps(
                 {
                     field: getattr(self, field)
-                    for field in ["arguments", "provider", "type"]
+                    for field in ["arguments", "provider", "type", "title"]
                 }
             ).encode()
         ).decode("utf-8")
@@ -89,12 +89,6 @@ class Playlist(Document):
         with contextlib.suppress(Exception):
             return cls(**json.loads(base64.b64decode(mime)))
         return None
-
-    @property
-    def display_type(self):
-        return (
-            self.title if self.title else self.type.replace("_", " ").title()
-        )
 
     @property
     def display_arguments(self):

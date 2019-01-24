@@ -51,7 +51,7 @@ class YouService:
                     item["snippet"]["description"].strip().split("\n")[-1]
                 )
                 if playlist:
-                    if playlist.display_type != item["snippet"]["title"]:
+                    if playlist.title != item["snippet"]["title"]:
                         playlist.title = item["snippet"]["title"]
                     playlist.youtube_id = item["id"]
                     playlists.append(playlist)
@@ -66,9 +66,7 @@ class YouService:
     def create_playlist(cls, playlist: Playlist):
         params = dict(
             body=dict(
-                snippet=dict(
-                    title=playlist.display_type, description=playlist.mime
-                ),
+                snippet=dict(title=playlist.title, description=playlist.mime),
                 status=dict(privacyStatus="private"),
             ),
             part="snippet,status",

@@ -27,11 +27,7 @@ class CommandFetchTests(CommandTestCase):
             cli, ["fetch", "youtube", "--tracks"], catch_exceptions=False
         )
 
-        expected_messages = (
-            "Fetching tracks information",
-            "Track: artist_a - name_a",
-            "Track: artist_b - name_b",
-        )
+        expected_messages = ("Searching tracks videos: 2/2",)
 
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_messages, result.output)
@@ -45,14 +41,6 @@ class CommandFetchTests(CommandTestCase):
             ]
         )
 
-    def test_fetch_tracks_empty_list(self):
-        result = self.runner.invoke(
-            cli, ["fetch", "youtube", "--tracks"], catch_exceptions=False
-        )
-
-        self.assertEqual(0, result.exit_code)
-        self.assertIn("There are no new tracks", result.output)
-
     @mock.patch.object(PlaylistManager, "set")
     @mock.patch.object(YouService, "get_playlists")
     def test_fetch_playlists(self, get_playlists, set_playlist):
@@ -63,11 +51,7 @@ class CommandFetchTests(CommandTestCase):
             cli, ["fetch", "youtube", "--playlists"], catch_exceptions=False
         )
 
-        expected_messages = (
-            "Imported playlist {}".format(p_one.id),
-            "Imported playlist {}".format(p_two.id),
-            "Fetching playlists information",
-        )
+        expected_messages = ("Fetching playlists information: 2/2",)
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_messages, result.output)
 

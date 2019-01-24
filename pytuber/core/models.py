@@ -74,6 +74,11 @@ class Playlist(Document):
             ).hexdigest()[:7]
 
     @property
+    def youtube_url(self):
+        link = "https://www.youtube.com/playlist?list={}"
+        return link.format(self.youtube_id) if self.youtube_id else "-"
+
+    @property
     def mime(self):
         return base64.b64encode(
             json.dumps(

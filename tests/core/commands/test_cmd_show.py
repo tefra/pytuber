@@ -17,11 +17,21 @@ class CommandShowPlaylistsTests(CommandTestCase):
         result = self.runner.invoke(cli, ["show", playlist.id])
 
         expected_output = (
-            "No  Artist    Track Name    Youtube",
+            "ID:  id_a",
+            " Provider:  provider_a",
+            "    Title:  title_a",
+            "     Type:  type_a",
+            "Arguments:  a: 0",
+            "   Synced:  -",
+            " Uploaded:  -",
+            "  Youtube:  -",
+            "   Tracks:",
+            "",
+            "No    Artist    Track Name     Youtube",
             "----  --------  ------------  ---------",
-            "   0  artist_a  name_a        -",
-            "   1  artist_b  name_b        ✔",
-            "   2  artist_c  name_c        -",
+            "0     artist_a  name_a            -",
+            "1     artist_b  name_b            ✔",
+            "2     artist_c  name_c            -",
         )
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)

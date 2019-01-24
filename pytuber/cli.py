@@ -47,6 +47,7 @@ def cli(ctx: click.Context):
 cli.add_command(core.list)
 cli.add_command(core.show)
 cli.add_command(core.remove)
+cli.add_command(core.clean)
 
 
 @cli.group()

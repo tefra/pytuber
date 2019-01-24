@@ -29,24 +29,26 @@ def fetch(
 
 
 def fetch_playlists():
-    with spinner("Fetching playlists information") as sp:
-        for playlist in YouService.get_playlists():
-            exists = PlaylistManager.exists(playlist)
+    message = "Fetching playlists information"
+    with spinner(message) as sp:
+        playlists = YouService.get_playlists()
+        for playlist in playlists:
             PlaylistManager.set(playlist.asdict())
-            sp.write(
-                "{} playlist {}".format(
-                    "Updated" if exists else "Imported", playlist.id
-                )
-            )
+
+        total = len(playlists)
+        if total > 0:
+            sp.text = "{0}: {1}/{1} ".format(message, total)
 
 
 def fetch_tracks():
     tracks = TrackManager.find(youtube_id=None)
-    if len(tracks) == 0:
-        return click.secho("There are no new tracks")
-
-    click.secho("Fetching tracks information", bold=True)
-    for track in tracks:
-        with spinner("Track: {} - {}".format(track.artist, track.name)):
+    message = "Searching tracks videos"
+    with spinner(message) as sp:
+        for track in tracks:
+            sp.text = "{}: {} - {}".format(message, track.artist, track.name)
             youtube_id = YouService.search_track(track)
             TrackManager.update(track, dict(youtube_id=youtube_id))
+
+        total = len(tracks)
+        if total > 0:
+            sp.text = "{0}: {1}/{1} ".format(message, total)

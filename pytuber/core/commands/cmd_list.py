@@ -9,31 +9,35 @@ from pytuber.utils import date
 @click.command()
 @click.option("--provider", type=params.ProviderParamType(), required=False)
 def list(provider: str):
-    """List all playlists, filtered by provider optionally."""
+    """List playlists."""
 
     kwargs = dict(provider=provider) if provider else dict()
-    click.secho(
-        tabulate(
-            [
-                (
-                    p.id,
-                    p.provider,
-                    "✔" if p.youtube_id else "-",
-                    p.title,
-                    p.display_arguments,
-                    date(p.synced),
-                    date(p.uploaded),
-                )
-                for p in PlaylistManager.find(**kwargs)
-            ],
-            headers=(
-                "ID",
-                "Provider",
-                "Youtube",
-                "Title",
-                "Arguments",
-                "Synced",
-                "Uploaded",
-            ),
+    playlists = PlaylistManager.find(**kwargs)
+
+    if len(playlists) == 0:
+        click.secho("No playlists found, use `pytuber add` to add some")
+    else:
+        click.secho(
+            tabulate(  # type: ignore
+                [
+                    (
+                        p.id,
+                        p.title,
+                        p.provider,
+                        click.style("✔", fg="green") if p.youtube_id else "-",
+                        date(p.synced),
+                        date(p.uploaded),
+                    )
+                    for p in playlists
+                ],
+                headers=(
+                    "ID",
+                    "Title",
+                    "Provider",
+                    "Youtube",
+                    "Synced",
+                    "Uploaded",
+                ),
+                colalign=("left", "left", "center"),
+            )
         )
-    )

@@ -26,11 +26,7 @@ class CommandPushTests(CommandTestCase):
             cli, ["push", "youtube", "--playlists"], catch_exceptions=False
         )
 
-        expected_messages = (
-            "Creating playlists",
-            "Playlist: {}".format(p_one.title),
-            "Playlist: {}".format(p_two.title),
-        )
+        expected_messages = ("Creating playlists: 2/2",)
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_messages, result.output)
 
@@ -41,14 +37,6 @@ class CommandPushTests(CommandTestCase):
                 mock.call(p_two, dict(youtube_id="y2")),
             ]
         )
-
-    def test_push_playlists_empty_list(self):
-        result = self.runner.invoke(
-            cli, ["push", "youtube", "--playlists"], catch_exceptions=False
-        )
-
-        self.assertEqual(0, result.exit_code)
-        self.assertIn("There are no new playlists", result.output)
 
     @mock.patch("pytuber.core.commands.cmd_push.timestamp")
     @mock.patch.object(YouService, "remove_playlist_item")
@@ -95,13 +83,11 @@ class CommandPushTests(CommandTestCase):
         expected_output = (
             "Syncing playlists",
             "Fetching playlist items: title_a",
-            "Adding new playlist items",
-            "Adding video: $b",
-            "Adding video: $c",
-            "Removing playlist items",
-            "Removing video: $e",
+            "Adding new playlist items: 2",
+            "Removing playlist items: 1",
             "Fetching playlist items: title_b",
-            "Playlist is already synced!",
+            "Adding new playlist items",
+            "Removing playlist items",
         )
 
         self.assertEqual(0, result.exit_code)

@@ -78,7 +78,7 @@ class YouService:
         items = []
         next_page_token = None
         params = dict(
-            part="contentDetails",
+            part="contentDetails,snippet",
             maxResults=cls.max_results,
             playlistId=playlist.youtube_id,
         )
@@ -88,10 +88,19 @@ class YouService:
 
             resp = cls.get_client().playlistItems().list(**params).execute()
             for item in resp.get("items", []):
+
+                try:
+                    artist, name = item["snippet"]["title"].split("-", 1)
+                except ValueError:
+                    artist = ""
+                    name = item["snippet"]["title"]
+
                 items.append(
                     PlaylistItem(
                         id=item["id"],
                         video_id=item["contentDetails"]["videoId"],
+                        artist=artist.strip(),
+                        name=name.strip(),
                     )
                 )
 

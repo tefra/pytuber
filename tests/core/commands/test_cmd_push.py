@@ -1,9 +1,14 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.models import PlaylistItem, PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager, TrackManager
 from pytuber.core.services import YouService
-from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
+from tests.utils import (
+    CommandTestCase,
+    PlaylistFixture,
+    PlaylistItemFixture,
+    TrackFixture,
+)
 
 
 class CommandPushTests(CommandTestCase):
@@ -57,6 +62,8 @@ class CommandPushTests(CommandTestCase):
     ):
 
         timestamp.return_value = 101
+        items = PlaylistItemFixture.get(4, video_id=["$a", "$d", "$e", "$f"])
+
         tracks = TrackFixture.get(
             6, youtube_id=["$a", "$b", "$c", "$d", "$e", "$f"]
         )
@@ -68,12 +75,8 @@ class CommandPushTests(CommandTestCase):
         find_tracks.side_effect = [tracks[:3], tracks[3:]]
 
         get_playlist_items.side_effect = [
-            [PlaylistItem(1, "$a"), PlaylistItem(2, "$e")],
-            [
-                PlaylistItem(1, "$d"),
-                PlaylistItem(2, "$e"),
-                PlaylistItem(2, "$f"),
-            ],
+            [items[0], items[2]],
+            [items[1], items[2], items[3]],
         ]
 
         result = self.runner.invoke(
@@ -103,5 +106,5 @@ class CommandPushTests(CommandTestCase):
                 mock.call(p_one, tracks[2].youtube_id),
             ]
         )
-        remove_playlist_item.assert_called_once_with(PlaylistItem(2, "$e"))
+        remove_playlist_item.assert_called_once_with(items[2])
         update_playlist.assert_called_once_with(p_one, dict(uploaded=101))

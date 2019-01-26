@@ -33,6 +33,19 @@ def fetch_playlists():
     with spinner(message) as sp:
         playlists = YouService.get_playlists()
         for playlist in playlists:
+            if not PlaylistManager.exists(playlist):
+                items = YouService.get_playlist_items(playlist)
+                track_ids = [
+                    TrackManager.set(
+                        dict(
+                            artist=item.artist,
+                            name=item.name,
+                            youtube_id=item.video_id,
+                        )
+                    ).id
+                    for item in items
+                ]
+                playlist.tracks = track_ids
             PlaylistManager.set(playlist.asdict())
 
         total = len(playlists)

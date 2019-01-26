@@ -103,8 +103,10 @@ class Playlist(Document):
 
 
 @attr.s(auto_attribs=True)
-class PlaylistItem:
+class PlaylistItem(Document):
     id: str
+    name: str
+    artist: str
     video_id: str
 
 

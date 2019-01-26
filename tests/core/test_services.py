@@ -3,10 +3,15 @@ from unittest import mock
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from pytuber.core.models import ConfigManager, PlaylistItem
+from pytuber.core.models import ConfigManager
 from pytuber.core.services import YouService
 from pytuber.exceptions import NotFound
-from tests.utils import PlaylistFixture, TestCase, TrackFixture
+from tests.utils import (
+    PlaylistFixture,
+    PlaylistItemFixture,
+    TestCase,
+    TrackFixture,
+)
 
 
 class YouServiceTests(TestCase):
@@ -100,32 +105,47 @@ class YouServiceTests(TestCase):
             {
                 "nextPageToken": 3,
                 "items": [
-                    {"id": "a", "contentDetails": {"videoId": "va"}},
-                    {"id": "b", "contentDetails": {"videoId": "vb"}},
+                    {
+                        "id": "a",
+                        "contentDetails": {"videoId": "va"},
+                        "snippet": {"title": "foo - bar"},
+                    },
+                    {
+                        "id": "b",
+                        "contentDetails": {"videoId": "vb"},
+                        "snippet": {"title": "thug life"},
+                    },
                 ],
             },
-            {"items": [{"id": "c", "contentDetails": {"videoId": "vc"}}]},
+            {
+                "items": [
+                    {
+                        "id": "c",
+                        "contentDetails": {"videoId": "vc"},
+                        "snippet": {"title": "a-b-c"},
+                    }
+                ]
+            },
         ]
 
         actual = YouService.get_playlist_items(playlist)
-        self.assertEqual(3, len(actual))
-        self.assertEqual("a", actual[0].id)
-        self.assertEqual("va", actual[0].video_id)
-        self.assertEqual("b", actual[1].id)
-        self.assertEqual("vb", actual[1].video_id)
-        self.assertEqual("c", actual[2].id)
-        self.assertEqual("vc", actual[2].video_id)
+        expected = [
+            {"artist": "foo", "id": "a", "name": "bar", "video_id": "va"},
+            {"artist": "", "id": "b", "name": "thug life", "video_id": "vb"},
+            {"artist": "a", "id": "c", "name": "b-c", "video_id": "vc"},
+        ]
+        self.assertEqual(expected, [a.asdict() for a in actual])
 
         list.assert_has_calls(
             [
                 mock.call(
-                    part="contentDetails",
+                    part="contentDetails,snippet",
                     maxResults=2,
                     playlistId=playlist.youtube_id,
                 ),
                 mock.call().execute(),
                 mock.call(
-                    part="contentDetails",
+                    part="contentDetails,snippet",
                     maxResults=2,
                     playlistId=playlist.youtube_id,
                     pageToken=3,
@@ -155,7 +175,7 @@ class YouServiceTests(TestCase):
 
     @mock.patch.object(YouService, "get_client")
     def test_remove_playlist_item(self, get_client):
-        item = PlaylistItem(id="a", video_id="b")
+        item = PlaylistItemFixture.one()
         delete = get_client.return_value.playlistItems.return_value.delete
         delete.return_value.execute.return_value = "foo"
 

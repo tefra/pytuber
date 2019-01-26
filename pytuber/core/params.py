@@ -14,6 +14,8 @@ class RegistryParamType(click.ParamType):
 
 
 class PlaylistParamType(RegistryParamType):
+    name = "ID"
+
     def complete(self, ctx, incomplete):
         self.init_registry()
         return [
@@ -24,6 +26,8 @@ class PlaylistParamType(RegistryParamType):
 
 
 class ProviderParamType(click.ParamType):
+    name = "Provider"
+
     def complete(self, ctx, incomplete):
         return [
             k.value

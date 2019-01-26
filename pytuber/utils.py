@@ -5,6 +5,10 @@ import click
 from yaspin import yaspin
 
 
+def magenta(text):
+    return click.style(str(text), fg="magenta")
+
+
 @contextlib.contextmanager
 def spinner(text):
     sp = yaspin(text=text)

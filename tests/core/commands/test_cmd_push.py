@@ -1,9 +1,14 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.models import PlaylistItem, PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager, TrackManager
 from pytuber.core.services import YouService
-from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
+from tests.utils import (
+    CommandTestCase,
+    PlaylistFixture,
+    PlaylistItemFixture,
+    TrackFixture,
+)
 
 
 class CommandPushTests(CommandTestCase):
@@ -26,11 +31,7 @@ class CommandPushTests(CommandTestCase):
             cli, ["push", "youtube", "--playlists"], catch_exceptions=False
         )
 
-        expected_messages = (
-            "Creating playlists",
-            "Playlist: {}".format(p_one.display_type),
-            "Playlist: {}".format(p_two.display_type),
-        )
+        expected_messages = ("Creating playlists: 2/2",)
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_messages, result.output)
 
@@ -41,14 +42,6 @@ class CommandPushTests(CommandTestCase):
                 mock.call(p_two, dict(youtube_id="y2")),
             ]
         )
-
-    def test_push_playlists_empty_list(self):
-        result = self.runner.invoke(
-            cli, ["push", "youtube", "--playlists"], catch_exceptions=False
-        )
-
-        self.assertEqual(0, result.exit_code)
-        self.assertIn("There are no new playlists", result.output)
 
     @mock.patch("pytuber.core.commands.cmd_push.timestamp")
     @mock.patch.object(YouService, "remove_playlist_item")
@@ -69,6 +62,8 @@ class CommandPushTests(CommandTestCase):
     ):
 
         timestamp.return_value = 101
+        items = PlaylistItemFixture.get(4, video_id=["$a", "$d", "$e", "$f"])
+
         tracks = TrackFixture.get(
             6, youtube_id=["$a", "$b", "$c", "$d", "$e", "$f"]
         )
@@ -80,12 +75,8 @@ class CommandPushTests(CommandTestCase):
         find_tracks.side_effect = [tracks[:3], tracks[3:]]
 
         get_playlist_items.side_effect = [
-            [PlaylistItem(1, "$a"), PlaylistItem(2, "$e")],
-            [
-                PlaylistItem(1, "$d"),
-                PlaylistItem(2, "$e"),
-                PlaylistItem(2, "$f"),
-            ],
+            [items[0], items[2]],
+            [items[1], items[2], items[3]],
         ]
 
         result = self.runner.invoke(
@@ -94,14 +85,12 @@ class CommandPushTests(CommandTestCase):
 
         expected_output = (
             "Syncing playlists",
-            "Fetching playlist items: Type A",
+            "Fetching playlist items: title_a",
+            "Adding new playlist items: 2",
+            "Removing playlist items: 1",
+            "Fetching playlist items: title_b",
             "Adding new playlist items",
-            "Adding video: $b",
-            "Adding video: $c",
             "Removing playlist items",
-            "Removing video: $e",
-            "Fetching playlist items: Type B",
-            "Playlist is already synced!",
         )
 
         self.assertEqual(0, result.exit_code)
@@ -117,5 +106,5 @@ class CommandPushTests(CommandTestCase):
                 mock.call(p_one, tracks[2].youtube_id),
             ]
         )
-        remove_playlist_item.assert_called_once_with(PlaylistItem(2, "$e"))
+        remove_playlist_item.assert_called_once_with(items[2])
         update_playlist.assert_called_once_with(p_one, dict(uploaded=101))

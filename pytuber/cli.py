@@ -17,8 +17,7 @@ Create and upload youtube playlists from various sources like last.fm.
 Usage Example:
 \b
 On a fresh install configure youtube and any other 3rd party providers
- $ pytuber setup youtube
- $ pytuber setup lastfm
+ $ pytuber setup lastfm|youtube
 \b
 If you have pytuber playlists uploaded on youtube but not your local
  $ pytuber fetch youtube --playlist
@@ -42,11 +41,13 @@ def cli(ctx: click.Context):
 
     Registry.from_file(cfg)
     ctx.call_on_close(lambda: Registry.persist(cfg))
+    click.secho("")
 
 
 cli.add_command(core.list)
 cli.add_command(core.show)
 cli.add_command(core.remove)
+cli.add_command(core.clean)
 
 
 @cli.group()

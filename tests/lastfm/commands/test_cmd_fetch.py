@@ -10,10 +10,11 @@ from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 class CommandFetchTests(CommandTestCase):
     @mock.patch.object(TrackManager, "set")
+    @mock.patch.object(LastService, "get_tags")
     @mock.patch.object(LastService, "get_tracks")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_fetch_tracks(self, find, update, get_tracks, set):
+    def test_fetch_tracks(self, find, update, get_tracks, get_tags, set):
 
         tracks = TrackFixture.get(6)
         playlists = PlaylistFixture.get(2)
@@ -32,6 +33,7 @@ class CommandFetchTests(CommandTestCase):
         result = self.runner.invoke(cli, ["fetch", "lastfm", "--tracks"])
 
         self.assertEqual(0, result.exit_code)
+        get_tags.assert_called_once_with()
         find.assert_called_once_with(provider=Provider.lastfm)
         get_tracks.assert_has_calls(
             [mock.call(a=0, type="type_a"), mock.call(b=1, type="type_b")]

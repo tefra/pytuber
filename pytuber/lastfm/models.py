@@ -8,7 +8,10 @@ class PlaylistMixin(enum.Enum):
     def choices(cls):
         prompts = ["Playlist Types"]
         prompts.extend(
-            ["[{}] {}".format(i + 1, str(x)) for i, x in enumerate(cls)]
+            [
+                "[{}] {}".format(i + 1, x.value.replace("_", " ").title())
+                for i, x in enumerate(cls)
+            ]
         )
         prompts.extend(["Select a playlist type 1-{}".format(len(cls))])
         return "\n".join(prompts)

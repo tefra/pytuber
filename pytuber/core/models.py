@@ -52,11 +52,11 @@ class Track(Document):
 
 @attr.s
 class Playlist(Document):
+    title: str = attr.ib(converter=str)
     type: str = attr.ib(converter=str)
     provider: str = attr.ib(converter=str)
     arguments: dict = attr.ib(factory=dict)
     id: str = attr.ib(default=None)
-    title: str = attr.ib(default=None)
     youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
     tracks: List[str] = attr.ib(factory=list, metadata=dict(keep=True))
     synced: int = attr.ib(default=None, metadata=dict(keep=True))
@@ -74,12 +74,17 @@ class Playlist(Document):
             ).hexdigest()[:7]
 
     @property
+    def youtube_url(self):
+        link = "https://www.youtube.com/playlist?list={}"
+        return link.format(self.youtube_id) if self.youtube_id else "-"
+
+    @property
     def mime(self):
         return base64.b64encode(
             json.dumps(
                 {
                     field: getattr(self, field)
-                    for field in ["arguments", "provider", "type"]
+                    for field in ["arguments", "provider", "type", "title"]
                 }
             ).encode()
         ).decode("utf-8")
@@ -91,12 +96,6 @@ class Playlist(Document):
         return None
 
     @property
-    def display_type(self):
-        return (
-            self.title if self.title else self.type.replace("_", " ").title()
-        )
-
-    @property
     def display_arguments(self):
         return ", ".join(
             ["{}: {}".format(k, v) for k, v in self.arguments.items()]
@@ -104,8 +103,10 @@ class Playlist(Document):
 
 
 @attr.s(auto_attribs=True)
-class PlaylistItem:
+class PlaylistItem(Document):
     id: str
+    name: str
+    artist: str
     video_id: str
 
 

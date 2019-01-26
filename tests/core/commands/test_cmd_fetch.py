@@ -3,7 +3,12 @@ from unittest import mock
 from pytuber import cli
 from pytuber.core.models import PlaylistManager, TrackManager
 from pytuber.core.services import YouService
-from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
+from tests.utils import (
+    CommandTestCase,
+    PlaylistFixture,
+    PlaylistItemFixture,
+    TrackFixture,
+)
 
 
 class CommandFetchTests(CommandTestCase):
@@ -27,15 +32,7 @@ class CommandFetchTests(CommandTestCase):
             cli, ["fetch", "youtube", "--tracks"], catch_exceptions=False
         )
 
-        expected_messages = (
-            "Fetching tracks information",
-            "Track: artist_a - name_a",
-            "Track: artist_b - name_b",
-        )
-
         self.assertEqual(0, result.exit_code)
-        self.assertOutputContains(expected_messages, result.output)
-
         find.assert_called_once_with(youtube_id=None)
         search.assert_has_calls([mock.call(track_one), mock.call(track_two)])
         update.assert_has_calls(
@@ -45,33 +42,54 @@ class CommandFetchTests(CommandTestCase):
             ]
         )
 
-    def test_fetch_tracks_empty_list(self):
-        result = self.runner.invoke(
-            cli, ["fetch", "youtube", "--tracks"], catch_exceptions=False
-        )
-
-        self.assertEqual(0, result.exit_code)
-        self.assertIn("There are no new tracks", result.output)
-
+    @mock.patch.object(TrackManager, "set")
+    @mock.patch.object(PlaylistManager, "exists")
     @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(YouService, "get_playlist_items")
     @mock.patch.object(YouService, "get_playlists")
-    def test_fetch_playlists(self, get_playlists, set_playlist):
+    def test_fetch_playlists(
+        self,
+        get_playlists,
+        get_playlist_items,
+        set_playlist,
+        exists,
+        set_tracks,
+    ):
+        exists.side_effect = [True, False]
         p_one, p_two = PlaylistFixture.get(2)
+        v_one, v_two = PlaylistItemFixture.get(2)
         get_playlists.return_value = [p_one, p_two]
+        get_playlist_items.return_value = [v_one, v_two]
+        set_tracks.side_effect = TrackFixture.get(2)
 
         result = self.runner.invoke(
             cli, ["fetch", "youtube", "--playlists"], catch_exceptions=False
         )
 
-        expected_messages = (
-            "Imported playlist {}".format(p_one.id),
-            "Imported playlist {}".format(p_two.id),
-            "Fetching playlists information",
-        )
+        expected_messages = ("Fetching playlists info",)
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_messages, result.output)
 
+        p_two.tracks = ["id_a", "id_b"]
         get_playlists.assert_called_once_with()
         set_playlist.assert_has_calls(
             [mock.call(p_one.asdict()), mock.call(p_two.asdict())]
+        )
+        set_tracks.assert_has_calls(
+            [
+                mock.call(
+                    {
+                        "artist": "artist_a",
+                        "name": "name_a",
+                        "youtube_id": "video_id_a",
+                    }
+                ),
+                mock.call(
+                    {
+                        "artist": "artist_b",
+                        "name": "name_b",
+                        "youtube_id": "video_id_b",
+                    }
+                ),
+            ]
         )

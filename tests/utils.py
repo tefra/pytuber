@@ -5,7 +5,7 @@ from unittest import mock
 
 from click.testing import CliRunner
 
-from pytuber.core.models import Playlist, Track
+from pytuber.core.models import Playlist, PlaylistItem, Track
 from pytuber.storage import Registry
 
 
@@ -81,9 +81,25 @@ class PlaylistFixture(Fixture):
     def generate(cls, letter, num, **kwargs):
         params = dict(
             id="id_%s" % letter,
+            title="title_%s" % letter,
             type="type_%s" % letter,
             provider="provider_%s" % letter,
             arguments={letter: num},
+        )
+        params.update(kwargs)
+        return params
+
+
+class PlaylistItemFixture(Fixture):
+    model = PlaylistItem
+
+    @classmethod
+    def generate(cls, letter, num, **kwargs):
+        params = dict(
+            id="id_%s" % letter,
+            name="name_%s" % letter,
+            artist="artist_%s" % letter,
+            video_id="video_id_%s" % letter,
         )
         params.update(kwargs)
         return params

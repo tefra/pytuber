@@ -2,7 +2,7 @@ import click
 
 from pytuber.core.models import PlaylistManager, TrackManager
 from pytuber.core.services import YouService
-from pytuber.utils import spinner
+from pytuber.utils import magenta, spinner
 
 
 @click.command("youtube")
@@ -29,24 +29,38 @@ def fetch(
 
 
 def fetch_playlists():
-    with spinner("Fetching playlists information") as sp:
-        for playlist in YouService.get_playlists():
-            exists = PlaylistManager.exists(playlist)
+    with spinner("Fetching playlists info") as sp:
+        playlists = YouService.get_playlists()
+        for playlist in playlists:
+            if not PlaylistManager.exists(playlist):
+                items = YouService.get_playlist_items(playlist)
+                track_ids = [
+                    TrackManager.set(
+                        dict(
+                            artist=item.artist,
+                            name=item.name,
+                            youtube_id=item.video_id,
+                        )
+                    ).id
+                    for item in items
+                ]
+                playlist.tracks = track_ids
             PlaylistManager.set(playlist.asdict())
-            sp.write(
-                "{} playlist {}".format(
-                    "Updated" if exists else "Imported", playlist.id
-                )
-            )
+
+        total = len(playlists)
+        if total > 0:
+            sp.text = "Fetched {} playlist(s) info".format(magenta(total))
 
 
 def fetch_tracks():
     tracks = TrackManager.find(youtube_id=None)
-    if len(tracks) == 0:
-        return click.secho("There are no new tracks")
-
-    click.secho("Fetching tracks information", bold=True)
-    for track in tracks:
-        with spinner("Track: {} - {}".format(track.artist, track.name)):
+    message = "Matching tracks to videos"
+    with spinner(message) as sp:
+        for track in tracks:
+            sp.text = "{}: {} - {}".format(message, track.artist, track.name)
             youtube_id = YouService.search_track(track)
             TrackManager.update(track, dict(youtube_id=youtube_id))
+
+        total = len(tracks)
+        if total > 0:
+            sp.text = "Matched {} tracks to videos".format(magenta(total))

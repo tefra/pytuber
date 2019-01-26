@@ -24,7 +24,14 @@ if __name__ == "__main__":
             "google-auth-oauthlib == 0.2.0",
         ],
         extras_require={
-            "dev": ["pre-commit", "pytest", "pytest-cov", "codecov", "tox"],
+            "dev": [
+                "pre-commit",
+                "pytest",
+                "pytest-cov",
+                "codecov",
+                "tox",
+                "Pygments",
+            ],
             "docs": [
                 "sphinx",
                 "sphinx-click",

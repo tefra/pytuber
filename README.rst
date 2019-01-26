@@ -1,5 +1,5 @@
 pytuber
-========
+=======
 
 
 .. image:: https://travis-ci.org/tefra/pytuber.svg?branch=master
@@ -31,7 +31,7 @@ pytuber
 
 ----
 
-**pytuber** is a cli tool to create music playlists on youtube.
+**pytuber** is a cli tool to manage your music playlists on youtube.
   - Generate playlists from `Last.fm <https://www.last.fm>`_
   - Search and match tracks to Youtube videos
   - Sync pytuber playlists (fetch/push)
@@ -39,15 +39,33 @@ pytuber
   - Comming soon: m3u, spotify, raw lists
 
 
-Install
-~~~~~~~
+Install & Setup
+~~~~~~~~~~~~~~~
 
 .. code-block:: console
 
     $ pip install pytuber
+    $ pytuber setup autocomplete  # Enable autocomplete
 
 
-Issues
-~~~~~~~
+Read how to setup youtube `authentication <https://pytuber.readthedocs.io/en/latest/credentials.html>`_
 
-  - Youtube limits the number of playlists you can create per day to only **10**
+Start creating youtube playlists ✨✨
+
+
+Youtube API Quota
+~~~~~~~~~~~~~~~~~
+
+Youtube api has a daily api `quota <https://developers.google.com/youtube/v3/getting-started#quota>`_ limit.
+During development I haven't managed to reach it but I do plan for pytuber to calculate it on the fly.
+
+Additionally to the api quota limit Youtube limits the amount of how many playlists you can create per day to only **10**.
+
+In case you reach that number, you can push a new playlist manually.
+  - Create a playlist with `pytuber add` command
+  - View the playlist by using this command `pytuber show xxxx --mime`
+  - This mime string is base64 signature used by pytuber internally to link local to youtube playlists
+  - Add a youtube playlists manually from the web site and add the mime signature at the bottom of the playlist description
+  - Fetch the new playlist info `pytuber fetch youtube --playlists`
+
+Afterwards you will be aple to push tracks like normally.

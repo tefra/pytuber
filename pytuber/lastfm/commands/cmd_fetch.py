@@ -30,6 +30,8 @@ def fetch_tracks(*args):
     if args:
         kwargs["id"] = lambda x: x in args
 
+    # So wrong, but yaspin doesn't support nested spinners
+    LastService.get_tags()
     with spinner("Fetching track lists") as sp:
         for playlist in PlaylistManager.find(**kwargs):
             tracklist = LastService.get_tracks(

@@ -32,11 +32,7 @@ class CommandFetchTests(CommandTestCase):
             cli, ["fetch", "youtube", "--tracks"], catch_exceptions=False
         )
 
-        expected_messages = ("Searching tracks videos: 2/2",)
-
         self.assertEqual(0, result.exit_code)
-        self.assertOutputContains(expected_messages, result.output)
-
         find.assert_called_once_with(youtube_id=None)
         search.assert_has_calls([mock.call(track_one), mock.call(track_two)])
         update.assert_has_calls(
@@ -70,7 +66,7 @@ class CommandFetchTests(CommandTestCase):
             cli, ["fetch", "youtube", "--playlists"], catch_exceptions=False
         )
 
-        expected_messages = ("Fetching playlists information",)
+        expected_messages = ("Fetching playlists info",)
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_messages, result.output)
 

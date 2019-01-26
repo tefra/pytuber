@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Optional
 
 import click
@@ -6,7 +5,7 @@ from tabulate import tabulate
 
 from pytuber.core import params
 from pytuber.core.models import PlaylistManager, TrackManager
-from pytuber.utils import date
+from pytuber.utils import date, magenta
 
 
 @click.command()
@@ -15,7 +14,6 @@ def show(id: Optional[str]):
     """Show a playlist track list."""
 
     playlist = PlaylistManager.get(id)
-    magenta = partial(click.style, fg="magenta")
     info = tabulate(  # type: ignore
         [
             (magenta("ID:"), playlist.id),

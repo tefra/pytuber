@@ -1,23 +1,22 @@
 #!/usr/bin/env bash
 
-# DEMO_PROMPT="$ " ./demo.sh -w 1
+# terminalizer record demo -c config.yml
+
 . demo-magic.sh
-
-clear
-
-terminalizer record demo
-
-p "# Hi, welcome to pytuber demo!"
-p "# I already run pytuber setup for youtube and lastfm"
+echo -e "\e[35m# Hi, welcome to pytuber demo!"
 pe "pytuber --help"
+sleep 2
+pe "clear"
 pe "pytuber list"
-pe "pytuber fetch youtube --all"
+pe "pytuber fetch youtube --playlists"
 pe "pytuber list"
-p "# We imported the playlist from youtube but still need to sync with last.fm"
-pe "pytuber fetch lastfm --tracks"
 pe "pytuber show 0d385e0"
-pe "pytuber add lastfm user-playlist"
-pe "pytuber fetch lastfm --tracks"
+pe "clear"
+pe "pytuber add lastfm country-playlist --country jp --limit 10 --title \"Japan Top10\""
+pe "pytuber list"
 pe "pytuber fetch youtube --tracks"
 pe "pytuber push youtube --all"
-pe "pytuber fetch lastfm --tags"
+echo -e "\e[35m# See help for more, bye bye :)"
+sleep 2
+
+# terminalizer render -o demo.gif demo

@@ -12,7 +12,7 @@
 ###############################################################################
 
 # the speed to "type" the text
-TYPE_SPEED=15
+TYPE_SPEED=20
 
 # no wait after "p" or "pe"
 NO_WAIT=false

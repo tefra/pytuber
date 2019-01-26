@@ -3,7 +3,6 @@ from tabulate import tabulate
 
 from pytuber.core import params
 from pytuber.core.models import PlaylistManager
-from pytuber.utils import date
 
 
 @click.command()
@@ -15,7 +14,10 @@ def list(provider: str):
     playlists = PlaylistManager.find(**kwargs)
 
     if len(playlists) == 0:
-        click.secho("No playlists found, use `pytuber add` to add some")
+        click.secho(
+            'No playlists found, use "pytuber add" or '
+            '"pytuber fetch youtube --playlists"'
+        )
     else:
         click.secho(
             tabulate(  # type: ignore
@@ -25,19 +27,11 @@ def list(provider: str):
                         p.title,
                         p.provider,
                         click.style("✔", fg="green") if p.youtube_id else "-",
-                        date(p.synced),
-                        date(p.uploaded),
+                        len(p.tracks),
                     )
                     for p in playlists
                 ],
-                headers=(
-                    "ID",
-                    "Title",
-                    "Provider",
-                    "Youtube",
-                    "Synced",
-                    "Uploaded",
-                ),
-                colalign=("left", "left", "center"),
+                headers=("ID", "Title", "Provider", "Youtube", "Tracks"),
+                colalign=("left", "left", "left", "center"),
             )
         )

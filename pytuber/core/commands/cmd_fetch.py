@@ -2,7 +2,7 @@ import click
 
 from pytuber.core.models import PlaylistManager, TrackManager
 from pytuber.core.services import YouService
-from pytuber.utils import spinner
+from pytuber.utils import magenta, spinner
 
 
 @click.command("youtube")
@@ -29,8 +29,7 @@ def fetch(
 
 
 def fetch_playlists():
-    message = "Fetching playlists information"
-    with spinner(message) as sp:
+    with spinner("Fetching playlists info") as sp:
         playlists = YouService.get_playlists()
         for playlist in playlists:
             if not PlaylistManager.exists(playlist):
@@ -50,12 +49,12 @@ def fetch_playlists():
 
         total = len(playlists)
         if total > 0:
-            sp.text = "{0}: {1}/{1} ".format(message, total)
+            sp.text = "Fetched {} playlist(s) info".format(magenta(total))
 
 
 def fetch_tracks():
     tracks = TrackManager.find(youtube_id=None)
-    message = "Searching tracks videos"
+    message = "Matching tracks to videos"
     with spinner(message) as sp:
         for track in tracks:
             sp.text = "{}: {} - {}".format(message, track.artist, track.name)
@@ -64,4 +63,4 @@ def fetch_tracks():
 
         total = len(tracks)
         if total > 0:
-            sp.text = "{0}: {1}/{1} ".format(message, total)
+            sp.text = "Matched {} tracks to videos".format(magenta(total))

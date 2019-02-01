@@ -6,6 +6,7 @@ import click_completion
 from pytuber.core import commands as core
 from pytuber.lastfm import commands as lastfm
 from pytuber.storage import Registry
+from pytuber.version import version
 
 click_completion.init(complete_options=True)
 
@@ -35,11 +36,13 @@ Push your updates to youtube
  $ pytuber push youtube --all
  """
 )
+@click.version_option(version=version)
 @click.pass_context
 def cli(ctx: click.Context):
     cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
 
     Registry.from_file(cfg)
+    Registry.set("version", version)
     ctx.call_on_close(lambda: Registry.persist(cfg))
     click.secho("")
 

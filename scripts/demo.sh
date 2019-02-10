@@ -10,12 +10,13 @@ pe "clear"
 pe "pytuber list"
 pe "pytuber fetch youtube --playlists"
 pe "pytuber list"
-pe "pytuber show 0d385e0"
-pe "clear"
+sleep 1
 pe "pytuber add lastfm country-playlist --country jp --limit 10 --title \"Japan Top10\""
 pe "pytuber list"
+pe "pytuber show 396b617"
 pe "pytuber fetch youtube --tracks"
 pe "pytuber push youtube --all"
+pe "pytuber quota"
 echo -e "\e[35m# See help for more, bye bye :)"
 sleep 2
 

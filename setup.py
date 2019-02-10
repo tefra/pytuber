@@ -31,6 +31,7 @@ if __name__ == "__main__":
                 "codecov",
                 "tox",
                 "Pygments",
+                "check-manifest",
             ],
             "docs": [
                 "sphinx",

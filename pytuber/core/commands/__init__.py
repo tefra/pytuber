@@ -7,6 +7,7 @@ from pytuber.core.commands.cmd_show import show
 from pytuber.core.commands.cmd_autocomplete import autocomplete
 from pytuber.core.commands.cmd_clean import clean
 from pytuber.core.commands.cmd_quota import quota
+from pytuber.core.commands.cmd_add import editor
 
 __all__ = [
     "setup",
@@ -18,4 +19,5 @@ __all__ = [
     "autocomplete",
     "clean",
     "quota",
+    "editor",
 ]

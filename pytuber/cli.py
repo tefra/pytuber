@@ -68,6 +68,7 @@ def add():
     """Add playlist."""
 
 
+add.add_command(core.editor)
 add.add_command(lastfm.add)
 
 

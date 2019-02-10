@@ -4,6 +4,7 @@ import click
 import click_completion
 
 from pytuber.core import commands as core
+from pytuber.core.utils import init_registry
 from pytuber.lastfm import commands as lastfm
 from pytuber.storage import Registry
 from pytuber.version import version
@@ -40,9 +41,7 @@ Push your updates to youtube
 @click.pass_context
 def cli(ctx: click.Context):
     cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
-
-    Registry.from_file(cfg)
-    Registry.set("version", version)
+    init_registry(cfg, version)
     ctx.call_on_close(lambda: Registry.persist(cfg))
     click.secho("")
 
@@ -51,6 +50,7 @@ cli.add_command(core.list)
 cli.add_command(core.show)
 cli.add_command(core.remove)
 cli.add_command(core.clean)
+cli.add_command(core.quota)
 
 
 @cli.group()

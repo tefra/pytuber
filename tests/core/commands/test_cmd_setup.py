@@ -29,6 +29,7 @@ class CommandSetupYoutubeTests(CommandTestCase):
         expected = {
             "client_id": "client_id",
             "client_secret": "client_secret",
+            "quota_limit": 1000000,
             "refresh_token": None,
             "scopes": "scopes",
             "token_uri": "token_uri",
@@ -37,10 +38,12 @@ class CommandSetupYoutubeTests(CommandTestCase):
         self.assertDictEqual(expected, actual.data)
 
     def test_update(self):
-        ConfigManager.set(dict(provider=Provider.youtube, data="foo"))
+        ConfigManager.set(dict(provider=Provider.youtube, data={"foo": "bar"}))
         client_secrets = "~/Downloads/client_secrets.json"
         result = self.runner.invoke(
-            cli, ["setup", "youtube", client_secrets], input="n"
+            cli,
+            ["setup", "youtube", client_secrets, "--quota-limit", 500],
+            input="n",
         )
 
         expected_output = "\n".join(

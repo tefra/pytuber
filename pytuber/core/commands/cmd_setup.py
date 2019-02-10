@@ -6,7 +6,15 @@ from pytuber.core.services import YouService
 
 @click.command("youtube")
 @click.argument("client-secrets", type=click.Path(), required=True)
-def setup(client_secrets: str) -> None:
+@click.option(
+    "--quota-limit",
+    "--q",
+    type=click.INT,
+    required=False,
+    default=1000000,
+    help="Override default youtube quota limit",
+)
+def setup(client_secrets: str, quota_limit: int) -> None:
     """
     Configure your youtube api credentials.
 
@@ -29,6 +37,7 @@ def setup(client_secrets: str) -> None:
                 client_id=credentials.client_id,
                 client_secret=credentials.client_secret,
                 scopes=credentials.scopes,
+                quota_limit=quota_limit,
             ),
         )
     )

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from unittest import mock
 
 from google.oauth2.credentials import Credentials
@@ -46,6 +47,7 @@ class YouServiceTests(TestCase):
             q="{} {}".format(track.artist, track.name),
             type="video",
         )
+        self.assertEqual(100, YouService.get_quota_usage())
 
     @mock.patch.object(YouService, "get_client")
     def test_get_playlists(self, get_client):
@@ -81,6 +83,7 @@ class YouServiceTests(TestCase):
                 mock.call().execute(),
             ]
         )
+        self.assertEqual(6, YouService.get_quota_usage())
 
     @mock.patch.object(YouService, "get_client")
     def test_create_playlist(self, get_client):
@@ -96,6 +99,7 @@ class YouServiceTests(TestCase):
             ),
             part="snippet,status",
         )
+        self.assertEqual(55, YouService.get_quota_usage())
 
     @mock.patch.object(YouService, "get_client")
     def test_get_playlist_items(self, get_client):
@@ -153,6 +157,7 @@ class YouServiceTests(TestCase):
                 mock.call().execute(),
             ]
         )
+        self.assertEqual(10, YouService.get_quota_usage())
 
     @mock.patch.object(YouService, "get_client")
     def test_create_playlist_item(self, get_client):
@@ -172,6 +177,7 @@ class YouServiceTests(TestCase):
             ),
             part="snippet",
         )
+        self.assertEqual(53, YouService.get_quota_usage())
 
     @mock.patch.object(YouService, "get_client")
     def test_remove_playlist_item(self, get_client):
@@ -181,6 +187,7 @@ class YouServiceTests(TestCase):
 
         self.assertEqual("foo", YouService.remove_playlist_item(item))
         delete.assert_called_once_with(id=item.id)
+        self.assertEqual(51, YouService.get_quota_usage())
 
     @mock.patch("pytuber.core.services.build")
     @mock.patch.object(Credentials, "from_authorized_user_info")
@@ -197,3 +204,7 @@ class YouServiceTests(TestCase):
 
         get_user_info.assert_called_once_with("foo", scopes=YouService.scopes)
         build.assert_called_once_with("youtube", "v3", credentials="creds")
+
+    def test_quota_date(self):
+        expected = (datetime.utcnow() - timedelta(hours=8)).strftime("%Y%m%d")
+        self.assertEqual(expected, YouService.quota_date())

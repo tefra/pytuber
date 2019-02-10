@@ -56,8 +56,13 @@ Start creating youtube playlists ✨✨
 Youtube API Quota
 ~~~~~~~~~~~~~~~~~
 
-Youtube api has a daily api `quota <https://developers.google.com/youtube/v3/getting-started#quota>`_ limit.
-During development I haven't managed to reach it but I do plan for pytuber to calculate it on the fly.
+Youtube api has a daily api `quota <https://developers.google.com/youtube/v3/getting-started#quota>`_ limit which resets at midnight Pacific Time (PT).
+
+pytuber includes a quota calculator
+
+.. code-block:: console
+
+    $ pytuber quota
 
 Additionally to the api quota limit Youtube limits the amount of how many playlists you can create per day to only **10**.
 

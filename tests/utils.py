@@ -5,7 +5,13 @@ from unittest import mock
 
 from click.testing import CliRunner
 
-from pytuber.core.models import Playlist, PlaylistItem, Track
+from pytuber.core.models import (
+    ConfigManager,
+    Playlist,
+    PlaylistItem,
+    Provider,
+    Track,
+)
 from pytuber.storage import Registry
 
 
@@ -103,3 +109,21 @@ class PlaylistItemFixture(Fixture):
         )
         params.update(kwargs)
         return params
+
+
+class ConfigFixture:
+    @classmethod
+    def youtube(cls):
+        ConfigManager.set(
+            dict(
+                provider=Provider.youtube.value,
+                data=dict(
+                    refresh_token=None,
+                    token_uri=None,
+                    client_id=None,
+                    client_secret=None,
+                    scopes=None,
+                    quota_limit=100,
+                ),
+            )
+        )

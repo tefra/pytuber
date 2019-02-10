@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -9,12 +11,14 @@ from pytuber.core.models import (
     Provider,
     Track,
 )
+from pytuber.storage import Registry
 
 
 class YouService:
     max_results = 50
     client = None
     scopes = ["https://www.googleapis.com/auth/youtube"]
+    quota_key = "youtube_quota"
 
     @classmethod
     def authorize(cls, client_secrets):
@@ -32,6 +36,7 @@ class YouService:
         )
 
         response = cls.get_client().search().list(**params).execute()
+        cls.update_quota(100)
         for item in response.get("items", []):
             if item["id"]["kind"] == "youtube#video":
                 return item["id"]["videoId"]
@@ -46,6 +51,7 @@ class YouService:
                 params.update(dict(pageToken=next_page_token))
 
             response = cls.get_client().playlists().list(**params).execute()
+            cls.update_quota(3)
             for item in response.get("items", []):
                 playlist = Playlist.from_mime(
                     item["snippet"]["description"].strip().split("\n")[-1]
@@ -71,7 +77,9 @@ class YouService:
             ),
             part="snippet,status",
         )
-        return cls.get_client().playlists().insert(**params).execute()["id"]
+        id = cls.get_client().playlists().insert(**params).execute()["id"]
+        cls.update_quota(55)
+        return id
 
     @classmethod
     def get_playlist_items(cls, playlist: Playlist):
@@ -87,6 +95,7 @@ class YouService:
                 params.update(dict(pageToken=next_page_token))
 
             resp = cls.get_client().playlistItems().list(**params).execute()
+            cls.update_quota(5)
             for item in resp.get("items", []):
 
                 try:
@@ -120,12 +129,16 @@ class YouService:
             ),
             part="snippet",
         )
-        return cls.get_client().playlistItems().insert(**params).execute()
+        result = cls.get_client().playlistItems().insert(**params).execute()
+        cls.update_quota(53)
+        return result
 
     @classmethod
     def remove_playlist_item(cls, playlist_item: PlaylistItem):
         params = dict(id=playlist_item.id)
-        return cls.get_client().playlistItems().delete(**params).execute()
+        result = cls.get_client().playlistItems().delete(**params).execute()
+        cls.update_quota(51)
+        return result
 
     @classmethod
     def get_client(cls):
@@ -136,3 +149,30 @@ class YouService:
             )
             cls.client = build("youtube", "v3", credentials=credentials)
         return cls.client
+
+    @classmethod
+    def get_quota_usage(cls):
+        return Registry.get(cls.quota_key, cls.quota_date(), default=0)
+
+    @classmethod
+    def update_quota(cls, cost: int):
+        """
+        Update current date youtube quota usage  according to this guide
+        https://developers.google.com/youtube/v3/determine_quota_cost.
+
+        :param int cost:
+        """
+        date = cls.quota_date()
+        quota = Registry.get(cls.quota_key, date, default=0) + cost
+        Registry.set(cls.quota_key, {date: quota})
+
+    @classmethod
+    def quota_date(cls, obj: bool = False):
+        """
+        Youtube daily quotas reset at midnight Pacific Time (PT). Return the
+        current quota date string.
+
+        :return: str
+        """
+        dt = datetime.utcnow() - timedelta(hours=8)
+        return dt if obj else dt.strftime("%Y%m%d")

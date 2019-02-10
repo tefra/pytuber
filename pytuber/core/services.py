@@ -167,7 +167,7 @@ class YouService:
         Registry.set(cls.quota_key, {date: quota})
 
     @classmethod
-    def quota_date(cls, object=False):
+    def quota_date(cls, obj: bool = False):
         """
         Youtube daily quotas reset at midnight Pacific Time (PT). Return the
         current quota date string.
@@ -175,4 +175,4 @@ class YouService:
         :return: str
         """
         dt = datetime.utcnow() - timedelta(hours=8)
-        return dt if object else dt.strftime("%Y%m%d")
+        return dt if obj else dt.strftime("%Y%m%d")

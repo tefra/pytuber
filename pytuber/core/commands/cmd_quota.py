@@ -14,7 +14,7 @@ def quota():
 
     limit = ConfigManager.get(Provider.youtube).data["quota_limit"]
     usage = YouService.get_quota_usage()
-    pt_date = YouService.quota_date(object=True)
+    pt_date = YouService.quota_date(obj=True)
     next_reset = timedelta(
         hours=23 - pt_date.hour,
         minutes=59 - pt_date.minute,

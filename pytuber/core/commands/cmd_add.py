@@ -1,5 +1,6 @@
 import contextlib
 import io
+from functools import partial
 from typing import List
 
 import click
@@ -12,8 +13,11 @@ from pytuber.core.models import (
     Provider,
     TrackManager,
 )
-from pytuber.lastfm.commands.cmd_add import option_title
 from pytuber.utils import magenta
+
+option_title = partial(
+    click.option, "--title", help="title", type=click.STRING, prompt="Title"
+)
 
 
 @click.command("editor")
@@ -25,8 +29,13 @@ def add_from_editor(title: str) -> None:
         "# One line per track, make sure it doesn't start with a #\n"
         "# Separate the track artist and title with a single dash `-`\n"
     )
-    message = click.edit(marker)
-    create_playlist(title, parse_text(message or ""))
+    text = click.edit(marker)
+    create_playlist(
+        title=title,
+        tracks=parse_text(text or ""),
+        type=PlaylistType.EDITOR,
+        arguments=dict(_title=title.strip()),
+    )
 
 
 @click.command("file")
@@ -40,7 +49,12 @@ def add_from_file(file: str, title: str, format: str) -> None:
         text = fp.read()
 
     parsers = dict(xspf=parse_xspf, txt=parse_text)
-    create_playlist(title, parsers[format](text or ""))
+    create_playlist(
+        title=title,
+        tracks=parsers[format](text or ""),
+        type=PlaylistType.FILE,
+        arguments=dict(_file=file),
+    )
 
 
 def parse_text(text):
@@ -93,7 +107,7 @@ def parse_xspf(xml):
     return tracks
 
 
-def create_playlist(title, tracks):
+def create_playlist(title, tracks, type, arguments):
     if not tracks:
         return click.secho("Tracklist is empty, aborting...")
 
@@ -120,9 +134,10 @@ def create_playlist(title, tracks):
     click.confirm("Are you sure you want to save this playlist?", abort=True)
     playlist = PlaylistManager.set(
         dict(
-            type=PlaylistType.EDITOR,
-            provider=Provider.user,
+            type=type,
             title=title.strip(),
+            arguments=arguments,
+            provider=Provider.user,
             tracks=[
                 TrackManager.set(dict(artist=artist, name=name)).id
                 for artist, name in tracks

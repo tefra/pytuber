@@ -21,7 +21,12 @@ class CommandAddTests(CommandTestCase):
             cli, ["add", "editor", "--title", "My Cool Playlist"]
         )
         parse_text.assert_called_once_with("foo")
-        create_playlist.assert_called_once_with("My Cool Playlist", ["a", "b"])
+        create_playlist.assert_called_once_with(
+            arguments={"_title": "My Cool Playlist"},
+            title="My Cool Playlist",
+            tracks=["a", "b"],
+            type=PlaylistType.EDITOR,
+        )
 
     @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
     @mock.patch("pytuber.core.commands.cmd_add.parse_text")
@@ -38,7 +43,10 @@ class CommandAddTests(CommandTestCase):
 
             parse_text.assert_called_once_with("foo")
             create_playlist.assert_called_once_with(
-                "My Cool Playlist", ["a", "b"]
+                arguments={"_file": "hello.txt"},
+                title="My Cool Playlist",
+                tracks=["a", "b"],
+                type=PlaylistType.FILE,
             )
 
     @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
@@ -64,7 +72,10 @@ class CommandAddTests(CommandTestCase):
 
             parse_xspf.assert_called_once_with("foo")
             create_playlist.assert_called_once_with(
-                "My Cool Playlist", ["a", "b"]
+                arguments={"_file": "hello.xspf"},
+                title="My Cool Playlist",
+                tracks=["a", "b"],
+                type=PlaylistType.FILE,
             )
 
 
@@ -129,7 +140,12 @@ class CommandAddUtilsTests(CommandTestCase):
             ("Queen", "Bohemian Rhapsody"),
             ("Queen", "I want to break free"),
         ]
-        create_playlist("My Cool Playlist", tracks)
+        create_playlist(
+            title="My Cool Playlist",
+            tracks=tracks,
+            type="foo",
+            arguments=dict(foo="bar"),
+        )
 
         expected_ouput = (
             "Title:  My Cool Playlist",
@@ -152,7 +168,8 @@ class CommandAddUtilsTests(CommandTestCase):
         )
         set.assert_called_once_with(
             dict(
-                type=PlaylistType.EDITOR,
+                type="foo",
+                arguments=dict(foo="bar"),
                 provider=Provider.user,
                 title="My Cool Playlist",
                 tracks=["55a4d2b", "b045fee"],
@@ -161,5 +178,5 @@ class CommandAddUtilsTests(CommandTestCase):
 
     @mock.patch("click.secho")
     def test_create_playlist_empty_tracks(self, secho):
-        create_playlist("foo", [])
+        create_playlist(title="foo", tracks=[], type=None, arguments=None)
         secho.assert_called_once_with("Tracklist is empty, aborting...")

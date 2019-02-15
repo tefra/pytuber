@@ -24,6 +24,7 @@ class Provider(enum.Enum):
 
 class PlaylistType(enum.Enum):
     EDITOR = "editor"
+    FILE = "file"
 
     def __str__(self):
         return self.value

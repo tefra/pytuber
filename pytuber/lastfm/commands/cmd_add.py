@@ -16,7 +16,7 @@ from .cmd_fetch import fetch_tracks
 
 @click.group("lastfm")
 def add():
-    """Last.fm is a music service that learns what you love."""
+    """Create playlists from Last.fm api."""
 
 
 option_limit = partial(

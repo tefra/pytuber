@@ -16,6 +16,14 @@ from pytuber.utils import timestamp
 class Provider(enum.Enum):
     lastfm = "last.fm"
     youtube = "youtube"
+    user = "user"
+
+    def __str__(self):
+        return self.value
+
+
+class PlaylistType(enum.Enum):
+    EDITOR = "editor"
 
     def __str__(self):
         return self.value

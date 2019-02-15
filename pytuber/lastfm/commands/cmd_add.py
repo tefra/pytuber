@@ -2,6 +2,7 @@ from functools import partial
 
 import click
 
+from pytuber.core.commands.cmd_add import option_title
 from pytuber.core.models import History, PlaylistManager, Provider
 from pytuber.lastfm.models import PlaylistType, UserPlaylistType
 from pytuber.lastfm.params import (
@@ -27,7 +28,6 @@ option_limit = partial(
     prompt="Maximum tracks",
     default=lambda: History.get("limit", 50),
 )
-option_title = partial(click.option, "--title", help="title", prompt="Title")
 
 
 @add.command()

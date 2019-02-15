@@ -1,7 +1,11 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.commands.cmd_add import create_playlist, parse_tracklist
+from pytuber.core.commands.cmd_add import (
+    create_playlist,
+    parse_text,
+    parse_xspf,
+)
 from pytuber.core.models import PlaylistManager, PlaylistType, Provider
 from tests.utils import CommandTestCase, PlaylistFixture
 
@@ -9,20 +13,20 @@ from tests.utils import CommandTestCase, PlaylistFixture
 class CommandAddTests(CommandTestCase):
     @mock.patch("click.edit")
     @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
-    @mock.patch("pytuber.core.commands.cmd_add.parse_tracklist")
-    def test_add_from_editor(self, parse_tracklist, create_playlist, clk_edit):
+    @mock.patch("pytuber.core.commands.cmd_add.parse_text")
+    def test_add_from_editor(self, parse_text, create_playlist, clk_edit):
         clk_edit.return_value = "foo"
-        parse_tracklist.return_value = ["a", "b"]
+        parse_text.return_value = ["a", "b"]
         self.runner.invoke(
             cli, ["add", "editor", "--title", "My Cool Playlist"]
         )
-        parse_tracklist.assert_called_once_with("foo")
+        parse_text.assert_called_once_with("foo")
         create_playlist.assert_called_once_with("My Cool Playlist", ["a", "b"])
 
     @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
-    @mock.patch("pytuber.core.commands.cmd_add.parse_tracklist")
-    def test_add_from_file(self, parse_tracklist, create_playlist):
-        parse_tracklist.return_value = ["a", "b"]
+    @mock.patch("pytuber.core.commands.cmd_add.parse_text")
+    def test_add_from_txt_file(self, parse_text, create_playlist):
+        parse_text.return_value = ["a", "b"]
         with self.runner.isolated_filesystem():
             with open("hello.txt", "w") as f:
                 f.write("foo")
@@ -32,14 +36,40 @@ class CommandAddTests(CommandTestCase):
                 ["add", "file", "hello.txt", "--title", "My Cool Playlist"],
             )
 
-            parse_tracklist.assert_called_once_with("foo")
+            parse_text.assert_called_once_with("foo")
+            create_playlist.assert_called_once_with(
+                "My Cool Playlist", ["a", "b"]
+            )
+
+    @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
+    @mock.patch("pytuber.core.commands.cmd_add.parse_xspf")
+    def test_add_from_xspf_file(self, parse_xspf, create_playlist):
+        parse_xspf.return_value = ["a", "b"]
+        with self.runner.isolated_filesystem():
+            with open("hello.xspf", "w") as f:
+                f.write("foo")
+
+            self.runner.invoke(
+                cli,
+                [
+                    "add",
+                    "file",
+                    "hello.xspf",
+                    "--title",
+                    "My Cool Playlist",
+                    "--format",
+                    "xspf",
+                ],
+            )
+
+            parse_xspf.assert_called_once_with("foo")
             create_playlist.assert_called_once_with(
                 "My Cool Playlist", ["a", "b"]
             )
 
 
 class CommandAddUtilsTests(CommandTestCase):
-    def test_parse_tracklist(self):
+    def test_parse_text(self):
         text = "\n".join(
             (
                 "Queen - Bohemian Rhapsody",
@@ -49,12 +79,43 @@ class CommandAddUtilsTests(CommandTestCase):
                 "Wrong Format",
             )
         )
-        actual = parse_tracklist(text)
         expected = [
             ("Queen", "Bohemian Rhapsody"),
             ("Queen", "I want to break free"),
         ]
-        self.assertEqual(expected, actual)
+        self.assertEqual(expected, parse_text(text))
+
+    def test_parse_xspf(self):
+        xml = """<?xml version="1.0" encoding="UTF-8"?>
+            <playlist version="1" xmlns="http://xspf.org/ns/0/">
+                <trackList>
+                    <track>
+                        <creator>Queen</creator>
+                        <title>Bohemian Rhapsody</title>
+                    </track>
+                    <track>
+                        <creator>Queen</creator>
+                        <title>Bohemian Rhapsody</title>
+                    </track>
+                    <track>
+                        <creator>Queen</creator>
+                        <title>I want to break free</title>
+                    </track>
+                    <track>
+                        <creator>No track</creator>
+                    </track>
+                    <track>
+                        <title>No artist</title>
+                    </track>
+                </trackList>
+            </playlist>"""
+
+        expected = [
+            ("Queen", "Bohemian Rhapsody"),
+            ("Queen", "I want to break free"),
+        ]
+        self.assertEqual(expected, parse_xspf(xml))
+        self.assertEqual([], parse_xspf(""))
 
     @mock.patch("pytuber.core.commands.cmd_add.magenta")
     @mock.patch.object(PlaylistManager, "set")

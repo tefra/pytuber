@@ -1,6 +1,9 @@
+import contextlib
+import io
 from typing import List
 
 import click
+from lxml import etree
 from tabulate import tabulate
 
 from pytuber.core.models import (
@@ -23,22 +26,32 @@ def add_from_editor(title: str) -> None:
         "# Separate the track artist and title with a single dash `-`\n"
     )
     message = click.edit(marker)
-    create_playlist(title, parse_tracklist(message or ""))
+    create_playlist(title, parse_text(message or ""))
 
 
 @click.command("file")
 @click.argument("file", type=click.Path(), required=True)
+@click.option("--format", type=click.Choice(["txt", "xspf"]), default="txt")
 @option_title()
-def add_from_file(file: str, title: str) -> None:
+def add_from_file(file: str, title: str, format: str) -> None:
     """Import a playlist from a text file."""
 
-    with open(file, "r") as fp:
+    with open(file, "r", encoding="UTF-8") as fp:
         text = fp.read()
 
-    create_playlist(title, parse_tracklist(text or ""))
+    parsers = dict(xspf=parse_xspf, txt=parse_text)
+    create_playlist(title, parsers[format](text or ""))
 
 
-def parse_tracklist(text):
+def parse_text(text):
+    """
+    Parse raw text format playlists, each line must contain a single.
+
+    track with artist and title separated by a single dash. eg Queen - Bohemian Rhapsody
+
+    :param str text:
+    :return: A list of tracks
+    """
     tracks: List[tuple] = []
     for line in text.split("\n"):
         line = line.strip()
@@ -55,6 +68,28 @@ def parse_tracklist(text):
 
         tracks.append((artist, track))
 
+    return tracks
+
+
+def parse_xspf(xml):
+    """
+    Parse xspf playlists and be as graceful as possible with errors.
+
+    :param str xml:
+    :return: A list of tracks
+    """
+    tracks = []
+    with contextlib.suppress(etree.XMLSyntaxError):
+        context = etree.iterparse(io.BytesIO(xml.encode("UTF-8")))
+        for action, elem in context:
+            if elem.tag.endswith("creator"):
+                artist = elem.text.strip()
+            elif elem.tag.endswith("title"):
+                track = elem.text.strip()
+            elif elem.tag.endswith("track"):
+                if artist and track and (artist, track) not in tracks:
+                    tracks.append((artist, track))
+                artist = track = None
     return tracks
 
 

@@ -13,6 +13,7 @@ if __name__ == "__main__":
         packages=find_packages(),
         version=meta["version"],
         install_requires=[
+            "lxml == 4.3.1",
             "click == 7.0",
             "click_completion == 0.5.0",
             "pydrag == 18.1",

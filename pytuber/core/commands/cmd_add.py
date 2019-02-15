@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 from functools import partial
 from typing import List
 
@@ -40,7 +41,9 @@ def add_from_editor(title: str) -> None:
 
 @click.command("file")
 @click.argument("file", type=click.Path(), required=True)
-@click.option("--format", type=click.Choice(["txt", "xspf"]), default="txt")
+@click.option(
+    "--format", type=click.Choice(["txt", "xspf", "jspf"]), default="txt"
+)
 @option_title()
 def add_from_file(file: str, title: str, format: str) -> None:
     """Import a playlist from a text file."""
@@ -48,7 +51,7 @@ def add_from_file(file: str, title: str, format: str) -> None:
     with open(file, "r", encoding="UTF-8") as fp:
         text = fp.read()
 
-    parsers = dict(xspf=parse_xspf, txt=parse_text)
+    parsers = dict(jspf=parse_jspf, xspf=parse_xspf, txt=parse_text)
     create_playlist(
         title=title,
         tracks=parsers[format](text or ""),
@@ -85,16 +88,16 @@ def parse_text(text):
     return tracks
 
 
-def parse_xspf(xml):
+def parse_xspf(text):
     """
-    Parse xspf playlists and be as graceful as possible with errors.
+    XSPF parser.
 
-    :param str xml:
+    :param str text:
     :return: A list of tracks
     """
     tracks = []
     with contextlib.suppress(etree.XMLSyntaxError):
-        context = etree.iterparse(io.BytesIO(xml.encode("UTF-8")))
+        context = etree.iterparse(io.BytesIO(text.encode("UTF-8")))
         for action, elem in context:
             if elem.tag.endswith("creator"):
                 artist = elem.text.strip()
@@ -104,6 +107,26 @@ def parse_xspf(xml):
                 if artist and track and (artist, track) not in tracks:
                     tracks.append((artist, track))
                 artist = track = None
+    return tracks
+
+
+def parse_jspf(text):
+    """
+    JSPF parser.
+
+    :param str text:
+    :return: A list of tracks
+    """
+
+    tracks = []
+    with contextlib.suppress(KeyError, json.JSONDecodeError):
+        data = json.loads(text)
+        for item in data["playlist"]["track"]:
+            artist = item.get("creator", "").strip()
+            track = item.get("title", "").strip()
+            if artist and track and (artist, track) not in tracks:
+                tracks.append((artist, track))
+
     return tracks
 
 

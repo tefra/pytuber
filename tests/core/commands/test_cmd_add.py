@@ -3,6 +3,7 @@ from unittest import mock
 from pytuber import cli
 from pytuber.core.commands.cmd_add import (
     create_playlist,
+    parse_jspf,
     parse_text,
     parse_xspf,
 )
@@ -78,6 +79,35 @@ class CommandAddTests(CommandTestCase):
                 type=PlaylistType.FILE,
             )
 
+    @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
+    @mock.patch("pytuber.core.commands.cmd_add.parse_jspf")
+    def test_add_from_jspf_file(self, parse_jspf, create_playlist):
+        parse_jspf.return_value = ["a", "b"]
+        with self.runner.isolated_filesystem():
+            with open("hello.jspf", "w") as f:
+                f.write("foo")
+
+            self.runner.invoke(
+                cli,
+                [
+                    "add",
+                    "file",
+                    "hello.jspf",
+                    "--title",
+                    "My Cool Playlist",
+                    "--format",
+                    "jspf",
+                ],
+            )
+
+            parse_jspf.assert_called_once_with("foo")
+            create_playlist.assert_called_once_with(
+                arguments={"_file": "hello.jspf"},
+                title="My Cool Playlist",
+                tracks=["a", "b"],
+                type=PlaylistType.FILE,
+            )
+
 
 class CommandAddUtilsTests(CommandTestCase):
     def test_parse_text(self):
@@ -127,6 +157,42 @@ class CommandAddUtilsTests(CommandTestCase):
         ]
         self.assertEqual(expected, parse_xspf(xml))
         self.assertEqual([], parse_xspf(""))
+
+    def test_parse_jspf(self):
+        json = """
+        {
+          "playlist": {
+            "title": "Two Songs From Thriller",
+            "creator": "MJ Fan",
+            "track": [
+              {
+                "title": "Bohemian Rhapsody",
+                "creator": "Queen"
+              },
+              {
+                "title": "Bohemian Rhapsody",
+                "creator": "Queen"
+              },
+              {
+                "creator": "Queen"
+              },
+              {
+                "title": "Bohemian Rhapsody"
+              },
+              {
+                "title": "I want to break free",
+                "creator": "Queen"
+              }
+            ]
+          }
+        }"""
+
+        expected = [
+            ("Queen", "Bohemian Rhapsody"),
+            ("Queen", "I want to break free"),
+        ]
+        self.assertEqual(expected, parse_jspf(json))
+        self.assertEqual([], parse_jspf(""))
 
     @mock.patch("pytuber.core.commands.cmd_add.magenta")
     @mock.patch.object(PlaylistManager, "set")

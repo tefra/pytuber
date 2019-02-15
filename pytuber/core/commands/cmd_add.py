@@ -42,7 +42,9 @@ def add_from_editor(title: str) -> None:
 @click.command("file")
 @click.argument("file", type=click.Path(), required=True)
 @click.option(
-    "--format", type=click.Choice(["txt", "xspf", "jspf"]), default="txt"
+    "--format",
+    type=click.Choice(["txt", "m3u", "xspf", "jspf"]),
+    default="txt",
 )
 @option_title()
 def add_from_file(file: str, title: str, format: str) -> None:
@@ -51,7 +53,9 @@ def add_from_file(file: str, title: str, format: str) -> None:
     with open(file, "r", encoding="UTF-8") as fp:
         text = fp.read()
 
-    parsers = dict(jspf=parse_jspf, xspf=parse_xspf, txt=parse_text)
+    parsers = dict(
+        m3u=parse_m3u, jspf=parse_jspf, xspf=parse_xspf, txt=parse_text
+    )
     create_playlist(
         title=title,
         tracks=parsers[format](text or ""),
@@ -126,6 +130,37 @@ def parse_jspf(text):
             track = item.get("title", "").strip()
             if artist and track and (artist, track) not in tracks:
                 tracks.append((artist, track))
+
+    return tracks
+
+
+def parse_m3u(text):
+    """
+    M3U parser.
+
+    :param str text:
+    :return: A list of tracks
+    """
+
+    tracks: List[tuple] = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line.startswith("#EXTINF:"):
+            continue
+
+        parts = line.split(",", 1)
+        if len(parts) != 2:
+            continue
+
+        parts = parts[1].split("-", 1)
+        if len(parts) != 2:
+            continue
+
+        artist, track = list(map(str.strip, parts))
+        if not artist or not track or (artist, track) in tracks:
+            continue
+
+        tracks.append((artist, track))
 
     return tracks
 

@@ -4,6 +4,7 @@ from pytuber import cli
 from pytuber.core.commands.cmd_add import (
     create_playlist,
     parse_jspf,
+    parse_m3u,
     parse_text,
     parse_xspf,
 )
@@ -29,83 +30,68 @@ class CommandAddTests(CommandTestCase):
             type=PlaylistType.EDITOR,
         )
 
-    @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
-    @mock.patch("pytuber.core.commands.cmd_add.parse_text")
-    def test_add_from_txt_file(self, parse_text, create_playlist):
-        parse_text.return_value = ["a", "b"]
-        with self.runner.isolated_filesystem():
-            with open("hello.txt", "w") as f:
-                f.write("foo")
-
-            self.runner.invoke(
-                cli,
-                ["add", "file", "hello.txt", "--title", "My Cool Playlist"],
-            )
-
-            parse_text.assert_called_once_with("foo")
-            create_playlist.assert_called_once_with(
-                arguments={"_file": "hello.txt"},
-                title="My Cool Playlist",
-                tracks=["a", "b"],
-                type=PlaylistType.FILE,
-            )
-
-    @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
+    @mock.patch("pytuber.core.commands.cmd_add.parse_m3u")
     @mock.patch("pytuber.core.commands.cmd_add.parse_xspf")
-    def test_add_from_xspf_file(self, parse_xspf, create_playlist):
-        parse_xspf.return_value = ["a", "b"]
-        with self.runner.isolated_filesystem():
-            with open("hello.xspf", "w") as f:
-                f.write("foo")
-
-            self.runner.invoke(
-                cli,
-                [
-                    "add",
-                    "file",
-                    "hello.xspf",
-                    "--title",
-                    "My Cool Playlist",
-                    "--format",
-                    "xspf",
-                ],
-            )
-
-            parse_xspf.assert_called_once_with("foo")
-            create_playlist.assert_called_once_with(
-                arguments={"_file": "hello.xspf"},
-                title="My Cool Playlist",
-                tracks=["a", "b"],
-                type=PlaylistType.FILE,
-            )
-
-    @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
     @mock.patch("pytuber.core.commands.cmd_add.parse_jspf")
-    def test_add_from_jspf_file(self, parse_jspf, create_playlist):
-        parse_jspf.return_value = ["a", "b"]
+    @mock.patch("pytuber.core.commands.cmd_add.parse_text")
+    @mock.patch("pytuber.core.commands.cmd_add.create_playlist")
+    def test_add_from_file(self, create_playlist, *args):
+        text, jspf, xspf, m3u = args
+        text.return_value = list("txt")
+        jspf.return_value = list("jspf")
+        xspf.return_value = list("xspf")
+        m3u.return_value = list("m3u")
+
         with self.runner.isolated_filesystem():
-            with open("hello.jspf", "w") as f:
-                f.write("foo")
+            for format in ["txt", "jspf", "xspf", "m3u"]:
+                with open("hello.{}".format(format), "w") as f:
+                    f.write(format)
 
-            self.runner.invoke(
-                cli,
+                self.runner.invoke(
+                    cli,
+                    [
+                        "add",
+                        "file",
+                        "hello.{}".format(format),
+                        "--title",
+                        "Mew",
+                        "--format",
+                        format,
+                    ],
+                )
+
+            jspf.assert_called_once_with("jspf")
+            xspf.assert_called_once_with("xspf")
+            text.assert_called_once_with("txt")
+            m3u.assert_called_once_with("m3u")
+
+            create_playlist.assert_has_calls(
                 [
-                    "add",
-                    "file",
-                    "hello.jspf",
-                    "--title",
-                    "My Cool Playlist",
-                    "--format",
-                    "jspf",
-                ],
-            )
-
-            parse_jspf.assert_called_once_with("foo")
-            create_playlist.assert_called_once_with(
-                arguments={"_file": "hello.jspf"},
-                title="My Cool Playlist",
-                tracks=["a", "b"],
-                type=PlaylistType.FILE,
+                    mock.call(
+                        arguments={"_file": "hello.txt"},
+                        title="Mew",
+                        tracks=list("txt"),
+                        type=PlaylistType.FILE,
+                    ),
+                    mock.call(
+                        arguments={"_file": "hello.jspf"},
+                        title="Mew",
+                        tracks=list("jspf"),
+                        type=PlaylistType.FILE,
+                    ),
+                    mock.call(
+                        arguments={"_file": "hello.xspf"},
+                        title="Mew",
+                        tracks=list("xspf"),
+                        type=PlaylistType.FILE,
+                    ),
+                    mock.call(
+                        arguments={"_file": "hello.m3u"},
+                        title="Mew",
+                        tracks=list("m3u"),
+                        type=PlaylistType.FILE,
+                    ),
+                ]
             )
 
 
@@ -116,7 +102,8 @@ class CommandAddUtilsTests(CommandTestCase):
                 "Queen - Bohemian Rhapsody",
                 " Queen - Bohemian Rhapsody",
                 "Queen -I want to break free",
-                "#" " ",
+                " # a - b",
+                " ",
                 "Wrong Format",
             )
         )
@@ -193,6 +180,23 @@ class CommandAddUtilsTests(CommandTestCase):
         ]
         self.assertEqual(expected, parse_jspf(json))
         self.assertEqual([], parse_jspf(""))
+
+    def test_parse_m3u(self):
+        text = "\n".join(
+            (
+                "#EXTM3U",
+                "#EXTINF:123, Queen - Bohemian Rhapsody",
+                "#EXTINF:123,Queen - I want to break free",
+                "#EXTINF:123 whatever format 1",
+                "#EXTINF:123, whatever format 2",
+            )
+        )
+        expected = [
+            ("Queen", "Bohemian Rhapsody"),
+            ("Queen", "I want to break free"),
+        ]
+        self.assertEqual(expected, parse_m3u(text))
+        self.assertEqual([], parse_m3u(""))
 
     @mock.patch("pytuber.core.commands.cmd_add.magenta")
     @mock.patch.object(PlaylistManager, "set")

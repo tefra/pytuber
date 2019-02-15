@@ -33,13 +33,12 @@ pytuber
 
 **pytuber** is a cli tool to manage your music **playlists** on youtube.
   - Generate playlists from `Last.fm <https://www.last.fm>`_ or
-  - Import from file formats: XSPF, JSPF
+  - Import from file formats: XSPF, JSPF, M3U
   - Create with a simple copy paste in a text editor
   - Search and match tracks to Youtube videos
   - Sync pytuber playlists (fetch/push)
   - Update youtube playlist items (add/remove)
   - Keep track of youtube api quota usage
-  - Comming soon: m3u, spotify
 
 
 Install & Setup

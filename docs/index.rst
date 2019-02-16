@@ -6,8 +6,8 @@ How to Use
 .. toctree::
     :maxdepth: 3
 
+    reference
     credentials
-    usage
 
 
 Indices and tables

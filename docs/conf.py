@@ -42,7 +42,7 @@ version = release = get_version()
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 
-extensions = ["sphinx_click.ext"]
+extensions = ["sphinxcontrib.programoutput"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -60,7 +60,7 @@ master_doc = "index"
 # for a list of supported languages.
 #
 # This is also used if you do content translation via gettext catalogs.
-# Usually you set "language" from the command line for these cases.
+# Usually you set "language" from the command line. for these cases.
 language = None
 
 # List of patterns, relative to source directory, that match files and

@@ -36,9 +36,8 @@ if __name__ == "__main__":
             ],
             "docs": [
                 "sphinx",
-                "sphinx-click",
                 "sphinx-rtd-theme",
-                "sphinx-autodoc-typehints",
+                "sphinxcontrib-programoutput",
             ],
         },
         entry_points={"console_scripts": ["pytuber=pytuber:cli"]},

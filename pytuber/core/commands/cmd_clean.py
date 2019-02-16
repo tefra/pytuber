@@ -1,25 +1,39 @@
 import click
+from tabulate import tabulate
 
 from pytuber.core.models import PlaylistManager, TrackManager
+from pytuber.utils import magenta
 
 
 @click.command("clean")
 def clean():
-    """Cleanup youtube related data from playlists and tracks."""
+    """Cleanup orphan tracks and empty playlists."""
 
-    playlists = tracks = 0
+    tracks = []
+    removed_playlists = 0
     for playlist in PlaylistManager.find():
-        if playlist.youtube_id:
-            playlists += 1
-            PlaylistManager.update(playlist, dict(youtube_id=None))
 
+        if len(playlist.tracks) == 0:
+            PlaylistManager.remove(playlist.id)
+            removed_playlists += 1
+        else:
+            tracks += playlist.tracks
+
+    tracks = list(set(tracks))
+    removed_tracks = 0
     for track in TrackManager.find():
-        if track.youtube_id:
-            tracks += 1
-            TrackManager.update(track, dict(youtube_id=None))
+        if track.id not in tracks:
+            TrackManager.remove(track.id)
+            removed_tracks += 1
 
+    click.secho("Cleanup removed:", bold=True)
     click.secho(
-        "Removed youtube references from {} playlists and {} tracks".format(
-            playlists, tracks
+        tabulate(  # type: ignore
+            [
+                (magenta("Tracks:"), removed_tracks),
+                (magenta("Playlists:"), removed_playlists),
+            ],
+            tablefmt="plain",
+            colalign=("right", "left"),
         )
     )

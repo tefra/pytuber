@@ -8,6 +8,7 @@ How to Use
 
     reference
     credentials
+    changelog
 
 
 Indices and tables

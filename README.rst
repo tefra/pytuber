@@ -17,6 +17,8 @@ pytuber
 .. image:: https://img.shields.io/github/languages/top/tefra/pytuber.svg
     :target: https://pytuber.readthedocs.io/
 
+.. image:: https://api.codacy.com/project/badge/Grade/5d21d2a3c7fd4dc5883c48124cac44de
+   :target: https://app.codacy.com/app/tefra/pytuber?utm_source=github.com&utm_medium=referral&utm_content=tefra/pytuber&utm_campaign=Badge_Grade_Dashboard
 
 .. image:: https://img.shields.io/pypi/pyversions/pytuber.svg
     :target: https://pypi.org/pypi/pytuber/

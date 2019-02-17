@@ -4,17 +4,30 @@ import pydrag
 
 from pytuber import cli
 from pytuber.core.models import PlaylistManager, Provider, TrackManager
+from pytuber.lastfm.commands.cmd_fetch import fetch_tracks
 from pytuber.lastfm.services import LastService
 from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 
 class CommandFetchTests(CommandTestCase):
+    @mock.patch("click.secho")
+    @mock.patch("click.Abort")
+    def test_with_nothing(self, abort, secho):
+        result = self.runner.invoke(
+            cli, ["fetch", "lastfm"], catch_exceptions=False
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertOutputContains("", result.output)
+        abort.assert_called_once_with()
+        self.assertEqual(1, secho.call_count)
+
     @mock.patch.object(TrackManager, "set")
     @mock.patch.object(LastService, "get_tags")
     @mock.patch.object(LastService, "get_tracks")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_fetch_tracks(self, find, update, get_tracks, get_tags, set):
+    def test_with_tracks(self, find, update, get_tracks, get_tags, set):
 
         tracks = TrackFixture.get(6)
         playlists = PlaylistFixture.get(2)
@@ -58,7 +71,7 @@ class CommandFetchTests(CommandTestCase):
 
     @mock.patch.object(LastService, "get_tags")
     @mock.patch.object(LastService, "__init__", return_value=None)
-    def test_fetch_tags(self, _, get_tags):
+    def test_with_tags(self, _, get_tags):
         get_tags.return_value = [
             pydrag.Tag(name="rock", count=1, reach=2),
             pydrag.Tag(name="rap", count=2, reach=4),
@@ -76,3 +89,15 @@ class CommandFetchTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         get_tags.assert_called_once_with()
+
+    @mock.patch.object(PlaylistManager, "find")
+    @mock.patch.object(LastService, "get_tags")
+    def test_fetch_tracks_with_arguments(self, get_tags, find):
+        fetch_tracks(1, 2)
+
+        kwargs = find.call_args_list[0][1]
+        self.assertEqual(Provider.lastfm, kwargs["provider"])
+
+        self.assertTrue(kwargs["id"](1))
+        self.assertTrue(kwargs["id"](2))
+        self.assertFalse(kwargs["id"](3))

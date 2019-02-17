@@ -12,9 +12,21 @@ from tests.utils import (
 
 
 class CommandPushTests(CommandTestCase):
+    @mock.patch("click.secho")
+    @mock.patch("click.Abort")
+    def test_with_nothing(self, abort, secho):
+        result = self.runner.invoke(
+            cli, ["push", "youtube"], catch_exceptions=False
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertOutputContains("", result.output)
+        abort.assert_called_once_with()
+        self.assertEqual(1, secho.call_count)
+
     @mock.patch("pytuber.core.commands.cmd_push.push_tracks")
     @mock.patch("pytuber.core.commands.cmd_push.push_playlists")
-    def test_push_all(self, push_playlists, push_tracks):
+    def test_with_all(self, push_playlists, push_tracks):
         self.runner.invoke(cli, ["push", "youtube", "--all"])
 
         push_playlists.assert_called_once()
@@ -23,7 +35,7 @@ class CommandPushTests(CommandTestCase):
     @mock.patch.object(YouService, "create_playlist")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_push_playlists(self, find, update, create_playlist):
+    def test_with_playlists(self, find, update, create_playlist):
         p_one, p_two = PlaylistFixture.get(2)
         find.return_value = [p_one, p_two]
         create_playlist.side_effect = ["y1", "y2"]
@@ -50,7 +62,7 @@ class CommandPushTests(CommandTestCase):
     @mock.patch.object(TrackManager, "find")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_push_tracks(
+    def test_with_tracks(
         self,
         find_playlists,
         update_playlist,

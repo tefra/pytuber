@@ -12,6 +12,18 @@ from tests.utils import (
 
 
 class CommandFetchTests(CommandTestCase):
+    @mock.patch("click.secho")
+    @mock.patch("click.Abort")
+    def test_with_nothing(self, abort, secho):
+        result = self.runner.invoke(
+            cli, ["fetch", "youtube"], catch_exceptions=False
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertOutputContains("", result.output)
+        abort.assert_called_once_with()
+        self.assertEqual(1, secho.call_count)
+
     @mock.patch("pytuber.core.commands.cmd_fetch.fetch_tracks")
     @mock.patch("pytuber.core.commands.cmd_fetch.fetch_playlists")
     def test_all(self, fetch_playlists, fetch_tracks):

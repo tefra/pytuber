@@ -13,21 +13,20 @@ from pytuber.storage import Registry
 from pytuber.utils import timestamp
 
 
-class Provider(enum.Enum):
+class StrEnum(enum.Enum):
+    def __str__(self):
+        return self.value
+
+
+class Provider(StrEnum):
     lastfm = "last.fm"
     youtube = "youtube"
     user = "user"
 
-    def __str__(self):
-        return self.value
 
-
-class PlaylistType(enum.Enum):
+class PlaylistType(StrEnum):
     EDITOR = "editor"
     FILE = "file"
-
-    def __str__(self):
-        return self.value
 
 
 class Document:

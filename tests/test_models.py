@@ -11,7 +11,9 @@ from pytuber.core.models import (
     Manager,
     Playlist,
     PlaylistManager,
+    PlaylistType,
     Provider,
+    StrEnum,
     Track,
     TrackManager,
 )
@@ -134,11 +136,21 @@ class ManagerTests(TestCase):
         b = FooManager.set(dict(id="b", value=2))
         c = FooManager.set(dict(id="c", value=2))
         d = FooManager.set(dict(id="d", value=1))
+        e = FooManager.set(dict(id="e", value=None))
 
-        self.assertEqual([a, b, c, d], FooManager.find())
+        self.assertEqual([a, b, c, d, e], FooManager.find())
         self.assertEqual([b, c], FooManager.find(value=2))
         self.assertEqual([c], FooManager.find(value=2, id="c"))
-        self.assertEqual([], FooManager.find(id="e"))
+        self.assertEqual([], FooManager.find(id="x"))
+        self.assertEqual([e], FooManager.find(value=None))
+        self.assertEqual([a, d], FooManager.find(value=lambda x: x == 1))
+
+    def test_exists(self):
+        a = Foo(id="a", value=1)
+        self.assertFalse(FooManager.exists(a))
+
+        FooManager.set(a.asdict())
+        self.assertTrue(FooManager.exists(a))
 
 
 class ConfigManagerTests(TestCase):
@@ -179,3 +191,10 @@ class TrackManagerTests(TestCase):
         Registry.set("track", "a", "youtube_id", 1)
         self.assertEqual(1, TrackManager.find_youtube_id("a"))
         self.assertIsNone(TrackManager.find_youtube_id("b"))
+
+
+class PlaylistTypeTests(TestCase):
+    def test_enum(self):
+        self.assertTrue(issubclass(PlaylistType, StrEnum))
+        for c in PlaylistType:
+            self.assertEqual(str(c), c.value)

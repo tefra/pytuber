@@ -1,9 +1,9 @@
-import enum
-
 import click
 
+from pytuber.core.models import StrEnum
 
-class PlaylistMixin(enum.Enum):
+
+class PlaylistMixin(StrEnum):
     @classmethod
     def choices(cls):
         prompts = ["Playlist Types"]
@@ -23,9 +23,6 @@ class PlaylistMixin(enum.Enum):
     @classmethod
     def range(cls):
         return click.IntRange(1, len(cls))
-
-    def __str__(self):
-        return self.value
 
 
 class PlaylistType(PlaylistMixin):

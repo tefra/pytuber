@@ -186,6 +186,7 @@ class CommandAddUtilsTests(CommandTestCase):
             (
                 "#EXTM3U",
                 "#EXTINF:123, Queen - Bohemian Rhapsody",
+                "#EXTINF:123, Queen - Bohemian Rhapsody",
                 "#EXTINF:123,Queen - I want to break free",
                 "#EXTINF:123 whatever format 1",
                 "#EXTINF:123, whatever format 2",

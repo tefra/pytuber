@@ -42,6 +42,7 @@ pytuber
   - Update youtube playlist items (add/remove)
   - Keep track of youtube api quota usage
 
+Check `Documentation <https://pytuber.readthedocs.io/>`__ |  `Changelog <https://pytuber.readthedocs.io/en/latest/changelog.html>`__
 
 Install & Setup
 ~~~~~~~~~~~~~~~

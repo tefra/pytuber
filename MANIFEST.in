@@ -1,4 +1,4 @@
-include LICENSE READNE.rst tox.ini
+include LICENSE READNE.rst CHANGELOG.rst tox.ini
 recursive-include docs *
 recursive-include tests *
 recursive-include pytuber *

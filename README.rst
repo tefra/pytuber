@@ -1,6 +1,10 @@
 pytuber
 =======
 
+.. image:: https://api.codacy.com/project/badge/Grade/5d21d2a3c7fd4dc5883c48124cac44de
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/app/tefra/pytuber?utm_source=github.com&utm_medium=referral&utm_content=tefra/pytuber&utm_campaign=Badge_Grade_Dashboard
+
 
 .. image:: https://travis-ci.org/tefra/pytuber.svg?branch=master
     :target: https://travis-ci.org/tefra/pytuber

@@ -18,7 +18,7 @@ if __name__ == "__main__":
             "click_completion == 0.5.0",
             "pydrag == 18.1",
             "attrs == 18.2.0",
-            "tabulate == 0.8.3",
+            "tabulate[widechars] == 0.8.3",
             "yaspin == 0.14.1",
             "google-api-python-client == 1.7.8",
             "google-auth == 1.6.2",

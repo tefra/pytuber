@@ -33,15 +33,15 @@ class YouServiceTests(TestCase):
         from_secrets.assert_called_once_with(path, scopes=YouService.scopes)
 
     @mock.patch.object(YouService, "get_client")
-    def test_search(self, get_client):
-        list = get_client.return_value.search.return_value.list
-        list.return_value.execute.return_value = {
+    def test_search_track(self, get_client):
+        search_list = get_client.return_value.search.return_value.list
+        search_list.return_value.execute.return_value = {
             "items": [{"id": {"kind": "youtube#video", "videoId": "101"}}]
         }
 
         track = TrackFixture.one()
         self.assertEqual("101", YouService.search_track(track))
-        list.assert_called_once_with(
+        search_list.assert_called_once_with(
             part="snippet",
             maxResults=1,
             q="{} {}".format(track.artist, track.name),
@@ -52,8 +52,8 @@ class YouServiceTests(TestCase):
     @mock.patch.object(YouService, "get_client")
     def test_get_playlists(self, get_client):
         playlist = PlaylistFixture.one()
-        list = get_client.return_value.playlists.return_value.list
-        list.return_value.execute.side_effect = [
+        playlist_list = get_client.return_value.playlists.return_value.list
+        playlist_list.return_value.execute.side_effect = [
             {
                 "nextPageToken": 2,
                 "items": [
@@ -73,7 +73,7 @@ class YouServiceTests(TestCase):
         actual = YouService.get_playlists()
         self.assertEqual(1, len(actual))
         self.assertEqual("One", actual[0].title)
-        list.assert_has_calls(
+        playlist_list.assert_has_calls(
             [
                 mock.call(part="snippet", mine=True, maxResults=2),
                 mock.call().execute(),
@@ -104,8 +104,10 @@ class YouServiceTests(TestCase):
     @mock.patch.object(YouService, "get_client")
     def test_get_playlist_items(self, get_client):
         playlist = PlaylistFixture.one()
-        list = get_client.return_value.playlistItems.return_value.list
-        list.return_value.execute.side_effect = [
+        playlist_items_list = (
+            get_client.return_value.playlistItems.return_value.list
+        )
+        playlist_items_list.return_value.execute.side_effect = [
             {
                 "nextPageToken": 3,
                 "items": [
@@ -140,7 +142,7 @@ class YouServiceTests(TestCase):
         ]
         self.assertEqual(expected, [a.asdict() for a in actual])
 
-        list.assert_has_calls(
+        playlist_items_list.assert_has_calls(
             [
                 mock.call(
                     part="contentDetails,snippet",
@@ -195,7 +197,7 @@ class YouServiceTests(TestCase):
         with self.assertRaises(NotFound):
             YouService.get_client()
 
-        ConfigManager.set(data=dict(provider="youtube", data="foo"))
+        ConfigManager.save(data=dict(provider="youtube", data="foo"))
         get_user_info.return_value = "creds"
         build.return_value = "client"
 

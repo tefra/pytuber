@@ -9,12 +9,12 @@ from pytuber.utils import date, magenta
 
 
 @click.command()
-@click.argument("id", type=params.PlaylistParamType())
+@click.argument("playlist_id", type=params.PlaylistParamType())
 @click.option("--mime", is_flag=True, help="How to push the playlist manually")
-def show(id: Optional[str], mime: bool = False):
+def show(playlist_id: Optional[str], mime: bool = False):
     """Show a playlist track list."""
 
-    playlist = PlaylistManager.get(id)
+    playlist = PlaylistManager.get(playlist_id)
     values = [
         (magenta("ID:"), playlist.id),
         (magenta("Provider:"), playlist.provider),
@@ -59,7 +59,10 @@ def show(id: Optional[str], mime: bool = False):
                 t.name,
                 click.style("✔", fg="green") if t.youtube_id else "-",
             )
-            for t in [TrackManager.get(id) for id in playlist.tracks]
+            for t in [
+                TrackManager.get(playlist_id)
+                for playlist_id in playlist.tracks
+            ]
         ],
         showindex="always",
         headers=("No", "Artist", "Track Name", "Youtube"),

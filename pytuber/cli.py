@@ -23,7 +23,7 @@ def cli(ctx: click.Context):
     ctx.call_on_close(lambda: Registry.persist(cfg))
 
 
-cli.add_command(core.list)
+cli.add_command(core.list_playlists)
 cli.add_command(core.show)
 cli.add_command(core.remove)
 cli.add_command(core.clean)

@@ -19,7 +19,7 @@ class CommandSetupLastfmTests(CommandTestCase):
         self.assertDictEqual({"api_key": "aaaa"}, actual.data)
 
     def test_update(self):
-        ConfigManager.set(
+        ConfigManager.save(
             dict(provider=Provider.lastfm, data=dict(api_key="bbbb"))
         )
 

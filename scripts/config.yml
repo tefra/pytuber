@@ -12,12 +12,12 @@ cwd: null
 env:
   recording: true
 
-# Explicitly set the number of columns
+# Explicitly save the number of columns
 # or use `auto` to take the current
 # number of columns of your shell
 cols: 120
 
-# Explicitly set the number of rows
+# Explicitly save the number of rows
 # or use `auto` to take the current
 # number of rows of your shell
 rows: 20
@@ -37,7 +37,7 @@ quality: 95
 frameDelay: auto
 
 # Maximum delay between frames in ms
-# Ignored if the `frameDelay` isn't set to `auto`
+# Ignored if the `frameDelay` isn't save to `auto`
 # Set to `auto` to prevent limiting the max idle time
 maxIdleTime: 5000
 

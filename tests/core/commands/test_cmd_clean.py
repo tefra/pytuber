@@ -5,14 +5,17 @@ from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
 
 class CommandCleanTests(CommandTestCase):
     def test_removes_orphan_tracks_and_empty_playlists(self):
-        [TrackManager.set(t.asdict()) for t in TrackFixture.get(2)]
-        [PlaylistManager.set(p.asdict()) for p in PlaylistFixture.get(3)]
+        for fixture in TrackFixture.get(2):
+            TrackManager.save(fixture.asdict())
+
+        for fixture in PlaylistFixture.get(3):
+            PlaylistManager.save(fixture.asdict())
 
         playlist = PlaylistFixture.one(num=50)
         track = TrackFixture.one(num=5)
         playlist.tracks = [track.id]
-        PlaylistManager.set(playlist.asdict())
-        TrackManager.set(track.asdict())
+        PlaylistManager.save(playlist.asdict())
+        TrackManager.save(track.asdict())
 
         result = self.runner.invoke(cli, ["clean"])
 

@@ -2,7 +2,7 @@ from pytuber.core.commands.cmd_add import add_from_editor, add_from_file
 from pytuber.core.commands.cmd_autocomplete import autocomplete
 from pytuber.core.commands.cmd_clean import clean
 from pytuber.core.commands.cmd_fetch import fetch
-from pytuber.core.commands.cmd_list import list
+from pytuber.core.commands.cmd_list import list_playlists
 from pytuber.core.commands.cmd_push import push
 from pytuber.core.commands.cmd_quota import quota
 from pytuber.core.commands.cmd_remove import remove
@@ -13,7 +13,7 @@ __all__ = [
     "setup",
     "fetch",
     "push",
-    "list",
+    "list_playlists",
     "remove",
     "show",
     "autocomplete",

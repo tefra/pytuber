@@ -35,17 +35,17 @@ def fetch_tracks(*args):
     with spinner("Fetching track lists") as sp:
         for playlist in PlaylistManager.find(**kwargs):
             tracklist = LastService.get_tracks(
-                type=playlist.type, **playlist.arguments
+                playlist_type=playlist.type, **playlist.arguments
             )
 
             track_ids: List[str] = []
             for entry in tracklist:
-                id = TrackManager.set(
+                track_id = TrackManager.save(
                     dict(artist=entry.artist.name, name=entry.name)
                 ).id
 
-                if id not in track_ids:
-                    track_ids.append(id)
+                if track_id not in track_ids:
+                    track_ids.append(track_id)
 
             sp.write(
                 "Playlist: {} - {} tracks".format(playlist.id, len(track_ids))

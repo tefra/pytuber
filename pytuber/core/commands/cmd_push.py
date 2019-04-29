@@ -6,7 +6,7 @@ from pytuber.utils import spinner, timestamp
 
 
 @click.command("youtube")
-@click.option("--all", is_flag=True, help="Perform all tasks")
+@click.option("--all", "all_tasks", is_flag=True, help="Perform all tasks")
 @click.option("--playlists", is_flag=True, help="Create new playlists")
 @click.option("--tracks", is_flag=True, help="Update playlist items")
 @click.pass_context
@@ -14,17 +14,17 @@ def push(
     ctx: click.Context,
     tracks: bool = False,
     playlists: bool = False,
-    all: bool = False,
+    all_tasks: bool = False,
 ):
     """Update youtube playlists and tracks."""
 
-    if not all and not playlists and not tracks:
+    if not all_tasks and not playlists and not tracks:
         click.secho(ctx.get_help())
         click.Abort()
 
-    if all or playlists:
+    if all_tasks or playlists:
         push_playlists()
-    if all or tracks:
+    if all_tasks or tracks:
         push_tracks()
 
 

@@ -15,7 +15,7 @@ from tests.utils import CommandTestCase, PlaylistFixture
 class CommandAddTests(CommandTestCase):
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(UserParamType, "convert")
-    @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(PlaylistManager, "save")
     def test_user_playlist(self, create_playlist, convert, fetch_tracks):
         convert.return_value = "bbb"
         create_playlist.return_value = PlaylistFixture.one()
@@ -51,7 +51,7 @@ class CommandAddTests(CommandTestCase):
         fetch_tracks.assert_called_once_with("id_a")
 
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
-    @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(PlaylistManager, "save")
     def test_chart_playlist(self, create_playlist, fetch_tracks):
         create_playlist.return_value = PlaylistFixture.one()
         result = self.runner.invoke(
@@ -78,7 +78,7 @@ class CommandAddTests(CommandTestCase):
 
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(CountryParamType, "convert")
-    @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(PlaylistManager, "save")
     def test_country_playlist(
         self, create_playlist, country_param_type, fetch_tracks
     ):
@@ -108,7 +108,7 @@ class CommandAddTests(CommandTestCase):
 
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(TagParamType, "convert")
-    @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(PlaylistManager, "save")
     def test_tag_playlist(self, create_playlist, convert, fetch_tracks):
         convert.return_value = "rock"
         create_playlist.return_value = PlaylistFixture.one(synced=111)
@@ -136,7 +136,7 @@ class CommandAddTests(CommandTestCase):
 
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(ArtistParamType, "convert")
-    @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(PlaylistManager, "save")
     def test_artist_playlist(
         self, create_playlist, artist_param, fetch_tracks
     ):

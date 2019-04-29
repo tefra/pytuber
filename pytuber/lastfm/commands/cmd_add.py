@@ -61,8 +61,8 @@ def user_playlist(
     3. User recent tracks
     4. User friends recent tracks
     """
-    History.set(user=user, limit=limit)
-    playlist = PlaylistManager.set(
+    History.save(user=user, limit=limit)
+    playlist = PlaylistManager.save(
         dict(
             type=UserPlaylistType.from_choice(playlist_type),
             provider=Provider.lastfm,
@@ -85,8 +85,8 @@ def user_playlist(
 def chart_playlist(ctx: click.Context, limit: int, title: str):
     """Add a top tracks playlist."""
 
-    History.set(limit=limit)
-    playlist = PlaylistManager.set(
+    History.save(limit=limit)
+    playlist = PlaylistManager.save(
         dict(
             type=PlaylistType.CHART,
             provider=Provider.lastfm,
@@ -116,8 +116,8 @@ def chart_playlist(ctx: click.Context, limit: int, title: str):
 def country_playlist(ctx: click.Context, country: str, limit: int, title: str):
     """Add a top tracks playlist by country."""
 
-    History.set(limit=limit)
-    playlist = PlaylistManager.set(
+    History.save(limit=limit)
+    playlist = PlaylistManager.save(
         dict(
             type=PlaylistType.COUNTRY,
             provider=Provider.lastfm,
@@ -146,8 +146,8 @@ def country_playlist(ctx: click.Context, country: str, limit: int, title: str):
 def tag_playlist(ctx: click.Context, tag: str, limit: int, title: str):
     """Add a top tracks playlist by tag."""
 
-    History.set(limit=limit)
-    playlist = PlaylistManager.set(
+    History.save(limit=limit)
+    playlist = PlaylistManager.save(
         dict(
             type=PlaylistType.TAG,
             provider=Provider.lastfm,
@@ -174,8 +174,8 @@ def tag_playlist(ctx: click.Context, tag: str, limit: int, title: str):
 def artist_playlist(ctx: click.Context, artist: str, limit: int, title: str):
     """Add a top tracks playlist by artist."""
 
-    History.set(limit=limit)
-    playlist = PlaylistManager.set(
+    History.save(limit=limit)
+    playlist = PlaylistManager.save(
         dict(
             type=PlaylistType.ARTIST,
             provider=Provider.lastfm,

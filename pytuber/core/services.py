@@ -77,9 +77,11 @@ class YouService:
             ),
             part="snippet,status",
         )
-        id = cls.get_client().playlists().insert(**params).execute()["id"]
+        youtube_id = (
+            cls.get_client().playlists().insert(**params).execute()["id"]
+        )
         cls.update_quota(55)
-        return id
+        return youtube_id
 
     @classmethod
     def get_playlist_items(cls, playlist: Playlist):

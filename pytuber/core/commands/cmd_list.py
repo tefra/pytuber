@@ -5,9 +5,9 @@ from pytuber.core import params
 from pytuber.core.models import PlaylistManager
 
 
-@click.command()
+@click.command("list")
 @click.option("--provider", type=params.ProviderParamType(), required=False)
-def list(provider: str):
+def list_playlists(provider: str):
     """List playlists."""
 
     kwargs = dict(provider=provider) if provider else dict()

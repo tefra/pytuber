@@ -4,20 +4,17 @@ import click
 from click_completion import completion_configuration
 
 from pytuber.core.models import PlaylistManager, Provider
-from pytuber.storage import Registry
+from pytuber.utils import init_registry
+from pytuber.version import version
 
 
-class RegistryParamType(click.ParamType):
-    def init_registry(self):
-        cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
-        Registry.from_file(cfg)
-
-
-class PlaylistParamType(RegistryParamType):
+class PlaylistParamType(click.ParamType):
     name = "ID"
 
     def complete(self, ctx, incomplete):
-        self.init_registry()
+        cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
+        init_registry(cfg, version)
+
         return [
             k
             for k in PlaylistManager.keys()

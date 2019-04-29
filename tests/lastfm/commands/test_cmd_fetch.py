@@ -22,12 +22,12 @@ class CommandFetchTests(CommandTestCase):
         abort.assert_called_once_with()
         self.assertEqual(1, secho.call_count)
 
-    @mock.patch.object(TrackManager, "set")
+    @mock.patch.object(TrackManager, "save")
     @mock.patch.object(LastService, "get_tags")
     @mock.patch.object(LastService, "get_tracks")
     @mock.patch.object(PlaylistManager, "update")
     @mock.patch.object(PlaylistManager, "find")
-    def test_with_tracks(self, find, update, get_tracks, get_tags, set):
+    def test_with_tracks(self, find, update, get_tracks, get_tags, save):
 
         tracks = TrackFixture.get(6)
         playlists = PlaylistFixture.get(2)
@@ -36,7 +36,7 @@ class CommandFetchTests(CommandTestCase):
             for track in tracks
         ]
 
-        set.side_effect = tracks
+        save.side_effect = tracks
         find.return_value = playlists
         get_tracks.side_effect = [
             [last_tracks[0], last_tracks[1], last_tracks[2]],
@@ -49,9 +49,12 @@ class CommandFetchTests(CommandTestCase):
         get_tags.assert_called_once_with()
         find.assert_called_once_with(provider=Provider.lastfm)
         get_tracks.assert_has_calls(
-            [mock.call(a=0, type="type_a"), mock.call(b=1, type="type_b")]
+            [
+                mock.call(a=0, playlist_type="type_a"),
+                mock.call(b=1, playlist_type="type_b"),
+            ]
         )
-        set.assert_has_calls(
+        save.assert_has_calls(
             [
                 mock.call({"artist": "artist_a", "name": "name_a"}),
                 mock.call({"artist": "artist_b", "name": "name_b"}),

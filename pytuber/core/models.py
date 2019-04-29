@@ -145,7 +145,7 @@ class Manager:
         )
 
     @classmethod
-    def set(cls, data: Dict):
+    def save(cls, data: Dict):
         obj = cls.model(**data)
         key = getattr(obj, cls.key)
 
@@ -177,17 +177,17 @@ class Manager:
     @classmethod
     def find(cls, **kwargs):
         def match(data, conditions):
-            with contextlib.suppress(Exception):
-                for k, v in conditions.items():
-                    value = data.get(k)
-                    if callable(v):
-                        assert v(value)
-                    elif v is None:
-                        assert value is None
-                    else:
-                        assert type(value)(v) == value
-                return True
-            return False
+            for k, v in conditions.items():
+                value = data.get(k)
+                if callable(v):
+                    if not v(value):
+                        return False
+                elif v is None:
+                    if value is not None:
+                        return False
+                elif value is None or type(value)(v) != value:
+                    return False
+            return True
 
         return [
             cls.model(**raw)
@@ -221,15 +221,17 @@ class TrackManager(Manager):
     model = Track
 
     @classmethod
-    def find_youtube_id(cls, id: str):
-        return Registry.get(cls.namespace, id, "youtube_id", default=None)
+    def find_youtube_id(cls, youtube_id: str):
+        return Registry.get(
+            cls.namespace, youtube_id, "youtube_id", default=None
+        )
 
 
 class History:
     namespace = "history"
 
     @classmethod
-    def set(cls, *args, **kwargs):
+    def save(cls, *args, **kwargs):
         for key, value in kwargs.items():
             Registry.set(cls.namespace, key, value)
 

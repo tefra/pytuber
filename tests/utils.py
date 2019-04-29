@@ -114,7 +114,7 @@ class PlaylistItemFixture(Fixture):
 class ConfigFixture:
     @classmethod
     def youtube(cls):
-        ConfigManager.set(
+        ConfigManager.save(
             dict(
                 provider=Provider.youtube.value,
                 data=dict(

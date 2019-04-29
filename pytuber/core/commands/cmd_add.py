@@ -34,7 +34,7 @@ def add_from_editor(title: str) -> None:
     create_playlist(
         title=title,
         tracks=parse_text(text or ""),
-        type=PlaylistType.EDITOR,
+        playlist_type=PlaylistType.EDITOR,
         arguments=dict(_title=title.strip()),
     )
 
@@ -43,11 +43,12 @@ def add_from_editor(title: str) -> None:
 @click.argument("file", type=click.Path(), required=True)
 @click.option(
     "--format",
+    "file_format",
     type=click.Choice(["txt", "m3u", "xspf", "jspf"]),
     default="txt",
 )
 @option_title()
-def add_from_file(file: str, title: str, format: str) -> None:
+def add_from_file(file: str, title: str, file_format: str) -> None:
     """Import a playlist from a text file."""
 
     with open(file, "r", encoding="UTF-8") as fp:
@@ -58,8 +59,8 @@ def add_from_file(file: str, title: str, format: str) -> None:
     )
     create_playlist(
         title=title,
-        tracks=parsers[format](text or ""),
-        type=PlaylistType.FILE,
+        tracks=parsers[file_format](text or ""),
+        playlist_type=PlaylistType.FILE,
         arguments=dict(_file=file),
     )
 
@@ -165,7 +166,7 @@ def parse_m3u(text):
     return tracks
 
 
-def create_playlist(title, tracks, type, arguments):
+def create_playlist(title, tracks, playlist_type, arguments):
     if not tracks:
         return click.secho("Tracklist is empty, aborting...")
 
@@ -190,14 +191,14 @@ def create_playlist(title, tracks, type, arguments):
         )
     )
     click.confirm("Are you sure you want to save this playlist?", abort=True)
-    playlist = PlaylistManager.set(
+    playlist = PlaylistManager.save(
         dict(
-            type=type,
+            type=playlist_type,
             title=title.strip(),
             arguments=arguments,
             provider=Provider.user,
             tracks=[
-                TrackManager.set(dict(artist=artist, name=name)).id
+                TrackManager.save(dict(artist=artist, name=name)).id
                 for artist, name in tracks
             ],
         )

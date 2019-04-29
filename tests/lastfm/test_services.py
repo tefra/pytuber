@@ -14,7 +14,8 @@ from tests.utils import TestCase
 
 
 class LastServiceTests(TestCase):
-    def get_user(self):
+    @staticmethod
+    def get_user():
         return User(
             playlists=1,
             playcount=10000000,
@@ -35,7 +36,9 @@ class LastServiceTests(TestCase):
         loved_tracks.return_value = ListModel(["a", "b", "c"])
 
         actual = LastService.get_tracks(
-            type=PlaylistType.USER_LOVED_TRACKS.value, limit=10, username="foo"
+            playlist_type=PlaylistType.USER_LOVED_TRACKS.value,
+            limit=10,
+            username="foo",
         )
         self.assertEqual(["a", "b", "c"], actual)
         get_user.assert_called_once_with("foo")
@@ -51,7 +54,7 @@ class LastServiceTests(TestCase):
         recent_tracks.return_value = ListModel(["a", "b", "c"])
 
         actual = LastService.get_tracks(
-            type=PlaylistType.USER_RECENT_TRACKS.value,
+            playlist_type=PlaylistType.USER_RECENT_TRACKS.value,
             limit=10,
             username="foo",
         )
@@ -67,7 +70,9 @@ class LastServiceTests(TestCase):
         top_tracks.return_value = ListModel(["a", "b", "c"])
 
         actual = LastService.get_tracks(
-            type=PlaylistType.USER_TOP_TRACKS.value, limit=10, username="foo"
+            playlist_type=PlaylistType.USER_TOP_TRACKS.value,
+            limit=10,
+            username="foo",
         )
         self.assertEqual(["a", "b", "c"], actual)
         get_user.assert_called_once_with("foo")
@@ -88,7 +93,7 @@ class LastServiceTests(TestCase):
         ]
 
         actual = LastService.get_tracks(
-            type=PlaylistType.USER_FRIENDS_RECENT_TRACKS.value,
+            playlist_type=PlaylistType.USER_FRIENDS_RECENT_TRACKS.value,
             limit=10,
             username="foo",
         )
@@ -101,7 +106,7 @@ class LastServiceTests(TestCase):
     def test_sync_with_chart(self, top_tracks_chart, *args):
         top_tracks_chart.return_value = ListModel(["a", "b", "c"])
         actual = LastService.get_tracks(
-            type=PlaylistType.CHART.value, limit=10
+            playlist_type=PlaylistType.CHART.value, limit=10
         )
         self.assertEqual(["a", "b", "c"], actual)
         top_tracks_chart.assert_called_once_with(limit=10)
@@ -111,7 +116,9 @@ class LastServiceTests(TestCase):
     def test_sync_with_country_chart(self, top_tracks_by_country, *args):
         top_tracks_by_country.return_value = ListModel(["a", "b", "c"])
         actual = LastService.get_tracks(
-            type=PlaylistType.COUNTRY.value, limit=10, country="greece"
+            playlist_type=PlaylistType.COUNTRY.value,
+            limit=10,
+            country="greece",
         )
         self.assertEqual(["a", "b", "c"], actual)
         top_tracks_by_country.assert_called_once_with(
@@ -125,7 +132,7 @@ class LastServiceTests(TestCase):
         get_tag.return_value = Tag(name="rock")
         get_top_tracks.return_value = ListModel(["a", "b", "c"])
         actual = LastService.get_tracks(
-            type=PlaylistType.TAG.value, limit=10, tag="rock"
+            playlist_type=PlaylistType.TAG.value, limit=10, tag="rock"
         )
         self.assertEqual(["a", "b", "c"], actual)
         get_tag.assert_called_once_with("rock")
@@ -138,7 +145,7 @@ class LastServiceTests(TestCase):
         get_artist.return_value = Artist(name="queen")
         get_top_tracks.return_value = ListModel(["a", "b", "c"])
         actual = LastService.get_tracks(
-            type=PlaylistType.ARTIST.value, limit=10, artist="queeen"
+            playlist_type=PlaylistType.ARTIST.value, limit=10, artist="queeen"
         )
         self.assertEqual(["a", "b", "c"], actual)
         get_artist.assert_called_once_with("queeen")
@@ -217,7 +224,7 @@ class LastServiceTests(TestCase):
         with self.assertRaises(NotFound):
             LastService.assert_config()
 
-        ConfigManager.set(
+        ConfigManager.save(
             dict(provider=Provider.lastfm, data=dict(api_key="aaa"))
         )
         LastService.assert_config()

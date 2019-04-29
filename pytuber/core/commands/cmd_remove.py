@@ -14,6 +14,6 @@ def remove(ids: Tuple[str]):
     """Delete one or more playlists by id."""
 
     click.confirm("Do you want to continue?", abort=True)
-    for id in ids:
-        PlaylistManager.remove(id)
-        click.secho("Removed playlist: {}!".format(id))
+    for playlist_id in ids:
+        PlaylistManager.remove(playlist_id)
+        click.secho("Removed playlist: {}!".format(playlist_id))

@@ -100,19 +100,19 @@ class ManagerTests(TestCase):
         self.assertDictEqual(self.data, obj.asdict())
 
     def test_set(self):
-        foo = FooManager.set(self.data)
+        foo = FooManager.save(self.data)
         self.assertIsInstance(foo, FooManager.model)
         self.assertDictEqual(self.data, Registry.get("foo", "a"))
         self.assertDictEqual(self.data, foo.asdict())
 
-        bar = FooManager.set(dict(id="a", value=1))
+        bar = FooManager.save(dict(id="a", value=1))
         self.assertEqual(foo.asdict(), bar.asdict())
 
-        thug = FooManager.set(dict(id="a", value=1, keeper="peek"))
+        thug = FooManager.save(dict(id="a", value=1, keeper="peek"))
         self.assertEqual("peek", thug.keeper)
 
     def test_update(self):
-        foo = FooManager.set(self.data)
+        foo = FooManager.save(self.data)
         new_foo = FooManager.update(foo, dict(value=2))
 
         self.assertIsNot(foo, new_foo)
@@ -132,11 +132,11 @@ class ManagerTests(TestCase):
         )
 
     def test_find(self):
-        a = FooManager.set(dict(id="a", value=1))
-        b = FooManager.set(dict(id="b", value=2))
-        c = FooManager.set(dict(id="c", value=2))
-        d = FooManager.set(dict(id="d", value=1))
-        e = FooManager.set(dict(id="e", value=None))
+        a = FooManager.save(dict(id="a", value=1))
+        b = FooManager.save(dict(id="b", value=2))
+        c = FooManager.save(dict(id="c", value=2))
+        d = FooManager.save(dict(id="d", value=1))
+        e = FooManager.save(dict(id="e", value=None))
 
         self.assertEqual([a, b, c, d, e], FooManager.find())
         self.assertEqual([b, c], FooManager.find(value=2))
@@ -149,7 +149,7 @@ class ManagerTests(TestCase):
         a = Foo(id="a", value=1)
         self.assertFalse(FooManager.exists(a))
 
-        FooManager.set(a.asdict())
+        FooManager.save(a.asdict())
         self.assertTrue(FooManager.exists(a))
 
 
@@ -169,7 +169,7 @@ class PlaylistManagerTests(TestCase):
         self.assertEqual("playlist", PlaylistManager.namespace)
 
     def test_update_sets_synced_if_tracks_are_updated(self):
-        playlist = PlaylistManager.set(
+        playlist = PlaylistManager.save(
             dict(id=1, type=None, provider=None, title="foo")
         )
 

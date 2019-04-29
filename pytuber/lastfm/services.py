@@ -11,17 +11,17 @@ from pytuber.utils import spinner
 
 class LastService:
     @classmethod
-    def get_tracks(cls, type, **kwargs):
+    def get_tracks(cls, playlist_type, **kwargs):
         """
         Retrieve from last.fm  a tracks list by the playlist type and
         arguments.
 
-        :param str type: The playlist type
+        :param str playlist_type: The playlist type
         :param dict kwargs: The playlist arguments like username, country, artist
         :rtype: :class:`list` of :class:`~pydrag.Track`
         """
         cls.assert_config()
-        ptype = PlaylistType(type)
+        ptype = PlaylistType(playlist_type)
         if ptype == PlaylistType.USER_LOVED_TRACKS:
             user = cls.get_user(kwargs["username"])
             return user.get_loved_tracks(limit=kwargs["limit"]).data

@@ -28,7 +28,7 @@ def setup(client_secrets: str, quota_limit: int) -> None:
         click.confirm("Overwrite existing configuration?", abort=True)
 
     credentials = YouService.authorize(client_secrets)
-    ConfigManager.set(
+    ConfigManager.save(
         dict(
             provider=Provider.youtube.value,
             data=dict(

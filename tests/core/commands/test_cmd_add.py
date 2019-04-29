@@ -27,7 +27,7 @@ class CommandAddTests(CommandTestCase):
             arguments={"_title": "My Cool Playlist"},
             title="My Cool Playlist",
             tracks=["a", "b"],
-            type=PlaylistType.EDITOR,
+            playlist_type=PlaylistType.EDITOR,
         )
 
     @mock.patch("pytuber.core.commands.cmd_add.parse_m3u")
@@ -43,20 +43,20 @@ class CommandAddTests(CommandTestCase):
         m3u.return_value = list("m3u")
 
         with self.runner.isolated_filesystem():
-            for format in ["txt", "jspf", "xspf", "m3u"]:
-                with open("hello.{}".format(format), "w") as f:
-                    f.write(format)
+            for playlist_format in ["txt", "jspf", "xspf", "m3u"]:
+                with open("hello.{}".format(playlist_format), "w") as f:
+                    f.write(playlist_format)
 
                 self.runner.invoke(
                     cli,
                     [
                         "add",
                         "file",
-                        "hello.{}".format(format),
+                        "hello.{}".format(playlist_format),
                         "--title",
                         "Mew",
                         "--format",
-                        format,
+                        playlist_format,
                     ],
                 )
 
@@ -71,25 +71,25 @@ class CommandAddTests(CommandTestCase):
                         arguments={"_file": "hello.txt"},
                         title="Mew",
                         tracks=list("txt"),
-                        type=PlaylistType.FILE,
+                        playlist_type=PlaylistType.FILE,
                     ),
                     mock.call(
                         arguments={"_file": "hello.jspf"},
                         title="Mew",
                         tracks=list("jspf"),
-                        type=PlaylistType.FILE,
+                        playlist_type=PlaylistType.FILE,
                     ),
                     mock.call(
                         arguments={"_file": "hello.xspf"},
                         title="Mew",
                         tracks=list("xspf"),
-                        type=PlaylistType.FILE,
+                        playlist_type=PlaylistType.FILE,
                     ),
                     mock.call(
                         arguments={"_file": "hello.m3u"},
                         title="Mew",
                         tracks=list("m3u"),
-                        type=PlaylistType.FILE,
+                        playlist_type=PlaylistType.FILE,
                     ),
                 ]
             )
@@ -200,13 +200,13 @@ class CommandAddUtilsTests(CommandTestCase):
         self.assertEqual([], parse_m3u(""))
 
     @mock.patch("pytuber.core.commands.cmd_add.magenta")
-    @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(PlaylistManager, "save")
     @mock.patch("click.confirm")
     @mock.patch("click.secho")
     @mock.patch("click.clear")
-    def test_create_playlist(self, clear, secho, confirm, set, magenta):
+    def test_create_playlist(self, clear, secho, confirm, save, magenta):
         magenta.side_effect = lambda x: x
-        set.return_value = PlaylistFixture.one()
+        save.return_value = PlaylistFixture.one()
         tracks = [
             ("Queen", "Bohemian Rhapsody"),
             ("Queen", "I want to break free"),
@@ -214,7 +214,7 @@ class CommandAddUtilsTests(CommandTestCase):
         create_playlist(
             title="My Cool Playlist",
             tracks=tracks,
-            type="foo",
+            playlist_type="foo",
             arguments=dict(foo="bar"),
         )
 
@@ -237,7 +237,7 @@ class CommandAddUtilsTests(CommandTestCase):
         confirm.assert_called_once_with(
             "Are you sure you want to save this playlist?", abort=True
         )
-        set.assert_called_once_with(
+        save.assert_called_once_with(
             dict(
                 type="foo",
                 arguments=dict(foo="bar"),
@@ -249,5 +249,7 @@ class CommandAddUtilsTests(CommandTestCase):
 
     @mock.patch("click.secho")
     def test_create_playlist_empty_tracks(self, secho):
-        create_playlist(title="foo", tracks=[], type=None, arguments=None)
+        create_playlist(
+            title="foo", tracks=[], playlist_type=None, arguments=None
+        )
         secho.assert_called_once_with("Tracklist is empty, aborting...")

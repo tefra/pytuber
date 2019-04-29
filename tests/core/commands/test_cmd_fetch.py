@@ -54,9 +54,9 @@ class CommandFetchTests(CommandTestCase):
             ]
         )
 
-    @mock.patch.object(TrackManager, "set")
+    @mock.patch.object(TrackManager, "save")
     @mock.patch.object(PlaylistManager, "exists")
-    @mock.patch.object(PlaylistManager, "set")
+    @mock.patch.object(PlaylistManager, "save")
     @mock.patch.object(YouService, "get_playlist_items")
     @mock.patch.object(YouService, "get_playlists")
     def test_fetch_playlists(

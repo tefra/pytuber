@@ -6,7 +6,7 @@ from pytuber.utils import magenta, spinner
 
 
 @click.command("youtube")
-@click.option("--all", is_flag=True, help="Perform all tasks")
+@click.option("--all", "all_tasks", is_flag=True, help="Perform all tasks")
 @click.option("--playlists", is_flag=True, help="Create new playlists")
 @click.option("--tracks", is_flag=True, help="Update playlist items")
 @click.pass_context
@@ -14,17 +14,17 @@ def fetch(
     ctx: click.Context,
     tracks: bool = False,
     playlists: bool = False,
-    all: bool = False,
+    all_tasks: bool = False,
 ):
     """Fetch youtube online playlist and tracks data."""
 
-    if not all and not playlists and not tracks:
+    if not all_tasks and not playlists and not tracks:
         click.secho(ctx.get_help())
         click.Abort()
 
-    if all or playlists:
+    if all_tasks or playlists:
         fetch_playlists()
-    if all or tracks:
+    if all_tasks or tracks:
         fetch_tracks()
 
 
@@ -35,7 +35,7 @@ def fetch_playlists():
             if not PlaylistManager.exists(playlist):
                 items = YouService.get_playlist_items(playlist)
                 track_ids = [
-                    TrackManager.set(
+                    TrackManager.save(
                         dict(
                             artist=item.artist,
                             name=item.name,
@@ -45,7 +45,7 @@ def fetch_playlists():
                     for item in items
                 ]
                 playlist.tracks = track_ids
-            PlaylistManager.set(playlist.asdict())
+            PlaylistManager.save(playlist.asdict())
 
         total = len(playlists)
         if total > 0:

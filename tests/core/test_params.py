@@ -1,11 +1,7 @@
 import click
 
 from pytuber.core.models import PlaylistManager
-from pytuber.core.params import (
-    PlaylistParamType,
-    ProviderParamType,
-    RegistryParamType,
-)
+from pytuber.core.params import PlaylistParamType, ProviderParamType
 from tests.utils import PlaylistFixture, TestCase
 
 
@@ -16,10 +12,10 @@ class PlaylistParamTypeTests(TestCase):
 
     def test_type(self):
         self.assertEqual("ID", self.param.name)
-        self.assertIsInstance(self.param, RegistryParamType)
 
     def test_complete(self):
-        [PlaylistManager.set(p.asdict()) for p in PlaylistFixture.get(2)]
+        for fixture in PlaylistFixture.get(2):
+            PlaylistManager.save(fixture.asdict())
 
         self.assertEqual(["id_a", "id_b"], self.param.complete(None, ""))
         self.assertEqual(["id_a"], self.param.complete(None, "id_a"))

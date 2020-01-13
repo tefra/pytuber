@@ -1,6 +1,10 @@
 Changelog
 =========
 
+20.1 (Jan 13, 2019)
+-------------------
+- Create application directory before use `#25 <https://github.com/tefra/pytuber/issues/25>`_.
+
 19.2 (Feb 17, 2019)
 -------------------
 - Add clean command to remove orphan tracks and playlists.

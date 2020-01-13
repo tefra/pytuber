@@ -17,7 +17,11 @@ click_completion.init(complete_options=True)
 @click.pass_context
 def cli(ctx: click.Context):
     """Create and upload music playlists to youtube."""
-    cfg = os.path.join(click.get_app_dir("pytuber", False), "storage.db")
+    appdir = click.get_app_dir("pytuber", False)
+    if not os.path.exists(appdir):
+        print("Application Directory not found! Creating one at", appdir)
+        os.makedirs(appdir)
+    cfg = os.path.join(appdir, "storage.db")
     init_registry(cfg, version)
 
     ctx.call_on_close(lambda: Registry.persist(cfg))

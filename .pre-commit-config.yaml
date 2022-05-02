@@ -38,7 +38,7 @@ repos:
     rev: v0.950
     hooks:
       - id: mypy
-        additional_dependencies: [tokenize-rt, types-setuptools, types-requests]
+        additional_dependencies: [tokenize-rt, types-setuptools, types-requests, types-tabulate]
   - repo: https://github.com/asottile/setup-cfg-fmt
     rev: v1.20.1
     hooks:

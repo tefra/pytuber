@@ -3,19 +3,21 @@ from unittest import mock
 import pydrag
 
 from pytuber import cli
-from pytuber.core.models import PlaylistManager, Provider, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
+from pytuber.core.models import TrackManager
 from pytuber.lastfm.commands.cmd_fetch import fetch_tracks
 from pytuber.lastfm.services import LastService
-from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
+from tests.utils import TrackFixture
 
 
 class CommandFetchTests(CommandTestCase):
     @mock.patch("click.secho")
     @mock.patch("click.Abort")
     def test_with_nothing(self, abort, secho):
-        result = self.runner.invoke(
-            cli, ["fetch", "lastfm"], catch_exceptions=False
-        )
+        result = self.runner.invoke(cli, ["fetch", "lastfm"], catch_exceptions=False)
 
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains("", result.output)

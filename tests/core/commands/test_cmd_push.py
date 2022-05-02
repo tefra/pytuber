@@ -1,23 +1,20 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.models import PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import TrackManager
 from pytuber.core.services import YouService
-from tests.utils import (
-    CommandTestCase,
-    PlaylistFixture,
-    PlaylistItemFixture,
-    TrackFixture,
-)
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
+from tests.utils import PlaylistItemFixture
+from tests.utils import TrackFixture
 
 
 class CommandPushTests(CommandTestCase):
     @mock.patch("click.secho")
     @mock.patch("click.Abort")
     def test_with_nothing(self, abort, secho):
-        result = self.runner.invoke(
-            cli, ["push", "youtube"], catch_exceptions=False
-        )
+        result = self.runner.invoke(cli, ["push", "youtube"], catch_exceptions=False)
 
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains("", result.output)
@@ -76,9 +73,7 @@ class CommandPushTests(CommandTestCase):
         timestamp.return_value = 101
         items = PlaylistItemFixture.get(4, video_id=["$a", "$d", "$e", "$f"])
 
-        tracks = TrackFixture.get(
-            6, youtube_id=["$a", "$b", "$c", "$d", "$e", "$f"]
-        )
+        tracks = TrackFixture.get(6, youtube_id=["$a", "$b", "$c", "$d", "$e", "$f"])
         p_one, p_two = PlaylistFixture.get(
             2, tracks=[["id_a", "id_b", "id_c"], ["id_d", "id_e", "id_f"]]
         )
@@ -108,9 +103,7 @@ class CommandPushTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains(expected_output, result.output)
 
-        get_playlist_items.assert_has_calls(
-            [mock.call(p_one), mock.call(p_two)]
-        )
+        get_playlist_items.assert_has_calls([mock.call(p_one), mock.call(p_two)])
 
         create_playlist_item.assert_has_calls(
             [

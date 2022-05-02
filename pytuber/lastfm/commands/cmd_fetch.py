@@ -3,7 +3,9 @@ from typing import List
 import click
 from tabulate import tabulate
 
-from pytuber.core.models import PlaylistManager, Provider, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
+from pytuber.core.models import TrackManager
 from pytuber.lastfm.services import LastService
 from pytuber.utils import spinner
 
@@ -34,9 +36,7 @@ def fetch_tracks(*args):
     LastService.get_tags()
     with spinner("Fetching track lists") as sp:
         for playlist in PlaylistManager.find(**kwargs):
-            tracklist = LastService.get_tracks(
-                type=playlist.type, **playlist.arguments
-            )
+            tracklist = LastService.get_tracks(type=playlist.type, **playlist.arguments)
 
             track_ids: List[str] = []
             for entry in tracklist:
@@ -47,16 +47,12 @@ def fetch_tracks(*args):
                 if id not in track_ids:
                     track_ids.append(id)
 
-            sp.write(
-                "Playlist: {} - {} tracks".format(playlist.id, len(track_ids))
-            )
+            sp.write(f"Playlist: {playlist.id} - {len(track_ids)} tracks")
             PlaylistManager.update(playlist, dict(tracks=track_ids))
 
 
 def fetch_tags():
-    values = [
-        (tag.name, tag.count, tag.reach) for tag in LastService.get_tags()
-    ]
+    values = [(tag.name, tag.count, tag.reach) for tag in LastService.get_tags()]
 
     click.echo_via_pager(
         tabulate(

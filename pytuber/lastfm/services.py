@@ -1,9 +1,15 @@
 from datetime import timedelta
 from typing import List
 
-from pydrag import Artist, Tag, Track, User, configure, constants
+from pydrag import Artist
+from pydrag import configure
+from pydrag import constants
+from pydrag import Tag
+from pydrag import Track
+from pydrag import User
 
-from pytuber.core.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Provider
 from pytuber.lastfm.models import PlaylistType
 from pytuber.storage import Registry
 from pytuber.utils import spinner
@@ -35,9 +41,7 @@ class LastService:
             ).data
         elif ptype == PlaylistType.USER_FRIENDS_RECENT_TRACKS:
             user = cls.get_user(kwargs["username"])
-            friends = user.get_friends(
-                limit=kwargs["limit"], recent_tracks=True
-            )
+            friends = user.get_friends(limit=kwargs["limit"], recent_tracks=True)
             return [f.recent_track for f in friends if f.recent_track]
         elif ptype == PlaylistType.CHART:
             return Track.get_top_tracks_chart(limit=kwargs["limit"]).data
@@ -70,10 +74,7 @@ class LastService:
             with spinner("Fetching tags"):
                 while len(tags) < 1000:
                     tags.extend(
-                        [
-                            t.to_dict()
-                            for t in Tag.get_top_tags(limit=250, page=page)
-                        ]
+                        [t.to_dict() for t in Tag.get_top_tags(limit=250, page=page)]
                     )
                     page += 1
             return tags
@@ -111,7 +112,7 @@ class LastService:
         cls.assert_config()
 
         cache = Registry.cache(
-            key="last.fm_artist_{}".format(artist.lower()),
+            key=f"last.fm_artist_{artist.lower()}",
             ttl=timedelta(days=30),
             func=lambda: Artist.find(artist).to_dict(),
         )
@@ -129,7 +130,7 @@ class LastService:
         cls.assert_config()
 
         cache = Registry.cache(
-            key="last.fm_user_{}".format(username.lower()),
+            key=f"last.fm_user_{username.lower()}",
             ttl=timedelta(hours=24),
             func=lambda: User.find(username).to_dict(),
         )

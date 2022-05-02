@@ -1,15 +1,16 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.commands.cmd_add import (
-    create_playlist,
-    parse_jspf,
-    parse_m3u,
-    parse_text,
-    parse_xspf,
-)
-from pytuber.core.models import PlaylistManager, PlaylistType, Provider
-from tests.utils import CommandTestCase, PlaylistFixture
+from pytuber.core.commands.cmd_add import create_playlist
+from pytuber.core.commands.cmd_add import parse_jspf
+from pytuber.core.commands.cmd_add import parse_m3u
+from pytuber.core.commands.cmd_add import parse_text
+from pytuber.core.commands.cmd_add import parse_xspf
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import PlaylistType
+from pytuber.core.models import Provider
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
 
 
 class CommandAddTests(CommandTestCase):
@@ -19,9 +20,7 @@ class CommandAddTests(CommandTestCase):
     def test_add_from_editor(self, parse_text, create_playlist, clk_edit):
         clk_edit.return_value = "foo"
         parse_text.return_value = ["a", "b"]
-        self.runner.invoke(
-            cli, ["add", "editor", "--title", "My Cool Playlist"]
-        )
+        self.runner.invoke(cli, ["add", "editor", "--title", "My Cool Playlist"])
         parse_text.assert_called_once_with("foo")
         create_playlist.assert_called_once_with(
             arguments={"_title": "My Cool Playlist"},
@@ -44,7 +43,7 @@ class CommandAddTests(CommandTestCase):
 
         with self.runner.isolated_filesystem():
             for format in ["txt", "jspf", "xspf", "m3u"]:
-                with open("hello.{}".format(format), "w") as f:
+                with open(f"hello.{format}", "w") as f:
                     f.write(format)
 
                 self.runner.invoke(
@@ -52,7 +51,7 @@ class CommandAddTests(CommandTestCase):
                     [
                         "add",
                         "file",
-                        "hello.{}".format(format),
+                        f"hello.{format}",
                         "--title",
                         "Mew",
                         "--format",
@@ -229,9 +228,7 @@ class CommandAddUtilsTests(CommandTestCase):
         )
 
         self.assertOutput(expected_ouput, secho.call_args_list[0][0][0])
-        self.assertEqual(
-            "Added playlist: id_a!", secho.call_args_list[1][0][0]
-        )
+        self.assertEqual("Added playlist: id_a!", secho.call_args_list[1][0][0])
 
         clear.assert_called_once_with()
         confirm.assert_called_once_with(

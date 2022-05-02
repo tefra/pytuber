@@ -8,12 +8,10 @@ import click
 from lxml import etree
 from tabulate import tabulate
 
-from pytuber.core.models import (
-    PlaylistManager,
-    PlaylistType,
-    Provider,
-    TrackManager,
-)
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import PlaylistType
+from pytuber.core.models import Provider
+from pytuber.core.models import TrackManager
 from pytuber.utils import magenta
 
 option_title = partial(
@@ -50,12 +48,10 @@ def add_from_editor(title: str) -> None:
 def add_from_file(file: str, title: str, format: str) -> None:
     """Import a playlist from a text file."""
 
-    with open(file, "r", encoding="UTF-8") as fp:
+    with open(file, encoding="UTF-8") as fp:
         text = fp.read()
 
-    parsers = dict(
-        m3u=parse_m3u, jspf=parse_jspf, xspf=parse_xspf, txt=parse_text
-    )
+    parsers = dict(m3u=parse_m3u, jspf=parse_jspf, xspf=parse_xspf, txt=parse_text)
     create_playlist(
         title=title,
         tracks=parsers[format](text or ""),
@@ -181,10 +177,7 @@ def create_playlist(title, tracks, type, arguments):
                 colalign=("right", "left"),
             ),
             tabulate(  # type: ignore
-                [
-                    (i + 1, track[0], track[1])
-                    for i, track in enumerate(tracks)
-                ],
+                [(i + 1, track[0], track[1]) for i, track in enumerate(tracks)],
                 headers=("No", "Artist", "Track Name"),
             ),
         )
@@ -202,4 +195,4 @@ def create_playlist(title, tracks, type, arguments):
             ],
         )
     )
-    click.secho("Added playlist: {}!".format(playlist.id))
+    click.secho(f"Added playlist: {playlist.id}!")

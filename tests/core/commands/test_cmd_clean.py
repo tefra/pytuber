@@ -1,6 +1,9 @@
 from pytuber import cli
-from pytuber.core.models import PlaylistManager, TrackManager
-from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import TrackManager
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
+from tests.utils import TrackFixture
 
 
 class CommandCleanTests(CommandTestCase):

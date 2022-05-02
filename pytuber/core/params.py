@@ -3,7 +3,8 @@ import os
 import click
 from click_completion import completion_configuration
 
-from pytuber.core.models import PlaylistManager, Provider
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
 from pytuber.storage import Registry
 
 

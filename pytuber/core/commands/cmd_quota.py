@@ -3,7 +3,8 @@ from datetime import timedelta
 import click
 from tabulate import tabulate
 
-from pytuber.core.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Provider
 from pytuber.core.services import YouService
 from pytuber.utils import magenta
 
@@ -29,7 +30,5 @@ def quota():
     ]
 
     click.secho(
-        tabulate(  # type: ignore
-            values, tablefmt="plain", colalign=("right", "left")
-        )
+        tabulate(values, tablefmt="plain", colalign=("right", "left"))  # type: ignore
     )

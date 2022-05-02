@@ -1,7 +1,9 @@
-from unittest import TestCase, mock
+from unittest import mock
+from unittest import TestCase
 from unittest.mock import PropertyMock
 
-from pytuber.utils import date, spinner
+from pytuber.utils import date
+from pytuber.utils import spinner
 
 
 class UtilsTests(TestCase):

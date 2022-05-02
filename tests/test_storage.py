@@ -3,7 +3,8 @@ import os
 import shutil
 import tempfile
 from datetime import timedelta
-from unittest import TestCase, mock
+from unittest import mock
+from unittest import TestCase
 
 from pytuber.storage import Registry
 

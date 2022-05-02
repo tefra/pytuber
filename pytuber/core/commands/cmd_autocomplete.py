@@ -14,8 +14,6 @@ def autocomplete(shell):
     shell, path = click_completion.core.install(
         shell=shell,
         append=True,
-        extra_env={
-            "_CLICK_COMPLETION_COMMAND_CASE_INSENSITIVE_COMPLETE": "ON"
-        },
+        extra_env={"_CLICK_COMPLETION_COMMAND_CASE_INSENSITIVE_COMPLETE": "ON"},
     )
-    click.secho("%s completion installed in %s" % (shell, path))
+    click.secho(f"{shell} completion installed in {path}")

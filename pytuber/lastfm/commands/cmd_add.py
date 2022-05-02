@@ -2,17 +2,17 @@ from functools import partial
 
 import click
 
-from pytuber.core.commands.cmd_add import option_title
-from pytuber.core.models import History, PlaylistManager, Provider
-from pytuber.lastfm.models import PlaylistType, UserPlaylistType
-from pytuber.lastfm.params import (
-    ArtistParamType,
-    CountryParamType,
-    TagParamType,
-    UserParamType,
-)
-
 from .cmd_fetch import fetch_tracks
+from pytuber.core.commands.cmd_add import option_title
+from pytuber.core.models import History
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
+from pytuber.lastfm.models import PlaylistType
+from pytuber.lastfm.models import UserPlaylistType
+from pytuber.lastfm.params import ArtistParamType
+from pytuber.lastfm.params import CountryParamType
+from pytuber.lastfm.params import TagParamType
+from pytuber.lastfm.params import UserParamType
 
 
 @click.group("lastfm")

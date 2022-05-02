@@ -13,9 +13,7 @@ class CommandAutoCompleteTests(CommandTestCase):
 
         install.assert_called_once_with(
             append=True,
-            extra_env={
-                "_CLICK_COMPLETION_COMMAND_CASE_INSENSITIVE_COMPLETE": "ON"
-            },
+            extra_env={"_CLICK_COMPLETION_COMMAND_CASE_INSENSITIVE_COMPLETE": "ON"},
             shell=None,
         )
         secho.assert_called_once_with("foo completion installed in bar")

@@ -1,15 +1,16 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.models import PlaylistManager, Provider
-from pytuber.lastfm.models import PlaylistType, UserPlaylistType
-from pytuber.lastfm.params import (
-    ArtistParamType,
-    CountryParamType,
-    TagParamType,
-    UserParamType,
-)
-from tests.utils import CommandTestCase, PlaylistFixture
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
+from pytuber.lastfm.models import PlaylistType
+from pytuber.lastfm.models import UserPlaylistType
+from pytuber.lastfm.params import ArtistParamType
+from pytuber.lastfm.params import CountryParamType
+from pytuber.lastfm.params import TagParamType
+from pytuber.lastfm.params import UserParamType
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
 
 
 class CommandAddTests(CommandTestCase):
@@ -79,9 +80,7 @@ class CommandAddTests(CommandTestCase):
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(CountryParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
-    def test_country_playlist(
-        self, create_playlist, country_param_type, fetch_tracks
-    ):
+    def test_country_playlist(self, create_playlist, country_param_type, fetch_tracks):
         country_param_type.return_value = "greece"
         create_playlist.return_value = PlaylistFixture.one()
         result = self.runner.invoke(
@@ -137,9 +136,7 @@ class CommandAddTests(CommandTestCase):
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(ArtistParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
-    def test_artist_playlist(
-        self, create_playlist, artist_param, fetch_tracks
-    ):
+    def test_artist_playlist(self, create_playlist, artist_param, fetch_tracks):
         artist_param.return_value = "Queen"
         create_playlist.return_value = PlaylistFixture.one()
         result = self.runner.invoke(

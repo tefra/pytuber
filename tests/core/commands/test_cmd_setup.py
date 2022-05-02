@@ -3,7 +3,8 @@ from unittest import mock
 from google.oauth2.credentials import Credentials
 
 from pytuber import cli
-from pytuber.core.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Provider
 from pytuber.core.services import YouService
 from tests.utils import CommandTestCase
 

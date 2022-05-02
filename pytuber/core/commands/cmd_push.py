@@ -1,8 +1,10 @@
 import click
 
-from pytuber.core.models import PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import TrackManager
 from pytuber.core.services import YouService
-from pytuber.utils import spinner, timestamp
+from pytuber.utils import spinner
+from pytuber.utils import timestamp
 
 
 @click.command("youtube")
@@ -33,7 +35,7 @@ def push_playlists():
     message = "Creating playlists"
     with spinner(message) as sp:
         for playlist in playlists:
-            sp.text = "{}: {}".format(message, playlist.title)
+            sp.text = f"{message}: {playlist.title}"
             youtube_id = YouService.create_playlist(playlist)
             PlaylistManager.update(playlist, dict(youtube_id=youtube_id))
 
@@ -47,18 +49,16 @@ def push_tracks():
     click.secho("Syncing playlists", bold=True)
     for playlist in online_playlists:
         add = items = remove = []
-        with spinner("Fetching playlist items: {}".format(playlist.title)):
+        with spinner(f"Fetching playlist items: {playlist.title}"):
             items = YouService.get_playlist_items(playlist)
-            online = set([item.video_id for item in items])
-            offline = set(
-                [
-                    track.youtube_id
-                    for track in TrackManager.find(
-                        youtube_id=lambda x: x is not None,
-                        id=lambda x: x in playlist.tracks,
-                    )
-                ]
-            )
+            online = {item.video_id for item in items}
+            offline = {
+                track.youtube_id
+                for track in TrackManager.find(
+                    youtube_id=lambda x: x is not None,
+                    id=lambda x: x in playlist.tracks,
+                )
+            }
 
             add = offline - online
             remove = online - offline
@@ -66,21 +66,21 @@ def push_tracks():
         message = "Adding new playlist items"
         with spinner(message) as sp:
             for video_id in sorted(add):
-                sp.text = "{}: {}".format(message, video_id)
+                sp.text = f"{message}: {video_id}"
                 YouService.create_playlist_item(playlist, video_id)
 
             if len(add) > 0:
-                sp.text = "{}: {}".format(message, len(add))
+                sp.text = f"{message}: {len(add)}"
 
         message = "Removing playlist items"
         with spinner(message) as sp:
             remove = [item for item in items if item.video_id in remove]
             for item in sorted(remove):
-                sp.text = "{}: {}".format(message, video_id)
+                sp.text = f"{message}: {video_id}"
                 YouService.remove_playlist_item(item)
 
             if len(remove) > 0:
-                sp.text = "{}: {}".format(message, len(remove))
+                sp.text = f"{message}: {len(remove)}"
 
         if len(add) or len(remove):
             PlaylistManager.update(playlist, dict(uploaded=timestamp()))

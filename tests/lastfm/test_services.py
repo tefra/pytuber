@@ -2,10 +2,15 @@ from collections import namedtuple
 from datetime import timedelta
 from unittest import mock
 
-from pydrag import Artist, Tag, Track, User, constants
+from pydrag import Artist
+from pydrag import constants
+from pydrag import Tag
+from pydrag import Track
+from pydrag import User
 from pydrag.models.common import ListModel
 
-from pytuber.core.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Provider
 from pytuber.exceptions import NotFound
 from pytuber.lastfm.models import PlaylistType
 from pytuber.lastfm.services import LastService
@@ -44,9 +49,7 @@ class LastServiceTests(TestCase):
     @mock.patch.object(LastService, "assert_config")
     @mock.patch.object(User, "get_recent_tracks")
     @mock.patch.object(LastService, "get_user")
-    def test_sync_with_user_recent_tracks(
-        self, get_user, recent_tracks, *args
-    ):
+    def test_sync_with_user_recent_tracks(self, get_user, recent_tracks, *args):
         get_user.return_value = self.get_user()
         recent_tracks.return_value = ListModel(["a", "b", "c"])
 
@@ -71,9 +74,7 @@ class LastServiceTests(TestCase):
         )
         self.assertEqual(["a", "b", "c"], actual)
         get_user.assert_called_once_with("foo")
-        top_tracks.assert_called_once_with(
-            period=constants.Period.overall, limit=10
-        )
+        top_tracks.assert_called_once_with(period=constants.Period.overall, limit=10)
 
     @mock.patch.object(LastService, "assert_config")
     @mock.patch.object(User, "get_friends")
@@ -100,9 +101,7 @@ class LastServiceTests(TestCase):
     @mock.patch.object(Track, "get_top_tracks_chart")
     def test_sync_with_chart(self, top_tracks_chart, *args):
         top_tracks_chart.return_value = ListModel(["a", "b", "c"])
-        actual = LastService.get_tracks(
-            type=PlaylistType.CHART.value, limit=10
-        )
+        actual = LastService.get_tracks(type=PlaylistType.CHART.value, limit=10)
         self.assertEqual(["a", "b", "c"], actual)
         top_tracks_chart.assert_called_once_with(limit=10)
 
@@ -114,9 +113,7 @@ class LastServiceTests(TestCase):
             type=PlaylistType.COUNTRY.value, limit=10, country="greece"
         )
         self.assertEqual(["a", "b", "c"], actual)
-        top_tracks_by_country.assert_called_once_with(
-            limit=10, country="greece"
-        )
+        top_tracks_by_country.assert_called_once_with(limit=10, country="greece")
 
     @mock.patch.object(LastService, "assert_config")
     @mock.patch.object(Tag, "get_top_tracks")
@@ -217,8 +214,6 @@ class LastServiceTests(TestCase):
         with self.assertRaises(NotFound):
             LastService.assert_config()
 
-        ConfigManager.set(
-            dict(provider=Provider.lastfm, data=dict(api_key="aaa"))
-        )
+        ConfigManager.set(dict(provider=Provider.lastfm, data=dict(api_key="aaa")))
         LastService.assert_config()
         configure.assert_called_once_with(api_key="aaa")

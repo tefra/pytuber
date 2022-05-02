@@ -1,4 +1,5 @@
-from pytuber.core.commands.cmd_add import add_from_editor, add_from_file
+from pytuber.core.commands.cmd_add import add_from_editor
+from pytuber.core.commands.cmd_add import add_from_file
 from pytuber.core.commands.cmd_autocomplete import autocomplete
 from pytuber.core.commands.cmd_clean import clean
 from pytuber.core.commands.cmd_fetch import fetch

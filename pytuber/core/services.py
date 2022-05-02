@@ -1,16 +1,15 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from pytuber.core.models import (
-    ConfigManager,
-    Playlist,
-    PlaylistItem,
-    Provider,
-    Track,
-)
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Playlist
+from pytuber.core.models import PlaylistItem
+from pytuber.core.models import Provider
+from pytuber.core.models import Track
 from pytuber.storage import Registry
 
 
@@ -31,7 +30,7 @@ class YouService:
         params = dict(
             part="snippet",
             maxResults=1,
-            q="{} {}".format(track.artist, track.name),
+            q=f"{track.artist} {track.name}",
             type="video",
         )
 
@@ -144,9 +143,7 @@ class YouService:
     def get_client(cls):
         if not cls.client:
             info = ConfigManager.get(Provider.youtube).data
-            credentials = Credentials.from_authorized_user_info(
-                info, scopes=cls.scopes
-            )
+            credentials = Credentials.from_authorized_user_info(info, scopes=cls.scopes)
             cls.client = build("youtube", "v3", credentials=credentials)
         return cls.client
 

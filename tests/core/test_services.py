@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from unittest import mock
 
 from google.oauth2.credentials import Credentials
@@ -7,22 +8,20 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from pytuber.core.models import ConfigManager
 from pytuber.core.services import YouService
 from pytuber.exceptions import NotFound
-from tests.utils import (
-    PlaylistFixture,
-    PlaylistItemFixture,
-    TestCase,
-    TrackFixture,
-)
+from tests.utils import PlaylistFixture
+from tests.utils import PlaylistItemFixture
+from tests.utils import TestCase
+from tests.utils import TrackFixture
 
 
 class YouServiceTests(TestCase):
     def setUp(self):
-        super(YouServiceTests, self).setUp()
+        super().setUp()
         YouService.max_results = 2
 
     def tearDown(self):
         YouService.max_results = 50
-        super(YouServiceTests, self).tearDown()
+        super().tearDown()
 
     @mock.patch.object(InstalledAppFlow, "from_client_secrets_file")
     def test_authorize(self, from_secrets):
@@ -44,7 +43,7 @@ class YouServiceTests(TestCase):
         list.assert_called_once_with(
             part="snippet",
             maxResults=1,
-            q="{} {}".format(track.artist, track.name),
+            q=f"{track.artist} {track.name}",
             type="video",
         )
         self.assertEqual(100, YouService.get_quota_usage())
@@ -77,9 +76,7 @@ class YouServiceTests(TestCase):
             [
                 mock.call(part="snippet", mine=True, maxResults=2),
                 mock.call().execute(),
-                mock.call(
-                    part="snippet", mine=True, maxResults=2, pageToken=2
-                ),
+                mock.call(part="snippet", mine=True, maxResults=2, pageToken=2),
                 mock.call().execute(),
             ]
         )
@@ -165,9 +162,7 @@ class YouServiceTests(TestCase):
         insert = get_client.return_value.playlistItems.return_value.insert
         insert.return_value.execute.return_value = "foo"
 
-        self.assertEqual(
-            "foo", YouService.create_playlist_item(playlist, "aa")
-        )
+        self.assertEqual("foo", YouService.create_playlist_item(playlist, "aa"))
         insert.assert_called_once_with(
             body=dict(
                 snippet=dict(

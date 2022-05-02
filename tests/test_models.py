@@ -1,25 +1,26 @@
 import base64
 import json
+from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
+from typing import Optional
 
-import attr
-
-from pytuber.core.models import (
-    Config,
-    ConfigManager,
-    Document,
-    Manager,
-    Playlist,
-    PlaylistManager,
-    PlaylistType,
-    Provider,
-    StrEnum,
-    Track,
-    TrackManager,
-)
+from pytuber.core.models import Config
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Document
+from pytuber.core.models import Manager
+from pytuber.core.models import Playlist
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import PlaylistType
+from pytuber.core.models import Provider
+from pytuber.core.models import StrEnum
+from pytuber.core.models import Track
+from pytuber.core.models import TrackManager
 from pytuber.exceptions import NotFound
 from pytuber.storage import Registry
-from tests.utils import PlaylistFixture, TestCase, TrackFixture
+from tests.utils import PlaylistFixture
+from tests.utils import TestCase
+from tests.utils import TrackFixture
 
 
 class PlaylistTests(TestCase):
@@ -50,9 +51,7 @@ class PlaylistTests(TestCase):
             "type": "type_a",
             "title": "title_a",
         }
-        self.assertEqual(
-            expected, json.loads(base64.b64decode(playlist.mime.encode()))
-        )
+        self.assertEqual(expected, json.loads(base64.b64decode(playlist.mime.encode())))
 
 
 class TrackTests(TestCase):
@@ -71,11 +70,11 @@ class ProviderTests(TestCase):
         self.assertEqual(Provider.lastfm.value, str(Provider.lastfm))
 
 
-@attr.s(auto_attribs=True)
+@dataclass
 class Foo(Document):
     id: str
     value: int
-    keeper: str = attr.ib(default=None, metadata=dict(keep=True))
+    keeper: Optional[str] = field(default=None, metadata=dict(keep=True))
 
 
 class FooManager(Manager):
@@ -90,9 +89,7 @@ class ManagerTests(TestCase):
     def test_get(self):
         with self.assertRaises(NotFound) as cm:
             FooManager.get("bar")
-        self.assertEqual(
-            "No foo matched your argument: bar!", str(cm.exception)
-        )
+        self.assertEqual("No foo matched your argument: bar!", str(cm.exception))
 
         Registry.set("foo", "bar", self.data)
         obj = FooManager.get("bar")
@@ -127,9 +124,7 @@ class ManagerTests(TestCase):
         FooManager.remove("bar")
         with self.assertRaises(NotFound) as cm:
             FooManager.remove("bar")
-        self.assertEqual(
-            "No foo matched your argument: bar!", str(cm.exception)
-        )
+        self.assertEqual("No foo matched your argument: bar!", str(cm.exception))
 
     def test_find(self):
         a = FooManager.set(dict(id="a", value=1))

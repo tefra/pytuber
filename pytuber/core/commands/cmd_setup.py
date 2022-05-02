@@ -1,6 +1,7 @@
 import click
 
-from pytuber.core.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Provider
 from pytuber.core.services import YouService
 
 

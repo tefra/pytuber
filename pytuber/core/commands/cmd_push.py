@@ -37,7 +37,7 @@ def push_playlists():
         for playlist in playlists:
             sp.text = f"{message}: {playlist.title}"
             youtube_id = YouService.create_playlist(playlist)
-            PlaylistManager.update(playlist, dict(youtube_id=youtube_id))
+            PlaylistManager.update(playlist, {"youtube_id": youtube_id})
 
         total = len(playlists)
         if total > 0:
@@ -83,4 +83,4 @@ def push_tracks():
                 sp.text = f"{message}: {len(remove)}"
 
         if len(add) or len(remove):
-            PlaylistManager.update(playlist, dict(uploaded=timestamp()))
+            PlaylistManager.update(playlist, {"uploaded": timestamp()})

@@ -30,16 +30,16 @@ def setup(client_secrets: str, quota_limit: int) -> None:
 
     credentials = YouService.authorize(client_secrets)
     ConfigManager.set(
-        dict(
-            provider=Provider.youtube.value,
-            data=dict(
-                refresh_token=credentials.refresh_token,
-                token_uri=credentials.token_uri,
-                client_id=credentials.client_id,
-                client_secret=credentials.client_secret,
-                scopes=credentials.scopes,
-                quota_limit=quota_limit,
-            ),
-        )
+        {
+            "provider": Provider.youtube.value,
+            "data": {
+                "refresh_token": credentials.refresh_token,
+                "token_uri": credentials.token_uri,
+                "client_id": credentials.client_id,
+                "client_secret": credentials.client_secret,
+                "scopes": credentials.scopes,
+                "quota_limit": quota_limit,
+            },
+        }
     )
     click.secho("Youtube configuration updated!")

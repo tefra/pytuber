@@ -20,9 +20,9 @@ class CommandSetupLastfmTests(CommandTestCase):
         self.assertDictEqual({"api_key": "aaaa"}, actual.data)
 
     def test_update(self):
-        ConfigManager.set(dict(provider=Provider.lastfm, data=dict(api_key="bbbb")))
+        ConfigManager.set({"provider": Provider.lastfm, "data": {"api_key": "bbbb"}})
 
-        self.assertEqual(dict(api_key="bbbb"), ConfigManager.get(Provider.lastfm).data)
+        self.assertEqual({"api_key": "bbbb"}, ConfigManager.get(Provider.lastfm).data)
         result = self.runner.invoke(
             cli, ["setup", "lastfm"], input="\n".join(("aaaa", "y"))
         )

@@ -17,5 +17,5 @@ def setup(api_key: str) -> None:
     if ConfigManager.get(Provider.lastfm, default=None):
         click.confirm("Overwrite existing configuration?", abort=True)
 
-    ConfigManager.set(dict(provider=Provider.lastfm.value, data=dict(api_key=api_key)))
+    ConfigManager.set({"provider": Provider.lastfm.value, "data": {"api_key": api_key}})
     click.secho("Last.fm configuration updated!")

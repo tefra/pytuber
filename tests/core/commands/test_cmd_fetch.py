@@ -46,8 +46,8 @@ class CommandFetchTests(CommandTestCase):
         search.assert_has_calls([mock.call(track_one), mock.call(track_two)])
         update.assert_has_calls(
             [
-                mock.call(track_one, dict(youtube_id="y1")),
-                mock.call(track_two, dict(youtube_id="y3")),
+                mock.call(track_one, {"youtube_id": "y1"}),
+                mock.call(track_two, {"youtube_id": "y3"}),
             ]
         )
 

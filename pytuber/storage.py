@@ -67,7 +67,7 @@ class Registry(dict, metaclass=Singleton):
 
     @classmethod
     def from_file(cls, path: str):
-        data: Dict = dict()
+        data: Dict = {}
         with suppress(FileNotFoundError, JSONDecodeError):
             with open(path) as cfg:
                 data = json.load(cfg)

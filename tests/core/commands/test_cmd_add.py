@@ -214,7 +214,7 @@ class CommandAddUtilsTests(CommandTestCase):
             title="My Cool Playlist",
             tracks=tracks,
             type="foo",
-            arguments=dict(foo="bar"),
+            arguments={"foo": "bar"},
         )
 
         expected_ouput = (
@@ -235,13 +235,13 @@ class CommandAddUtilsTests(CommandTestCase):
             "Are you sure you want to save this playlist?", abort=True
         )
         set.assert_called_once_with(
-            dict(
-                type="foo",
-                arguments=dict(foo="bar"),
-                provider=Provider.user,
-                title="My Cool Playlist",
-                tracks=["55a4d2b", "b045fee"],
-            )
+            {
+                "type": "foo",
+                "arguments": {"foo": "bar"},
+                "provider": Provider.user,
+                "title": "My Cool Playlist",
+                "tracks": ["55a4d2b", "b045fee"],
+            }
         )
 
     @mock.patch("click.secho")

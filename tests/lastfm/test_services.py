@@ -214,6 +214,6 @@ class LastServiceTests(TestCase):
         with self.assertRaises(NotFound):
             LastService.assert_config()
 
-        ConfigManager.set(dict(provider=Provider.lastfm, data=dict(api_key="aaa")))
+        ConfigManager.set({"provider": Provider.lastfm, "data": {"api_key": "aaa"}})
         LastService.assert_config()
         configure.assert_called_once_with(api_key="aaa")

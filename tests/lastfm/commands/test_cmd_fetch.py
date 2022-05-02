@@ -34,7 +34,7 @@ class CommandFetchTests(CommandTestCase):
         tracks = TrackFixture.get(6)
         playlists = PlaylistFixture.get(2)
         last_tracks = [
-            pydrag.Track.from_dict(dict(name=track.name, artist=track.artist))
+            pydrag.Track.from_dict({"name": track.name, "artist": track.artist})
             for track in tracks
         ]
 
@@ -66,8 +66,8 @@ class CommandFetchTests(CommandTestCase):
 
         update.assert_has_calls(
             [
-                mock.call(playlists[0], dict(tracks=["id_a", "id_b", "id_c"])),
-                mock.call(playlists[1], dict(tracks=["id_d", "id_e", "id_f"])),
+                mock.call(playlists[0], {"tracks": ["id_a", "id_b", "id_c"]}),
+                mock.call(playlists[1], {"tracks": ["id_d", "id_e", "id_f"]}),
             ]
         )
 

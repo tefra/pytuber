@@ -42,12 +42,12 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=UserPlaylistType.USER_TOP_TRACKS,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, username="bbb"),
-                title="My Favorite",
-            )
+            {
+                "type": UserPlaylistType.USER_TOP_TRACKS,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "username": "bbb"},
+                "title": "My Favorite",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
@@ -68,12 +68,12 @@ class CommandAddTests(CommandTestCase):
         self.assertOutput(expected_output, result.output)
 
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.CHART,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50),
-                title="",
-            )
+            {
+                "type": PlaylistType.CHART,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50},
+                "title": "",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
@@ -96,12 +96,12 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.COUNTRY,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, country="greece"),
-                title="",
-            )
+            {
+                "type": PlaylistType.COUNTRY,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "country": "greece"},
+                "title": "",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
@@ -124,12 +124,12 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.TAG,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, tag="rock"),
-                title="",
-            )
+            {
+                "type": PlaylistType.TAG,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "tag": "rock"},
+                "title": "",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
@@ -155,11 +155,11 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.ARTIST,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, artist="Queen"),
-                title="Queen....",
-            )
+            {
+                "type": PlaylistType.ARTIST,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "artist": "Queen"},
+                "title": "Queen....",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")

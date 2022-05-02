@@ -39,7 +39,7 @@ class CommandSetupYoutubeTests(CommandTestCase):
         self.assertDictEqual(expected, actual.data)
 
     def test_update(self):
-        ConfigManager.set(dict(provider=Provider.youtube, data={"foo": "bar"}))
+        ConfigManager.set({"provider": Provider.youtube, "data": {"foo": "bar"}})
         client_secrets = "~/Downloads/client_secrets.json"
         result = self.runner.invoke(
             cli,

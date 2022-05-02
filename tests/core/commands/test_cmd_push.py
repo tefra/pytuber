@@ -47,8 +47,8 @@ class CommandPushTests(CommandTestCase):
         create_playlist.assert_has_calls([mock.call(p_one), mock.call(p_two)])
         update.assert_has_calls(
             [
-                mock.call(p_one, dict(youtube_id="y1")),
-                mock.call(p_two, dict(youtube_id="y2")),
+                mock.call(p_one, {"youtube_id": "y1"}),
+                mock.call(p_two, {"youtube_id": "y2"}),
             ]
         )
 
@@ -112,4 +112,4 @@ class CommandPushTests(CommandTestCase):
             ]
         )
         remove_playlist_item.assert_called_once_with(items[2])
-        update_playlist.assert_called_once_with(p_one, dict(uploaded=101))
+        update_playlist.assert_called_once_with(p_one, {"uploaded": 101})

@@ -38,11 +38,11 @@ def fetch_playlists():
                 items = YouService.get_playlist_items(playlist)
                 track_ids = [
                     TrackManager.set(
-                        dict(
-                            artist=item.artist,
-                            name=item.name,
-                            youtube_id=item.video_id,
-                        )
+                        {
+                            "artist": item.artist,
+                            "name": item.name,
+                            "youtube_id": item.video_id,
+                        }
                     ).id
                     for item in items
                 ]
@@ -61,7 +61,7 @@ def fetch_tracks():
         for track in tracks:
             sp.text = f"{message}: {track.artist} - {track.name}"
             youtube_id = YouService.search_track(track)
-            TrackManager.update(track, dict(youtube_id=youtube_id))
+            TrackManager.update(track, {"youtube_id": youtube_id})
 
         total = len(tracks)
         if total > 0:

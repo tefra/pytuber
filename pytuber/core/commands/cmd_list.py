@@ -10,7 +10,7 @@ from pytuber.core.models import PlaylistManager
 def list(provider: str):
     """List playlists."""
 
-    kwargs = dict(provider=provider) if provider else dict()
+    kwargs = {"provider": provider} if provider else {}
     playlists = PlaylistManager.find(**kwargs)
 
     if len(playlists) == 0:

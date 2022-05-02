@@ -74,7 +74,7 @@ class ProviderTests(TestCase):
 class Foo(Document):
     id: str
     value: int
-    keeper: Optional[str] = field(default=None, metadata=dict(keep=True))
+    keeper: Optional[str] = field(default=None, metadata={"keep": True})
 
 
 class FooManager(Manager):
@@ -84,7 +84,7 @@ class FooManager(Manager):
 
 
 class ManagerTests(TestCase):
-    data = dict(id="a", value=1, keeper="keep")
+    data = {"id": "a", "value": 1, "keeper": "keep"}
 
     def test_get(self):
         with self.assertRaises(NotFound) as cm:
@@ -102,20 +102,20 @@ class ManagerTests(TestCase):
         self.assertDictEqual(self.data, Registry.get("foo", "a"))
         self.assertDictEqual(self.data, foo.asdict())
 
-        bar = FooManager.set(dict(id="a", value=1))
+        bar = FooManager.set({"id": "a", "value": 1})
         self.assertEqual(foo.asdict(), bar.asdict())
 
-        thug = FooManager.set(dict(id="a", value=1, keeper="peek"))
+        thug = FooManager.set({"id": "a", "value": 1, "keeper": "peek"})
         self.assertEqual("peek", thug.keeper)
 
     def test_update(self):
         foo = FooManager.set(self.data)
-        new_foo = FooManager.update(foo, dict(value=2))
+        new_foo = FooManager.update(foo, {"value": 2})
 
         self.assertIsNot(foo, new_foo)
         self.assertIsInstance(new_foo, FooManager.model)
 
-        expected = dict(id="a", value=2, keeper="keep")
+        expected = {"id": "a", "value": 2, "keeper": "keep"}
         self.assertDictEqual(expected, Registry.get("foo", "a"))
         self.assertDictEqual(expected, new_foo.asdict())
 
@@ -127,11 +127,11 @@ class ManagerTests(TestCase):
         self.assertEqual("No foo matched your argument: bar!", str(cm.exception))
 
     def test_find(self):
-        a = FooManager.set(dict(id="a", value=1))
-        b = FooManager.set(dict(id="b", value=2))
-        c = FooManager.set(dict(id="c", value=2))
-        d = FooManager.set(dict(id="d", value=1))
-        e = FooManager.set(dict(id="e", value=None))
+        a = FooManager.set({"id": "a", "value": 1})
+        b = FooManager.set({"id": "b", "value": 2})
+        c = FooManager.set({"id": "c", "value": 2})
+        d = FooManager.set({"id": "d", "value": 1})
+        e = FooManager.set({"id": "e", "value": None})
 
         self.assertEqual([a, b, c, d, e], FooManager.find())
         self.assertEqual([b, c], FooManager.find(value=2))
@@ -165,10 +165,10 @@ class PlaylistManagerTests(TestCase):
 
     def test_update_sets_synced_if_tracks_are_updated(self):
         playlist = PlaylistManager.set(
-            dict(id=1, type=None, provider=None, title="foo")
+            {"id": 1, "type": None, "provider": None, "title": "foo"}
         )
 
-        new = PlaylistManager.update(playlist, dict(tracks=[1, 2, 3]))
+        new = PlaylistManager.update(playlist, {"tracks": [1, 2, 3]})
         self.assertEqual(
             datetime.fromtimestamp(new.synced).strftime("%Y-%m-%d %H:%M"),
             datetime.utcnow().strftime("%Y-%m-%d %H:%M"),

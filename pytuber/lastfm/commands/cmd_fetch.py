@@ -28,7 +28,7 @@ def fetch(ctx: click.Context, tracks: bool = False, tags: bool = False):
 
 
 def fetch_tracks(*args):
-    kwargs = dict(provider=Provider.lastfm)
+    kwargs = {"provider": Provider.lastfm}
     if args:
         kwargs["id"] = lambda x: x in args
 
@@ -41,14 +41,14 @@ def fetch_tracks(*args):
             track_ids: List[str] = []
             for entry in tracklist:
                 id = TrackManager.set(
-                    dict(artist=entry.artist.name, name=entry.name)
+                    {"artist": entry.artist.name, "name": entry.name}
                 ).id
 
                 if id not in track_ids:
                     track_ids.append(id)
 
             sp.write(f"Playlist: {playlist.id} - {len(track_ids)} tracks")
-            PlaylistManager.update(playlist, dict(tracks=track_ids))
+            PlaylistManager.update(playlist, {"tracks": track_ids})
 
 
 def fetch_tags():

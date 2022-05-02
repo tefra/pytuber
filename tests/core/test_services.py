@@ -90,10 +90,10 @@ class YouServiceTests(TestCase):
 
         self.assertEqual("101", YouService.create_playlist(playlist))
         insert.assert_called_once_with(
-            body=dict(
-                snippet=dict(title=playlist.title, description=playlist.mime),
-                status=dict(privacyStatus="private"),
-            ),
+            body={
+                "snippet": {"title": playlist.title, "description": playlist.mime},
+                "status": {"privacyStatus": "private"},
+            },
             part="snippet,status",
         )
         self.assertEqual(55, YouService.get_quota_usage())
@@ -164,12 +164,12 @@ class YouServiceTests(TestCase):
 
         self.assertEqual("foo", YouService.create_playlist_item(playlist, "aa"))
         insert.assert_called_once_with(
-            body=dict(
-                snippet=dict(
-                    playlistId=playlist.youtube_id,
-                    resourceId=dict(kind="youtube#video", videoId="aa"),
-                )
-            ),
+            body={
+                "snippet": {
+                    "playlistId": playlist.youtube_id,
+                    "resourceId": {"kind": "youtube#video", "videoId": "aa"},
+                }
+            },
             part="snippet",
         )
         self.assertEqual(53, YouService.get_quota_usage())
@@ -190,7 +190,7 @@ class YouServiceTests(TestCase):
         with self.assertRaises(NotFound):
             YouService.get_client()
 
-        ConfigManager.set(data=dict(provider="youtube", data="foo"))
+        ConfigManager.set(data={"provider": "youtube", "data": "foo"})
         get_user_info.return_value = "creds"
         build.return_value = "client"
 

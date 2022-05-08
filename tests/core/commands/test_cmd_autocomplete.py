@@ -1,6 +1,6 @@
 from unittest import mock
 
-from pytuber import cli
+from pytuber.cli import cli
 from tests.utils import CommandTestCase
 
 

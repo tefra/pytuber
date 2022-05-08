@@ -1,6 +1,6 @@
 from unittest import mock
 
-from pytuber import cli
+from pytuber.cli import cli
 from pytuber.core.models import PlaylistManager
 from tests.utils import CommandTestCase
 

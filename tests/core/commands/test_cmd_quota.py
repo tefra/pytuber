@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest import mock
 
-from pytuber import cli
+from pytuber.cli import cli
 from pytuber.core.services import YouService
 from tests.utils import CommandTestCase
 from tests.utils import ConfigFixture

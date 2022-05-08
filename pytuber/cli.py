@@ -3,17 +3,17 @@ import os
 import click
 import click_completion
 
+from pytuber import __version__
 from pytuber.core import commands as core
 from pytuber.lastfm import commands as lastfm
 from pytuber.storage import Registry
 from pytuber.utils import init_registry
-from pytuber.version import version
 
 click_completion.init(complete_options=True)
 
 
 @click.group()
-@click.version_option(version=version)
+@click.version_option(version=__version__)
 @click.pass_context
 def cli(ctx: click.Context):
     """Create and upload music playlists to youtube."""
@@ -22,7 +22,7 @@ def cli(ctx: click.Context):
         print("Application Directory not found! Creating one at", appdir)
         os.makedirs(appdir)
     cfg = os.path.join(appdir, "storage.db")
-    init_registry(cfg, version)
+    init_registry(cfg, __version__)
 
     ctx.call_on_close(lambda: Registry.persist(cfg))
 

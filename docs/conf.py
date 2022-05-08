@@ -11,15 +11,9 @@
 #
 import os
 import sys
+from importlib import metadata
 
 sys.path.insert(0, os.path.abspath("."))
-
-
-def get_version():
-    from pytuber import version
-
-    return version
-
 
 # -- Project information -----------------------------------------------------
 
@@ -27,7 +21,7 @@ project = "pytuber"
 copyright = "2019, Christodoulos Tsoulloftas"
 author = "Christodoulos Tsoulloftas"
 
-version = release = get_version()
+version = release = metadata.version("xsdata")
 
 
 # -- General configuration ---------------------------------------------------

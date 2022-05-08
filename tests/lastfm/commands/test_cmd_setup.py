@@ -1,4 +1,4 @@
-from pytuber import cli
+from pytuber.cli import cli
 from pytuber.core.models import ConfigManager
 from pytuber.core.models import Provider
 from tests.utils import CommandTestCase

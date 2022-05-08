@@ -2,7 +2,7 @@ from unittest import mock
 
 import pydrag
 
-from pytuber import cli
+from pytuber.cli import cli
 from pytuber.core.models import PlaylistManager
 from pytuber.core.models import Provider
 from pytuber.core.models import TrackManager

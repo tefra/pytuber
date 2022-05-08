@@ -1,4 +1,4 @@
-from pytuber import cli
+from pytuber.cli import cli
 from pytuber.core.models import PlaylistManager
 from pytuber.core.models import TrackManager
 from tests.utils import CommandTestCase

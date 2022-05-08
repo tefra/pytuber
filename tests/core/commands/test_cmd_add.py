@@ -1,6 +1,6 @@
 from unittest import mock
 
-from pytuber import cli
+from pytuber.cli import cli
 from pytuber.core.commands.cmd_add import create_playlist
 from pytuber.core.commands.cmd_add import parse_jspf
 from pytuber.core.commands.cmd_add import parse_m3u

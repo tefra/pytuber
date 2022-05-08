@@ -1,6 +1,10 @@
 Changelog
 =========
 
+22.5 (May 8, 2022)
+------------------
+- Fixed google auth flow `#32 <https://github.com/tefra/pytuber/issues/32>`_.
+
 20.1 (Jan 13, 2019)
 -------------------
 - Create application directory before use `#25 <https://github.com/tefra/pytuber/issues/25>`_.

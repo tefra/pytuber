@@ -21,7 +21,7 @@ project = "pytuber"
 copyright = "2019, Christodoulos Tsoulloftas"
 author = "Christodoulos Tsoulloftas"
 
-version = release = metadata.version("xsdata")
+version = release = metadata.version("pytuber")
 
 
 # -- General configuration ---------------------------------------------------

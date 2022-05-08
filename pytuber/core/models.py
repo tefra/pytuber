@@ -45,6 +45,10 @@ class Config(Document):
     provider: str = field()
     data: dict = field(default_factory=dict)
 
+    def __post_init__(self):
+        if isinstance(self.provider, Provider):
+            self.provider = self.provider.value
+
 
 @dataclass
 class Track(Document):
@@ -53,7 +57,7 @@ class Track(Document):
     id: Optional[str] = field(default=None)
     youtube_id: Optional[str] = field(default=None, metadata={"keep": True})
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
         if self.id is None:
             self.id = hashlib.sha1(
                 re.sub(
@@ -76,13 +80,19 @@ class Playlist(Document):
     synced: Optional[int] = field(default=None, metadata={"keep": True})
     uploaded: Optional[int] = field(default=None, metadata={"keep": True})
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
+        if isinstance(self.type, StrEnum):
+            self.type = self.type.value
+
+        if isinstance(self.provider, StrEnum):
+            self.provider = self.provider.value
+
         if self.id is None:
             self.id = hashlib.sha1(
                 json.dumps(
                     {
-                        field: getattr(self, field)
-                        for field in ["arguments", "provider", "type"]
+                        key: getattr(self, key)
+                        for key in ["arguments", "provider", "type"]
                     }
                 ).encode("utf-8")
             ).hexdigest()[:7]
@@ -114,7 +124,7 @@ class Playlist(Document):
         return ", ".join([f"{k}: {v}" for k, v in self.arguments.items()])
 
 
-@dataclass
+@dataclass(order=True)
 class PlaylistItem(Document):
     id: str
     name: str
@@ -171,8 +181,8 @@ class Manager:
     def remove(cls, key):
         try:
             Registry.remove(cls.namespace, key)
-        except KeyError:
-            raise NotFound(f"No {cls.namespace} matched your argument: {key}!")
+        except KeyError as e:
+            raise NotFound(f"No {cls.namespace} matched your argument: {key}!") from e
 
     @classmethod
     def find(cls, **kwargs):

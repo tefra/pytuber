@@ -28,7 +28,7 @@ access APIs that you have enabled for that project.
 1. Open the `Credentials page <https://console.developers.google.com/apis/credentials/>`_.
     in the API Console.
 2. Click Create credentials > OAuth client ID.
-3. Complete the form. Set the application type to **other**.
+3. Complete the form. Set the application type to **Desktop APP**.
 
 .. image:: /_static/google.console.png
 

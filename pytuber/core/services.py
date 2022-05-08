@@ -23,7 +23,7 @@ class YouService:
     def authorize(cls, client_secrets):
         return InstalledAppFlow.from_client_secrets_file(
             client_secrets, scopes=cls.scopes
-        ).run_console()
+        ).run_local_server()
 
     @classmethod
     def search_track(cls, track: Track):

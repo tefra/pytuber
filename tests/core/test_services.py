@@ -26,7 +26,7 @@ class YouServiceTests(TestCase):
     @mock.patch.object(InstalledAppFlow, "from_client_secrets_file")
     def test_authorize(self, from_secrets):
         path = "~/Downloads/client_secets.json"
-        from_secrets.return_value.run_console.return_value = "foo"
+        from_secrets.return_value.run_local_server.return_value = "foo"
 
         self.assertEqual("foo", YouService.authorize(path))
         from_secrets.assert_called_once_with(path, scopes=YouService.scopes)

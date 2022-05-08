@@ -1,7 +1,8 @@
 import click
 from tabulate import tabulate
 
-from pytuber.core.models import PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import TrackManager
 from pytuber.utils import magenta
 
 

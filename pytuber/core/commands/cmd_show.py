@@ -4,8 +4,10 @@ import click
 from tabulate import tabulate
 
 from pytuber.core import params
-from pytuber.core.models import PlaylistManager, TrackManager
-from pytuber.utils import date, magenta
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import TrackManager
+from pytuber.utils import date
+from pytuber.utils import magenta
 
 
 @click.command()
@@ -39,8 +41,7 @@ def show(id: Optional[str], mime: bool = False):
         click.secho(info)
         click.secho("\nYou reached the 10 playlists limit per day on youtube?")
         click.secho(
-            "Create a playlist manually and add "
-            "in the bottom the above mime string"
+            "Create a playlist manually and add " "in the bottom the above mime string"
         )
         click.secho(
             "The mime is base64 signature that "
@@ -66,4 +67,4 @@ def show(id: Optional[str], mime: bool = False):
         colalign=("left", "left", "left", "center"),
     )
 
-    click.echo_via_pager("{}\n\n{}".format(info, tracks))
+    click.echo_via_pager(f"{info}\n\n{tracks}")

@@ -13,7 +13,7 @@ class PlaylistMixin(StrEnum):
                 for i, x in enumerate(cls)
             ]
         )
-        prompts.extend(["Select a playlist type 1-{}".format(len(cls))])
+        prompts.extend([f"Select a playlist type 1-{len(cls)}"])
         return "\n".join(prompts)
 
     @classmethod

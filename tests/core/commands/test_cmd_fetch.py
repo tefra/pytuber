@@ -1,23 +1,20 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.models import PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import TrackManager
 from pytuber.core.services import YouService
-from tests.utils import (
-    CommandTestCase,
-    PlaylistFixture,
-    PlaylistItemFixture,
-    TrackFixture,
-)
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
+from tests.utils import PlaylistItemFixture
+from tests.utils import TrackFixture
 
 
 class CommandFetchTests(CommandTestCase):
     @mock.patch("click.secho")
     @mock.patch("click.Abort")
     def test_with_nothing(self, abort, secho):
-        result = self.runner.invoke(
-            cli, ["fetch", "youtube"], catch_exceptions=False
-        )
+        result = self.runner.invoke(cli, ["fetch", "youtube"], catch_exceptions=False)
 
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains("", result.output)
@@ -49,8 +46,8 @@ class CommandFetchTests(CommandTestCase):
         search.assert_has_calls([mock.call(track_one), mock.call(track_two)])
         update.assert_has_calls(
             [
-                mock.call(track_one, dict(youtube_id="y1")),
-                mock.call(track_two, dict(youtube_id="y3")),
+                mock.call(track_one, {"youtube_id": "y1"}),
+                mock.call(track_two, {"youtube_id": "y3"}),
             ]
         )
 

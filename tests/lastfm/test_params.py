@@ -1,24 +1,24 @@
 from collections import namedtuple
-from unittest import TestCase, mock
+from unittest import mock
+from unittest import TestCase
 from unittest.mock import call
 
 import click
 from click import BadParameter
-from pydrag import Artist, Tag
+from pydrag import Artist
+from pydrag import Tag
 
-from pytuber.lastfm.params import (
-    ArtistParamType,
-    CountryParamType,
-    TagParamType,
-    UserParamType,
-)
+from pytuber.lastfm.params import ArtistParamType
+from pytuber.lastfm.params import CountryParamType
+from pytuber.lastfm.params import TagParamType
+from pytuber.lastfm.params import UserParamType
 from pytuber.lastfm.services import LastService
 
 
 class CountryParamTypeTests(TestCase):
     def setUp(self):
         self.param = CountryParamType()
-        super(CountryParamTypeTests, self).setUp()
+        super().setUp()
 
     def test_type(self):
         self.assertEqual("Country Code", self.param.name)
@@ -38,7 +38,7 @@ class CountryParamTypeTests(TestCase):
 class TagParamTypeTests(TestCase):
     def setUp(self):
         self.param = TagParamType()
-        super(TagParamTypeTests, self).setUp()
+        super().setUp()
 
     def test_type(self):
         self.assertEqual("Tag", self.param.name)
@@ -66,7 +66,7 @@ class TagParamTypeTests(TestCase):
 class ArtistParamTypeTests(TestCase):
     def setUp(self):
         self.param = ArtistParamType()
-        super(ArtistParamTypeTests, self).setUp()
+        super().setUp()
 
     def test_type(self):
         self.assertEqual("Artist", self.param.name)
@@ -92,7 +92,7 @@ class ArtistParamTypeTests(TestCase):
 class UserParamTypeTests(TestCase):
     def setUp(self):
         self.param = UserParamType()
-        super(UserParamTypeTests, self).setUp()
+        super().setUp()
 
     def test_type(self):
         self.assertEqual("User", self.param.name)

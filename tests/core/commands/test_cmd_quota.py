@@ -3,7 +3,8 @@ from unittest import mock
 
 from pytuber import cli
 from pytuber.core.services import YouService
-from tests.utils import CommandTestCase, ConfigFixture
+from tests.utils import CommandTestCase
+from tests.utils import ConfigFixture
 
 
 class CommandQuotaTests(CommandTestCase):

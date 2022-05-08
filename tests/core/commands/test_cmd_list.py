@@ -2,7 +2,8 @@ from unittest import mock
 
 from pytuber import cli
 from pytuber.core.models import PlaylistManager
-from tests.utils import CommandTestCase, PlaylistFixture
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
 
 
 class CommandListPlaylistsTests(CommandTestCase):

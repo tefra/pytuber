@@ -1,16 +1,15 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from pytuber.core.models import (
-    ConfigManager,
-    Playlist,
-    PlaylistItem,
-    Provider,
-    Track,
-)
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Playlist
+from pytuber.core.models import PlaylistItem
+from pytuber.core.models import Provider
+from pytuber.core.models import Track
 from pytuber.storage import Registry
 
 
@@ -24,16 +23,16 @@ class YouService:
     def authorize(cls, client_secrets):
         return InstalledAppFlow.from_client_secrets_file(
             client_secrets, scopes=cls.scopes
-        ).run_console()
+        ).run_local_server()
 
     @classmethod
     def search_track(cls, track: Track):
-        params = dict(
-            part="snippet",
-            maxResults=1,
-            q="{} {}".format(track.artist, track.name),
-            type="video",
-        )
+        params = {
+            "part": "snippet",
+            "maxResults": 1,
+            "q": f"{track.artist} {track.name}",
+            "type": "video",
+        }
 
         response = cls.get_client().search().list(**params).execute()
         cls.update_quota(100)
@@ -43,12 +42,12 @@ class YouService:
 
     @classmethod
     def get_playlists(cls):
-        params = dict(part="snippet", mine=True, maxResults=cls.max_results)
+        params = {"part": "snippet", "mine": True, "maxResults": cls.max_results}
         next_page_token = None
         playlists = []
         while True:
             if next_page_token:
-                params.update(dict(pageToken=next_page_token))
+                params.update({"pageToken": next_page_token})
 
             response = cls.get_client().playlists().list(**params).execute()
             cls.update_quota(3)
@@ -70,13 +69,13 @@ class YouService:
 
     @classmethod
     def create_playlist(cls, playlist: Playlist):
-        params = dict(
-            body=dict(
-                snippet=dict(title=playlist.title, description=playlist.mime),
-                status=dict(privacyStatus="private"),
-            ),
-            part="snippet,status",
-        )
+        params = {
+            "body": {
+                "snippet": {"title": playlist.title, "description": playlist.mime},
+                "status": {"privacyStatus": "private"},
+            },
+            "part": "snippet,status",
+        }
         id = cls.get_client().playlists().insert(**params).execute()["id"]
         cls.update_quota(55)
         return id
@@ -85,14 +84,14 @@ class YouService:
     def get_playlist_items(cls, playlist: Playlist):
         items = []
         next_page_token = None
-        params = dict(
-            part="contentDetails,snippet",
-            maxResults=cls.max_results,
-            playlistId=playlist.youtube_id,
-        )
+        params = {
+            "part": "contentDetails,snippet",
+            "maxResults": cls.max_results,
+            "playlistId": playlist.youtube_id,
+        }
         while True:
             if next_page_token:
-                params.update(dict(pageToken=next_page_token))
+                params.update({"pageToken": next_page_token})
 
             resp = cls.get_client().playlistItems().list(**params).execute()
             cls.update_quota(5)
@@ -120,22 +119,22 @@ class YouService:
 
     @classmethod
     def create_playlist_item(cls, playlist: Playlist, video_id):
-        params = dict(
-            body=dict(
-                snippet=dict(
-                    playlistId=playlist.youtube_id,
-                    resourceId=dict(kind="youtube#video", videoId=video_id),
-                )
-            ),
-            part="snippet",
-        )
+        params = {
+            "body": {
+                "snippet": {
+                    "playlistId": playlist.youtube_id,
+                    "resourceId": {"kind": "youtube#video", "videoId": video_id},
+                }
+            },
+            "part": "snippet",
+        }
         result = cls.get_client().playlistItems().insert(**params).execute()
         cls.update_quota(53)
         return result
 
     @classmethod
     def remove_playlist_item(cls, playlist_item: PlaylistItem):
-        params = dict(id=playlist_item.id)
+        params = {"id": playlist_item.id}
         result = cls.get_client().playlistItems().delete(**params).execute()
         cls.update_quota(51)
         return result
@@ -144,9 +143,7 @@ class YouService:
     def get_client(cls):
         if not cls.client:
             info = ConfigManager.get(Provider.youtube).data
-            credentials = Credentials.from_authorized_user_info(
-                info, scopes=cls.scopes
-            )
+            credentials = Credentials.from_authorized_user_info(info, scopes=cls.scopes)
             cls.client = build("youtube", "v3", credentials=credentials)
         return cls.client
 

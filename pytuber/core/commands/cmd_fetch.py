@@ -1,8 +1,10 @@
 import click
 
-from pytuber.core.models import PlaylistManager, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import TrackManager
 from pytuber.core.services import YouService
-from pytuber.utils import magenta, spinner
+from pytuber.utils import magenta
+from pytuber.utils import spinner
 
 
 @click.command("youtube")
@@ -36,11 +38,11 @@ def fetch_playlists():
                 items = YouService.get_playlist_items(playlist)
                 track_ids = [
                     TrackManager.set(
-                        dict(
-                            artist=item.artist,
-                            name=item.name,
-                            youtube_id=item.video_id,
-                        )
+                        {
+                            "artist": item.artist,
+                            "name": item.name,
+                            "youtube_id": item.video_id,
+                        }
                     ).id
                     for item in items
                 ]
@@ -49,7 +51,7 @@ def fetch_playlists():
 
         total = len(playlists)
         if total > 0:
-            sp.text = "Fetched {} playlist(s) info".format(magenta(total))
+            sp.text = f"Fetched {magenta(total)} playlist(s) info"
 
 
 def fetch_tracks():
@@ -57,10 +59,10 @@ def fetch_tracks():
     message = "Matching tracks to videos"
     with spinner(message) as sp:
         for track in tracks:
-            sp.text = "{}: {} - {}".format(message, track.artist, track.name)
+            sp.text = f"{message}: {track.artist} - {track.name}"
             youtube_id = YouService.search_track(track)
-            TrackManager.update(track, dict(youtube_id=youtube_id))
+            TrackManager.update(track, {"youtube_id": youtube_id})
 
         total = len(tracks)
         if total > 0:
-            sp.text = "Matched {} tracks to videos".format(magenta(total))
+            sp.text = f"Matched {magenta(total)} tracks to videos"

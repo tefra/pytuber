@@ -1,15 +1,16 @@
 from unittest import mock
 
 from pytuber import cli
-from pytuber.core.models import PlaylistManager, Provider
-from pytuber.lastfm.models import PlaylistType, UserPlaylistType
-from pytuber.lastfm.params import (
-    ArtistParamType,
-    CountryParamType,
-    TagParamType,
-    UserParamType,
-)
-from tests.utils import CommandTestCase, PlaylistFixture
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
+from pytuber.lastfm.models import PlaylistType
+from pytuber.lastfm.models import UserPlaylistType
+from pytuber.lastfm.params import ArtistParamType
+from pytuber.lastfm.params import CountryParamType
+from pytuber.lastfm.params import TagParamType
+from pytuber.lastfm.params import UserParamType
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
 
 
 class CommandAddTests(CommandTestCase):
@@ -41,12 +42,12 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=UserPlaylistType.USER_TOP_TRACKS,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, username="bbb"),
-                title="My Favorite",
-            )
+            {
+                "type": UserPlaylistType.USER_TOP_TRACKS,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "username": "bbb"},
+                "title": "My Favorite",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
@@ -67,21 +68,19 @@ class CommandAddTests(CommandTestCase):
         self.assertOutput(expected_output, result.output)
 
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.CHART,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50),
-                title="",
-            )
+            {
+                "type": PlaylistType.CHART,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50},
+                "title": "",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(CountryParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
-    def test_country_playlist(
-        self, create_playlist, country_param_type, fetch_tracks
-    ):
+    def test_country_playlist(self, create_playlist, country_param_type, fetch_tracks):
         country_param_type.return_value = "greece"
         create_playlist.return_value = PlaylistFixture.one()
         result = self.runner.invoke(
@@ -97,12 +96,12 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.COUNTRY,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, country="greece"),
-                title="",
-            )
+            {
+                "type": PlaylistType.COUNTRY,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "country": "greece"},
+                "title": "",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
@@ -125,21 +124,19 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.TAG,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, tag="rock"),
-                title="",
-            )
+            {
+                "type": PlaylistType.TAG,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "tag": "rock"},
+                "title": "",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")
 
     @mock.patch("pytuber.lastfm.commands.cmd_add.fetch_tracks")
     @mock.patch.object(ArtistParamType, "convert")
     @mock.patch.object(PlaylistManager, "set")
-    def test_artist_playlist(
-        self, create_playlist, artist_param, fetch_tracks
-    ):
+    def test_artist_playlist(self, create_playlist, artist_param, fetch_tracks):
         artist_param.return_value = "Queen"
         create_playlist.return_value = PlaylistFixture.one()
         result = self.runner.invoke(
@@ -158,11 +155,11 @@ class CommandAddTests(CommandTestCase):
         self.assertEqual(0, result.exit_code)
         self.assertOutput(expected_output, result.output)
         create_playlist.assert_called_once_with(
-            dict(
-                type=PlaylistType.ARTIST,
-                provider=Provider.lastfm,
-                arguments=dict(limit=50, artist="Queen"),
-                title="Queen....",
-            )
+            {
+                "type": PlaylistType.ARTIST,
+                "provider": Provider.lastfm,
+                "arguments": {"limit": 50, "artist": "Queen"},
+                "title": "Queen....",
+            }
         )
         fetch_tracks.assert_called_once_with("id_a")

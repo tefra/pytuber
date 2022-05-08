@@ -4,9 +4,15 @@ import enum
 import hashlib
 import json
 import re
-from typing import Dict, List, Type
-
-import attr
+from dataclasses import asdict
+from dataclasses import dataclass
+from dataclasses import field
+from dataclasses import fields
+from dataclasses import replace
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Type
 
 from pytuber.exceptions import NotFound
 from pytuber.storage import Registry
@@ -31,52 +37,58 @@ class PlaylistType(StrEnum):
 
 class Document:
     def asdict(self):
-        return attr.asdict(self)
+        return asdict(self)
 
 
-@attr.s(auto_attribs=True)
+@dataclass
 class Config(Document):
-    provider: str = attr.ib(converter=str)
-    data: dict = attr.ib(factory=dict)
+    provider: str = field()
+    data: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.provider = str(self.provider)
 
 
-@attr.s
+@dataclass
 class Track(Document):
-    artist: str = attr.ib()
-    name: str = attr.ib()
-    id: str = attr.ib(default=None)
-    youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
+    artist: str = field()
+    name: str = field()
+    id: Optional[str] = field(default=None)
+    youtube_id: Optional[str] = field(default=None, metadata={"keep": True})
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
         if self.id is None:
             self.id = hashlib.sha1(
                 re.sub(
                     r"[\W_]+",
                     "",
-                    "{}{}".format(self.artist, self.name).lower(),
+                    f"{self.artist}{self.name}".lower(),
                 ).encode("utf-8")
             ).hexdigest()[:7]
 
 
-@attr.s
+@dataclass
 class Playlist(Document):
-    title: str = attr.ib(converter=str)
-    type: str = attr.ib(converter=str)
-    provider: str = attr.ib(converter=str)
-    arguments: dict = attr.ib(factory=dict)
-    id: str = attr.ib(default=None)
-    youtube_id: str = attr.ib(default=None, metadata=dict(keep=True))
-    tracks: List[str] = attr.ib(factory=list, metadata=dict(keep=True))
-    synced: int = attr.ib(default=None, metadata=dict(keep=True))
-    uploaded: int = attr.ib(default=None, metadata=dict(keep=True))
+    title: str = field()
+    type: str = field()
+    provider: str = field()
+    arguments: dict = field(default_factory=dict)
+    id: Optional[str] = field(default=None)
+    youtube_id: Optional[str] = field(default=None, metadata={"keep": True})
+    tracks: List[str] = field(default_factory=list, metadata={"keep": True})
+    synced: Optional[int] = field(default=None, metadata={"keep": True})
+    uploaded: Optional[int] = field(default=None, metadata={"keep": True})
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
+        self.type = str(self.type)
+        self.provider = str(self.provider)
+
         if self.id is None:
             self.id = hashlib.sha1(
                 json.dumps(
                     {
-                        field: getattr(self, field)
-                        for field in ["arguments", "provider", "type"]
+                        key: getattr(self, key)
+                        for key in ["arguments", "provider", "type"]
                     }
                 ).encode("utf-8")
             ).hexdigest()[:7]
@@ -105,12 +117,10 @@ class Playlist(Document):
 
     @property
     def display_arguments(self):
-        return ", ".join(
-            ["{}: {}".format(k, v) for k, v in self.arguments.items()]
-        )
+        return ", ".join([f"{k}: {v}" for k, v in self.arguments.items()])
 
 
-@attr.s(auto_attribs=True)
+@dataclass(order=True)
 class PlaylistItem(Document):
     id: str
     name: str
@@ -140,9 +150,7 @@ class Manager:
                 return cls.model(**data)
             return data
 
-        raise NotFound(
-            "No {} matched your argument: {}!".format(cls.namespace, key)
-        )
+        raise NotFound(f"No {cls.namespace} matched your argument: {key}!")
 
     @classmethod
     def set(cls, data: Dict):
@@ -151,16 +159,16 @@ class Manager:
 
         with contextlib.suppress(KeyError):
             data = Registry.get(cls.namespace, key)
-            for field in attr.fields(cls.model):
-                if field.metadata.get("keep") and not getattr(obj, field.name):
-                    setattr(obj, field.name, data.get(field.name))
+            for f in fields(cls.model):
+                if f.metadata.get("keep") and not getattr(obj, f.name):
+                    setattr(obj, f.name, data.get(f.name))
 
         Registry.set(cls.namespace, key, obj.asdict())
         return obj
 
     @classmethod
     def update(cls, obj, data: Dict):
-        new = attr.evolve(obj, **data)
+        new = replace(obj, **data)
         key = getattr(new, cls.key)
         Registry.set(cls.namespace, key, new.asdict())
         return new
@@ -169,10 +177,8 @@ class Manager:
     def remove(cls, key):
         try:
             Registry.remove(cls.namespace, key)
-        except KeyError:
-            raise NotFound(
-                "No {} matched your argument: {}!".format(cls.namespace, key)
-            )
+        except KeyError as e:
+            raise NotFound(f"No {cls.namespace} matched your argument: {key}!") from e
 
     @classmethod
     def find(cls, **kwargs):

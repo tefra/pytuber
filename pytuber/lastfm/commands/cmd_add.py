@@ -2,17 +2,17 @@ from functools import partial
 
 import click
 
-from pytuber.core.commands.cmd_add import option_title
-from pytuber.core.models import History, PlaylistManager, Provider
-from pytuber.lastfm.models import PlaylistType, UserPlaylistType
-from pytuber.lastfm.params import (
-    ArtistParamType,
-    CountryParamType,
-    TagParamType,
-    UserParamType,
-)
-
 from .cmd_fetch import fetch_tracks
+from pytuber.core.commands.cmd_add import option_title
+from pytuber.core.models import History
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
+from pytuber.lastfm.models import PlaylistType
+from pytuber.lastfm.models import UserPlaylistType
+from pytuber.lastfm.params import ArtistParamType
+from pytuber.lastfm.params import CountryParamType
+from pytuber.lastfm.params import TagParamType
+from pytuber.lastfm.params import UserParamType
 
 
 @click.group("lastfm")
@@ -63,12 +63,12 @@ def user_playlist(
     """
     History.set(user=user, limit=limit)
     playlist = PlaylistManager.set(
-        dict(
-            type=UserPlaylistType.from_choice(playlist_type),
-            provider=Provider.lastfm,
-            arguments=dict(username=user, limit=limit),
-            title=title.strip(),
-        )
+        {
+            "type": UserPlaylistType.from_choice(playlist_type),
+            "provider": Provider.lastfm,
+            "arguments": {"username": user, "limit": limit},
+            "title": title.strip(),
+        }
     )
     click.secho(
         "{} playlist: {}!".format(
@@ -87,12 +87,12 @@ def chart_playlist(ctx: click.Context, limit: int, title: str):
 
     History.set(limit=limit)
     playlist = PlaylistManager.set(
-        dict(
-            type=PlaylistType.CHART,
-            provider=Provider.lastfm,
-            arguments=dict(limit=limit),
-            title=title.strip(),
-        )
+        {
+            "type": PlaylistType.CHART,
+            "provider": Provider.lastfm,
+            "arguments": {"limit": limit},
+            "title": title.strip(),
+        }
     )
     click.secho(
         "{} playlist: {}!".format(
@@ -118,12 +118,12 @@ def country_playlist(ctx: click.Context, country: str, limit: int, title: str):
 
     History.set(limit=limit)
     playlist = PlaylistManager.set(
-        dict(
-            type=PlaylistType.COUNTRY,
-            provider=Provider.lastfm,
-            arguments=dict(country=country, limit=limit),
-            title=title.strip(),
-        )
+        {
+            "type": PlaylistType.COUNTRY,
+            "provider": Provider.lastfm,
+            "arguments": {"country": country, "limit": limit},
+            "title": title.strip(),
+        }
     )
     click.secho(
         "{} playlist: {}!".format(
@@ -148,12 +148,12 @@ def tag_playlist(ctx: click.Context, tag: str, limit: int, title: str):
 
     History.set(limit=limit)
     playlist = PlaylistManager.set(
-        dict(
-            type=PlaylistType.TAG,
-            provider=Provider.lastfm,
-            arguments=dict(tag=tag, limit=limit),
-            title=title.strip(),
-        )
+        {
+            "type": PlaylistType.TAG,
+            "provider": Provider.lastfm,
+            "arguments": {"tag": tag, "limit": limit},
+            "title": title.strip(),
+        }
     )
 
     click.secho(
@@ -176,12 +176,12 @@ def artist_playlist(ctx: click.Context, artist: str, limit: int, title: str):
 
     History.set(limit=limit)
     playlist = PlaylistManager.set(
-        dict(
-            type=PlaylistType.ARTIST,
-            provider=Provider.lastfm,
-            arguments=dict(artist=artist, limit=limit),
-            title=title.strip(),
-        )
+        {
+            "type": PlaylistType.ARTIST,
+            "provider": Provider.lastfm,
+            "arguments": {"artist": artist, "limit": limit},
+            "title": title.strip(),
+        }
     )
 
     click.secho(

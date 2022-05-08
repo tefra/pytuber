@@ -4,7 +4,8 @@ from contextlib import suppress
 from datetime import timedelta
 from functools import reduce
 from json import JSONDecodeError
-from typing import Callable, Dict
+from typing import Callable
+from typing import Dict
 
 
 class Singleton(type):
@@ -12,7 +13,7 @@ class Singleton(type):
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._obj:
-            cls._obj[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._obj[cls] = super().__call__(*args, **kwargs)
         return cls._obj[cls]
 
 
@@ -66,16 +67,14 @@ class Registry(dict, metaclass=Singleton):
 
     @classmethod
     def from_file(cls, path: str):
-        data: Dict = dict()
+        data: Dict = {}
         with suppress(FileNotFoundError, JSONDecodeError):
-            with open(path, "r") as cfg:
+            with open(path) as cfg:
                 data = json.load(cfg)
         return cls(data)
 
     @classmethod
-    def cache(
-        cls, key: str, func: Callable, ttl: timedelta, refresh: bool = False
-    ):
+    def cache(cls, key: str, func: Callable, ttl: timedelta, refresh: bool = False):
         registry = cls()
         if refresh or key not in registry or registry[key][1] < time.time():
             registry[key] = (func(), time.time() + ttl.total_seconds())

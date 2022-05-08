@@ -3,19 +3,21 @@ from unittest import mock
 import pydrag
 
 from pytuber import cli
-from pytuber.core.models import PlaylistManager, Provider, TrackManager
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import Provider
+from pytuber.core.models import TrackManager
 from pytuber.lastfm.commands.cmd_fetch import fetch_tracks
 from pytuber.lastfm.services import LastService
-from tests.utils import CommandTestCase, PlaylistFixture, TrackFixture
+from tests.utils import CommandTestCase
+from tests.utils import PlaylistFixture
+from tests.utils import TrackFixture
 
 
 class CommandFetchTests(CommandTestCase):
     @mock.patch("click.secho")
     @mock.patch("click.Abort")
     def test_with_nothing(self, abort, secho):
-        result = self.runner.invoke(
-            cli, ["fetch", "lastfm"], catch_exceptions=False
-        )
+        result = self.runner.invoke(cli, ["fetch", "lastfm"], catch_exceptions=False)
 
         self.assertEqual(0, result.exit_code)
         self.assertOutputContains("", result.output)
@@ -32,7 +34,7 @@ class CommandFetchTests(CommandTestCase):
         tracks = TrackFixture.get(6)
         playlists = PlaylistFixture.get(2)
         last_tracks = [
-            pydrag.Track.from_dict(dict(name=track.name, artist=track.artist))
+            pydrag.Track.from_dict({"name": track.name, "artist": track.artist})
             for track in tracks
         ]
 
@@ -64,8 +66,8 @@ class CommandFetchTests(CommandTestCase):
 
         update.assert_has_calls(
             [
-                mock.call(playlists[0], dict(tracks=["id_a", "id_b", "id_c"])),
-                mock.call(playlists[1], dict(tracks=["id_d", "id_e", "id_f"])),
+                mock.call(playlists[0], {"tracks": ["id_a", "id_b", "id_c"]}),
+                mock.call(playlists[1], {"tracks": ["id_d", "id_e", "id_f"]}),
             ]
         )
 

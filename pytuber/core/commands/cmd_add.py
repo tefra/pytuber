@@ -8,12 +8,10 @@ import click
 from lxml import etree
 from tabulate import tabulate
 
-from pytuber.core.models import (
-    PlaylistManager,
-    PlaylistType,
-    Provider,
-    TrackManager,
-)
+from pytuber.core.models import PlaylistManager
+from pytuber.core.models import PlaylistType
+from pytuber.core.models import Provider
+from pytuber.core.models import TrackManager
 from pytuber.utils import magenta
 
 option_title = partial(
@@ -35,7 +33,7 @@ def add_from_editor(title: str) -> None:
         title=title,
         tracks=parse_text(text or ""),
         type=PlaylistType.EDITOR,
-        arguments=dict(_title=title.strip()),
+        arguments={"_title": title.strip()},
     )
 
 
@@ -50,17 +48,20 @@ def add_from_editor(title: str) -> None:
 def add_from_file(file: str, title: str, format: str) -> None:
     """Import a playlist from a text file."""
 
-    with open(file, "r", encoding="UTF-8") as fp:
+    with open(file, encoding="UTF-8") as fp:
         text = fp.read()
 
-    parsers = dict(
-        m3u=parse_m3u, jspf=parse_jspf, xspf=parse_xspf, txt=parse_text
-    )
+    parsers = {
+        "m3u": parse_m3u,
+        "jspf": parse_jspf,
+        "xspf": parse_xspf,
+        "txt": parse_text,
+    }
     create_playlist(
         title=title,
         tracks=parsers[format](text or ""),
         type=PlaylistType.FILE,
-        arguments=dict(_file=file),
+        arguments={"_file": file},
     )
 
 
@@ -102,7 +103,7 @@ def parse_xspf(text):
     tracks = []
     with contextlib.suppress(etree.XMLSyntaxError):
         context = etree.iterparse(io.BytesIO(text.encode("UTF-8")))
-        for action, elem in context:
+        for _, elem in context:
             if elem.tag.endswith("creator"):
                 artist = elem.text.strip()
             elif elem.tag.endswith("title"):
@@ -181,25 +182,22 @@ def create_playlist(title, tracks, type, arguments):
                 colalign=("right", "left"),
             ),
             tabulate(  # type: ignore
-                [
-                    (i + 1, track[0], track[1])
-                    for i, track in enumerate(tracks)
-                ],
+                [(i + 1, track[0], track[1]) for i, track in enumerate(tracks)],
                 headers=("No", "Artist", "Track Name"),
             ),
         )
     )
     click.confirm("Are you sure you want to save this playlist?", abort=True)
     playlist = PlaylistManager.set(
-        dict(
-            type=type,
-            title=title.strip(),
-            arguments=arguments,
-            provider=Provider.user,
-            tracks=[
-                TrackManager.set(dict(artist=artist, name=name)).id
+        {
+            "type": type,
+            "title": title.strip(),
+            "arguments": arguments,
+            "provider": Provider.user,
+            "tracks": [
+                TrackManager.set({"artist": artist, "name": name}).id
                 for artist, name in tracks
             ],
-        )
+        }
     )
-    click.secho("Added playlist: {}!".format(playlist.id))
+    click.secho(f"Added playlist: {playlist.id}!")

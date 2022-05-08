@@ -17,8 +17,8 @@ pytuber
 .. image:: https://img.shields.io/github/languages/top/tefra/pytuber.svg
     :target: https://pytuber.readthedocs.io/
 
-.. image:: https://api.codacy.com/project/badge/Grade/5d21d2a3c7fd4dc5883c48124cac44de
-   :target: https://app.codacy.com/app/tefra/pytuber?utm_source=github.com&utm_medium=referral&utm_content=tefra/pytuber&utm_campaign=Badge_Grade_Dashboard
+.. image:: https://app.codacy.com/project/badge/Grade/00744926e0c94552857f3320640c7f71
+   :target: https://www.codacy.com/gh/tefra/pytuber/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tefra/pytuber&amp;utm_campaign=Badge_Grade
 
 .. image:: https://img.shields.io/pypi/pyversions/pytuber.svg
     :target: https://pypi.org/pypi/pytuber/
@@ -69,13 +69,16 @@ pytuber includes a quota calculator
 
     $ pytuber quota
 
-Additionally to the api quota limit Youtube limits the amount of how many playlists you can create per day to only **10**.
+Additionally to the api quota limit Youtube limits the amount of how many
+playlists you can create per day to only **10**.
 
 In case you reach that number, you can push a new playlist manually.
   - Create a playlist with `pytuber add` command
   - View the playlist by using this command `pytuber show xxxx --mime`
-  - This mime string is base64 signature used by pytuber internally to link local to youtube playlists
-  - Add a youtube playlists manually from the web site and add the mime signature at the bottom of the playlist description
+  - This mime string is base64 signature used by pytuber internally to
+    link local to youtube playlists
+  - Add a youtube playlists manually from the web site and add the mime
+    signature at the bottom of the playlist description
   - Fetch the new playlist info `pytuber fetch youtube --playlists`
 
 Afterwards you will be aple to push tracks like normally.

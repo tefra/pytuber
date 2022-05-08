@@ -3,7 +3,8 @@ from unittest import mock
 from google.oauth2.credentials import Credentials
 
 from pytuber import cli
-from pytuber.core.models import ConfigManager, Provider
+from pytuber.core.models import ConfigManager
+from pytuber.core.models import Provider
 from pytuber.core.services import YouService
 from tests.utils import CommandTestCase
 
@@ -38,7 +39,7 @@ class CommandSetupYoutubeTests(CommandTestCase):
         self.assertDictEqual(expected, actual.data)
 
     def test_update(self):
-        ConfigManager.set(dict(provider=Provider.youtube, data={"foo": "bar"}))
+        ConfigManager.set({"provider": Provider.youtube, "data": {"foo": "bar"}})
         client_secrets = "~/Downloads/client_secrets.json"
         result = self.runner.invoke(
             cli,

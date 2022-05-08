@@ -3,7 +3,8 @@ import os
 import shutil
 import tempfile
 from datetime import timedelta
-from unittest import TestCase, mock
+from unittest import mock
+from unittest import TestCase
 
 from pytuber.storage import Registry
 
@@ -47,11 +48,11 @@ class RegistryTests(TestCase):
             tmp = tempfile.mkdtemp()
             file_path = os.path.join(tmp, "foo.json")
             with open(file_path, "w") as fp:
-                json.dump(dict(a=True), fp)
+                json.dump({"a": True}, fp)
 
             Registry.from_file(file_path)
 
-            self.assertEqual(dict(a=True), Registry())
+            self.assertEqual({"a": True}, Registry())
 
             Registry.set("a", False)
 

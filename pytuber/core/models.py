@@ -46,8 +46,7 @@ class Config(Document):
     data: dict = field(default_factory=dict)
 
     def __post_init__(self):
-        if isinstance(self.provider, Provider):
-            self.provider = self.provider.value
+        self.provider = str(self.provider)
 
 
 @dataclass
@@ -81,11 +80,8 @@ class Playlist(Document):
     uploaded: Optional[int] = field(default=None, metadata={"keep": True})
 
     def __post_init__(self):
-        if isinstance(self.type, StrEnum):
-            self.type = self.type.value
-
-        if isinstance(self.provider, StrEnum):
-            self.provider = self.provider.value
+        self.type = str(self.type)
+        self.provider = str(self.provider)
 
         if self.id is None:
             self.id = hashlib.sha1(
